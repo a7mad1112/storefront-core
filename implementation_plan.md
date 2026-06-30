@@ -351,6 +351,7 @@ CREATE TABLE products (
     additional_images TEXT[],                 -- Array of R2 URLs
     supplier_image_url TEXT,                  -- Original URL for reference
     quantity INT DEFAULT 0,
+    consecutive_zero_qty INT DEFAULT 0,      -- 🗑️ Incremented each sync with qty=0; deleted at threshold
     is_available BOOLEAN DEFAULT true,
     is_active BOOLEAN DEFAULT true,          -- Admin can deactivate
     tags TEXT[],                              -- "جملة", "حصرياً", etc.
@@ -381,6 +382,8 @@ CREATE TABLE sync_logs (
     products_added INT DEFAULT 0,
     products_updated INT DEFAULT 0,
     products_deactivated INT DEFAULT 0,
+    products_deleted INT DEFAULT 0,          -- Hard-deleted rows (removed from supplier or zero-qty threshold)
+    images_deleted INT DEFAULT 0,            -- R2 images purged alongside deleted products
     categories_found INT DEFAULT 0,
     error_message TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -488,8 +491,16 @@ flowchart TD
     K --> M
     L --> M
 
-    M["8. Mark missing products\nas is_active=false"]
-    M --> N["9. Insert sync_log\n(stats + status)"]
+    M["8. Reconcile missing products"]
+    M --> M1{"Still in supplier\ncatalogue?"}
+    M1 -->|"No — removed\nfrom supplier"| M2["🗑️ Hard DELETE row\n+ purge R2 images"]
+    M1 -->|"Zero qty this sync"| M3["Increment\nconsecutive_zero_qty"]
+    M3 --> M4{"consecutive_zero_qty\n≥ 3?"}
+    M4 -->|"Yes"| M2
+    M4 -->|"No"| M5["Set is_available=false\n(keep row)"]
+    M2 --> N
+    M5 --> N
+    N["9. Insert sync_log\n(stats + status + deleted counts)"]
     N --> O["10. Done ✅"]
 
     style A fill:#2d3748,color:#fff
@@ -519,7 +530,24 @@ scraper/
 3. **Image Optimization:** Pillow converts to WebP at 80% quality (~60-70% size reduction)
 4. **Diff Logic:** Compare `wholesale_price`, `quantity`, `name` against existing DB records
 5. **Error Handling:** Try/except per product, continue on failure, log errors in `sync_logs`
-6. **Deactivation:** Products in DB but not in latest scrape → `is_active = false`
+6. **Cleanup (NFR-4.1.3 — Minimize Storage):** Two-tier deletion strategy:
+   - **Hard delete immediately:** Products no longer present in the supplier catalogue → `DELETE FROM products WHERE supplier_id = ?` + delete R2 image objects
+   - **Hard delete after threshold:** Products with `quantity = 0` for 3 consecutive syncs → `consecutive_zero_qty` is incremented each sync; when `>= 3`, the row is hard-deleted and R2 images purged
+   - **Intermediate state:** Products with `quantity = 0` but `consecutive_zero_qty < 3` → `is_available = false` (hidden from storefront, kept in DB)
+   - **R2 cleanup:** Before deleting a DB row, the scraper calls R2 `delete_objects` for `image_url` and all entries in `additional_images[]` to prevent orphaned files
+
+### Cleanup Strategy — Decision Matrix
+
+| Scenario | Action | Storage Impact |
+|---|---|---|
+| Product removed from supplier site | Hard DELETE row + purge R2 images | ✅ Full cleanup |
+| `quantity = 0` for 1–2 syncs | `is_available = false`, row kept | 🟡 Temporarily retained |
+| `quantity = 0` for 3+ consecutive syncs | Hard DELETE row + purge R2 images | ✅ Full cleanup |
+| Product back in stock after zero-qty | Reset `consecutive_zero_qty = 0`, `is_available = true` | — |
+| Admin manually deactivated (`is_active = false`) | Row kept indefinitely (admin intent) | 🟡 Admin-controlled |
+
+> [!NOTE]
+> The 3-sync threshold (~72 hours) gives a buffer for genuine temporary stock-outs at the supplier before permanently purging. This value can be adjusted via a config env var (`ZERO_QTY_DELETE_THRESHOLD`, default `3`).
 
 ### GitHub Actions Workflow
 ```yaml
@@ -804,8 +832,11 @@ flowchart LR
 - [ ] Build product extraction with pagination (`extractor.py`)
 - [ ] Build image pipeline: download → WebP → R2 upload (`image_pipeline.py`)
 - [ ] Build Supabase upsert logic with diff (`db.py`)
+- [ ] Implement two-tier cleanup in `db.py`: hard-delete removed products + `consecutive_zero_qty` threshold logic
+- [ ] Implement R2 `delete_objects` call in `image_pipeline.py` for purging orphaned images on product deletion
+- [ ] Add `ZERO_QTY_DELETE_THRESHOLD` env var to `config.py` (default: `3`)
 - [ ] Add pacing, error handling, logging
-- [ ] Create GitHub Actions workflow
+- [ ] Create GitHub Actions workflow (add `ZERO_QTY_DELETE_THRESHOLD` to env block)
 - [ ] Run first full sync manually
 - [ ] Verify data in Supabase dashboard
 
