@@ -5,6 +5,12 @@ Loads and validates all environment variables needed by the scraper.
 
 import os
 import sys
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 
 def load_config():
@@ -13,6 +19,12 @@ def load_config():
     Returns a dict with all config values.
     Exits with error if any required variable is missing.
     """
+    if load_dotenv:
+        # Try loading from project root .env.local or scraper/.env
+        root_dir = Path(__file__).resolve().parent.parent
+        load_dotenv(root_dir / ".env.local")
+        load_dotenv(root_dir / ".env")
+        load_dotenv(Path(__file__).resolve().parent / ".env")
     required_vars = {
         # Supplier credentials
         "SUPPLIER_PHONE": "Phone number for gbstore.ps login",
@@ -27,6 +39,7 @@ def load_config():
         "R2_ACCESS_KEY": "R2 API access key ID",
         "R2_SECRET_KEY": "R2 API secret access key",
         "R2_BUCKET": "R2 bucket name for product images",
+        "R2_PUBLIC_URL": "R2 public read URL (e.g., https://pub-xxx.r2.dev)",
     }
 
     config = {}
@@ -34,13 +47,19 @@ def load_config():
 
     for var, description in required_vars.items():
         value = os.environ.get(var)
+        # Fallback to Next.js public variables if available
+        if not value and var == "SUPABASE_URL":
+            value = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+        if not value and var == "R2_PUBLIC_URL":
+            value = os.environ.get("NEXT_PUBLIC_R2_PUBLIC_URL")
+
         if not value:
             missing.append(f"  - {var}: {description}")
         else:
             config[var] = value
 
     if missing:
-        print("❌ Missing required environment variables:", file=sys.stderr)
+        print("[ERROR] Missing required environment variables:", file=sys.stderr)
         print("\n".join(missing), file=sys.stderr)
         print(
             "\nSet these in your .env file or as GitHub Actions secrets.",
