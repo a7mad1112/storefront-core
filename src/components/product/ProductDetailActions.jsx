@@ -11,7 +11,7 @@ export default function ProductDetailActions({ product }) {
   const { addItem } = useCart();
 
   const handleDirectWhatsAppBuy = () => {
-    const text = `مرحباً، أريد طلب هذا المنتج من GB Store:\n\n` +
+    const text = `مرحباً، أريد طلب هذا المنتج من متجر Eloria FASHION:\n\n` +
       `📦 الاسم: ${product.name}\n` +
       `🔢 العدد: ${quantity}\n` +
       `💰 السعر الإجمالي: ${formatPrice((product.retail_price || 0) * quantity)}\n\n` +

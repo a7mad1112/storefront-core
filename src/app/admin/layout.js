@@ -52,20 +52,18 @@ export default function AdminLayout({ children }) {
   };
 
   return (
-    <div className="container" style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '2rem', padding: '3rem var(--space-4)', minHeight: '85vh' }}>
+    <div className="container admin-layout-grid">
       {/* Admin Sidebar */}
-      <aside style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', height: 'fit-content' }}>
-        <div style={{ paddingBottom: '1rem', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)' }}>
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-header">
           <h2 style={{ fontSize: '1.125rem', fontWeight: 800 }}>⚙️ لوحة التحكم</h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>إدارة المتجر والأسعار</p>
         </div>
 
         <Link
           href="/admin"
+          className="admin-nav-link"
           style={{
-            padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 700,
             backgroundColor: pathname === '/admin' ? 'var(--color-accent)' : 'transparent',
           }}
         >
@@ -74,10 +72,8 @@ export default function AdminLayout({ children }) {
 
         <Link
           href="/admin/margins"
+          className="admin-nav-link"
           style={{
-            padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 700,
             backgroundColor: pathname === '/admin/margins' ? 'var(--color-accent)' : 'transparent',
           }}
         >
@@ -86,10 +82,8 @@ export default function AdminLayout({ children }) {
 
         <Link
           href="/admin/products"
+          className="admin-nav-link"
           style={{
-            padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 700,
             backgroundColor: pathname === '/admin/products' ? 'var(--color-accent)' : 'transparent',
           }}
         >
@@ -98,13 +92,9 @@ export default function AdminLayout({ children }) {
 
         <button
           onClick={handleLogout}
+          className="admin-nav-link"
           style={{
-            marginTop: '2rem',
-            padding: '0.75rem 1rem',
-            borderRadius: 'var(--radius-md)',
             color: 'var(--color-error)',
-            textAlign: 'right',
-            fontWeight: 700,
             border: '1px solid rgba(229, 62, 62, 0.2)',
           }}
         >
@@ -113,7 +103,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Main Admin Content */}
-      <div style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)', padding: '2rem', border: '1px solid var(--color-border)' }}>
+      <div style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', border: '1px solid var(--color-border)', overflowX: 'hidden' }}>
         {children}
       </div>
     </div>

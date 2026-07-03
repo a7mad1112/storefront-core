@@ -6,6 +6,26 @@ import ProductGrid from '../../../components/product/ProductGrid';
 
 export const revalidate = 60;
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const category = await getCategoryBySlug(slug);
+
+  if (!category) {
+    return { title: 'القسم غير موجود — Eloria FASHION' };
+  }
+
+  return {
+    title: `${category.name} — Eloria FASHION`,
+    description: `تسوقي أفضل المنتجات في قسم ${category.name} بأسعار مميزة وجودة عالية من متجر Eloria FASHION.`,
+    openGraph: {
+      title: `${category.name} — Eloria FASHION`,
+      description: `تسوقي أفضل المنتجات في قسم ${category.name} بأسعار مميزة وجودة عالية من متجر Eloria FASHION.`,
+      images: [category.image_url || '/placeholder.webp'],
+      type: 'website',
+    },
+  };
+}
+
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
 

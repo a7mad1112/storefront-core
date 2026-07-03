@@ -89,7 +89,7 @@ export default function MarginManagerClient({ categories }) {
           <h3 style={{ fontSize: '1.125rem', fontWeight: 800 }}>⚡ تطبيق سريع على جميع الأقسام</h3>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>حدد نسبة زيادة موحدة وتطبيقها بضغطة زر واحدة</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <select
             value={globalType}
             onChange={(e) => setGlobalType(e.target.value)}

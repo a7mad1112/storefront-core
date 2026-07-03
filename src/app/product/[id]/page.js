@@ -7,6 +7,28 @@ import ProductDetailActions from '../../../components/product/ProductDetailActio
 
 export const revalidate = 60;
 
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const product = await getProductById(id);
+
+  if (!product) {
+    return { title: 'المنتج غير موجود — Eloria FASHION' };
+  }
+
+  const desc = product.description || `تسوقي ${product.name} بأفضل الأسعار وأعلى معايير الجودة من متجر Eloria FASHION مع خدمة توصيل سريعة وموثوقة.`;
+
+  return {
+    title: `${product.name} — Eloria FASHION`,
+    description: desc,
+    openGraph: {
+      title: `${product.name} — Eloria FASHION`,
+      description: desc,
+      images: [product.image_url || '/placeholder.webp'],
+      type: 'website',
+    },
+  };
+}
+
 export default async function ProductDetailPage({ params }) {
   const { id } = await params;
   const product = await getProductById(id);
@@ -44,24 +66,16 @@ export default async function ProductDetailPage({ params }) {
       </nav>
 
       {/* Main Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gap: '2.5rem',
-          backgroundColor: 'var(--color-bg-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '2rem',
-        }}
-        className="product-detail-grid"
-      >
+      <div className="product-detail-grid">
         {/* Left / Top Image Showcase */}
         <div style={{ backgroundColor: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '350px' }}>
           <img
             src={product.image_url || '/placeholder.webp'}
             alt={product.name}
             style={{ maxHeight: '450px', width: 'auto', objectFit: 'contain' }}
+            fetchPriority="high"
+            decoding="async"
+            loading="eager"
           />
         </div>
 
@@ -102,7 +116,7 @@ export default async function ProductDetailPage({ params }) {
           <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.8, marginBottom: '0.5rem' }}>
             <h3 style={{ color: 'var(--color-text-primary)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.5rem' }}>وصف المنتج والمواصفات:</h3>
             <p>
-              {product.description || 'منتج فاخر بجودة عالية ماستر كوالتي ممتاز جداً. يأتي مغلفاً بعناية فائقة مع كامل ملحقات الشركة الأصلية من علبة وكيس فاخر لتكون أفضل هدية لك أو لمن تحب.'}
+              {product.description || 'منتج عالي الجودة ومميز من متجرنا، تم اختياره بعناية ليلبي تطلعاتك ويضمن لك أفضل أداء وتجربة استخدام رائعة، أو ليكون خياراً مميزاً للإهداء لمن تحب.'}
             </p>
           </div>
 

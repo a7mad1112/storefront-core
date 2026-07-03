@@ -199,16 +199,16 @@ def upsert_product(supabase, product, category_id_map):
         "image_url": product.get("r2_image_url"),
         "additional_images": product.get("r2_additional_images", []),
         "supplier_image_url": product.get("supplier_image_url"),
-        "quantity": product.get("quantity", 1),
-        "is_available": (product.get("quantity", 1) or 0) > 0,
+        "quantity": product.get("quantity"),
+        "is_available": True if product.get("quantity") is None else product.get("quantity") > 0,
         "tags": product.get("tags", []),
     }
 
     if category_id:
         data["category_id"] = category_id
 
-    # Reset consecutive_zero_qty if product has stock
-    if data["quantity"] and data["quantity"] > 0:
+    # Reset consecutive_zero_qty if product was found on supplier store
+    if data.get("quantity") is None or data["quantity"] > 0:
         data["consecutive_zero_qty"] = 0
         data["is_available"] = True
 

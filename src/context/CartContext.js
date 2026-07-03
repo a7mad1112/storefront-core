@@ -80,7 +80,7 @@ export function CartProvider({ children }) {
   const getWhatsAppOrderUrl = () => {
     if (items.length === 0) return '';
 
-    let text = 'مرحباً، أريد طلب المنتجات التالية من GB Store:\n\n';
+    let text = 'مرحباً، أريد طلب المنتجات التالية من متجر Eloria FASHION:\n\n';
     items.forEach((item, index) => {
       text += `${index + 1}. ${item.name} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity)}\n`;
     });

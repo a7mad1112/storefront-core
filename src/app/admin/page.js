@@ -15,7 +15,7 @@ export default async function AdminDashboardPage() {
       <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>إحصائيات قاعدة البيانات وحالة المزامنة التلقائية مع المورد</p>
 
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+      <div className="stats-grid">
         <div style={{ backgroundColor: 'var(--color-bg-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
           <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>إجمالي المنتجات الفعالة</span>
           <p style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-accent)', marginTop: '0.5rem' }}>{counts.products}</p>

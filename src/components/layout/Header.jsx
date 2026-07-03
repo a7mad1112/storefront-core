@@ -21,8 +21,12 @@ export default function Header() {
     <header className="site-header">
       <div className="container header-content">
         {/* Brand Logo */}
-        <Link href="/" className="logo">
-          <span>GB</span> Store
+        <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <img
+            src="/logo.png"
+            alt="Eloria FASHION"
+            style={{ maxHeight: '48px', width: 'auto', objectFit: 'contain' }}
+          />
         </Link>
 
         {/* Search Bar */}
@@ -45,8 +49,26 @@ export default function Header() {
           />
         </form>
 
-        {/* Actions (Cart & Admin Link) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Actions (Cart & Categories Link) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Link
+            href="/categories"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.875rem',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-border)',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🛍️ الأقسام
+          </Link>
+
           <button
             onClick={() => setIsDrawerOpen(true)}
             style={{
