@@ -1,0 +1,40 @@
+# .github/workflows/scrape.yml
+# GB Store — Daily Product Sync from gbstore.ps
+name: Daily Product Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * *'        # Daily at 3 AM UTC (6 AM Palestine time)
+  workflow_dispatch:              # Manual trigger button in GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scraper/requirements.txt
+
+      - name: Run product sync
+        run: python scraper/sync.py
+        env:
+          SUPPLIER_PHONE: ${{ secrets.SUPPLIER_PHONE }}
+          SUPPLIER_PASSWORD: ${{ secrets.SUPPLIER_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          ZERO_QTY_DELETE_THRESHOLD: '3'
