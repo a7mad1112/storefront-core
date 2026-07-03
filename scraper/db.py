@@ -32,34 +32,27 @@ def create_supabase_client(config):
 # Slug Generation
 # ---------------------------------------------------------------------------
 
-def generate_slug(text, supplier_id):
+def generate_slug(text, supplier_id, prefix="item"):
     """
-    Generate a URL-friendly slug from Arabic/English text.
-    Falls back to supplier_id if text produces an empty slug.
-
-    Args:
-        text: Product or category name (may be Arabic).
-        supplier_id: Fallback identifier.
-
-    Returns:
-        URL-safe slug string.
+    Generate an ASCII-only URL-friendly slug from text.
+    Strips non-ASCII (Arabic) characters to avoid encoded URLs.
+    Falls back to {prefix}-{supplier_id} if no ASCII text remains.
     """
     if not text:
-        return f"product-{supplier_id}"
+        return f"{prefix}-{supplier_id}"
 
     # Normalize unicode
     slug = unicodedata.normalize("NFKD", text.strip())
 
-    # Replace Arabic/special chars with hyphens, keep alphanumeric + Arabic
-    slug = re.sub(r"[^\w\u0600-\u06FF\s-]", "", slug)  # Keep Arabic range
-    slug = re.sub(r"[\s_]+", "-", slug)  # Spaces/underscores → hyphens
-    slug = re.sub(r"-+", "-", slug)      # Collapse multiple hyphens
+    # Strip out non-ASCII alphanumeric characters (removes Arabic letters)
+    slug = re.sub(r"[^a-zA-Z0-9\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug)
     slug = slug.strip("-").lower()
 
     if not slug:
-        return f"product-{supplier_id}"
+        return f"{prefix}-{supplier_id}"
 
-    # Append supplier_id for uniqueness
     return f"{slug}-{supplier_id}"
 
 
@@ -83,7 +76,7 @@ def upsert_categories(supabase, categories):
 
     for cat in categories:
         try:
-            slug = generate_slug(cat["name"], cat["supplier_id"])
+            slug = generate_slug(cat["name"], cat["supplier_id"], prefix="cat")
 
             data = {
                 "supplier_id": cat["supplier_id"],
@@ -195,7 +188,7 @@ def upsert_product(supabase, product, category_id_map):
     cat_sid = product.get("category_supplier_id")
     category_id = category_id_map.get(cat_sid) if cat_sid else None
 
-    slug = generate_slug(product["name"], supplier_id)
+    slug = generate_slug(product["name"], supplier_id, prefix="product")
 
     data = {
         "supplier_id": supplier_id,

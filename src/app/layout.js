@@ -1,9 +1,13 @@
 import "./globals.css";
+import { CartProvider } from "../context/CartContext";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
+import CartDrawer from "../components/cart/CartDrawer";
 
 export const metadata = {
-  title: "GB Store — متجر الهدايا والاكسسوارات",
+  title: "GB Store — متجر الهدايا والاكسسوارات والشنط",
   description:
-    "تسوق أفضل الهدايا، الشنط، العطور، والاكسسوارات بأسعار مميزة. توصيل لجميع مناطق فلسطين.",
+    "تسوق أفضل الشنط الفاخرة، العطور، الساعات، والاكسسوارات بأسعار مميزة. توصيل سريع لجميع مناطق فلسطين.",
 };
 
 export default function RootLayout({ children }) {
@@ -21,7 +25,14 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <CartProvider>
+          <Header />
+          <CartDrawer />
+          <main style={{ flexGrow: 1 }}>{children}</main>
+          <Footer />
+        </CartProvider>
+      </body>
     </html>
   );
 }
