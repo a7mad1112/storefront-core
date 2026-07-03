@@ -841,22 +841,22 @@ flowchart LR
 - [ ] Verify data in Supabase dashboard
 
 ### Phase 3: Storefront (Days 6-10)
-- [ ] Design system — CSS variables, typography, RTL layout
-- [ ] Layout shell — header, sidebar, footer, mobile nav
-- [ ] Homepage — hero banner, category grid, featured products
-- [ ] Category page — product grid, sorting, pagination
-- [ ] Product detail page — images, description, price, WhatsApp CTA
-- [ ] Search functionality
-- [ ] Cart + WhatsApp checkout flow
-- [ ] Mobile responsive polish
-- [ ] Micro-animations and premium design touches
+- [x] Design system — CSS variables, typography, RTL layout
+- [x] Layout shell — header, sidebar, footer, mobile nav
+- [x] Homepage — hero banner, category grid, featured products
+- [x] Category page — product grid, sorting, pagination
+- [x] Product detail page — images, description, price, WhatsApp CTA
+- [x] Search functionality
+- [x] Cart + WhatsApp checkout flow
+- [x] Mobile responsive polish
+- [x] Micro-animations and premium design touches
 
 ### Phase 4: Admin Panel (Days 11-13)
-- [ ] Admin login page (Supabase Auth)
-- [ ] Auth middleware for `/admin/*` routes
-- [ ] Dashboard — sync status, product counts, alerts
-- [ ] Category margin management (inline table editor)
-- [ ] Product overview (with wholesale + retail price visibility)
+- [x] Admin login page (Supabase Auth)
+- [x] Auth middleware for `/admin/*` routes
+- [x] Dashboard — sync status, product counts, alerts
+- [x] Category margin management (inline table editor)
+- [x] Product overview (with wholesale + retail price visibility)
 
 ### Phase 5: Polish & Deploy (Days 14-15)
 - [ ] End-to-end testing
