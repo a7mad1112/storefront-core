@@ -12,7 +12,7 @@ This document tracks all manual steps, database migrations, and configurations t
   - It also creates the `analytics_visits` table with appropriate Row Level Security (RLS) policies.
 
 ### 2. Translations Data Population
-- [ ] **Populate Product/Category Translations**: The system currently falls back to Arabic if English or Hebrew names are empty. When available, manually populate `name_en` and `name_he` in your database (or update the scraper pipeline to auto-translate) so English and Hebrew visitors see translated product and brand names.
+- [x] **Populate Product/Category Translations**: The system currently falls back to Arabic if English or Hebrew names are empty. When available, manually populate `name_en` and `name_he` in your database (or update the scraper pipeline to auto-translate) so English and Hebrew visitors see translated product and brand names.
 
 ### 3. Verification & Testing
 - [ ] **Test Language Switcher**: Go to the website header and click between **AR**, **EN**, and **HE**. Verify that:
