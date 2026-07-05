@@ -13,6 +13,10 @@ CREATE INDEX IF NOT EXISTS idx_categories_supplier_code ON categories(supplier_c
 CREATE INDEX IF NOT EXISTS idx_brands_supplier_code ON brands(supplier_code);
 
 -- 3. Update get_store_products RPC to support optional p_supplier_code filtering
+DROP VIEW IF EXISTS public_products;
+DROP FUNCTION IF EXISTS get_store_products(text);
+DROP FUNCTION IF EXISTS get_store_products(text, text);
+
 CREATE OR REPLACE FUNCTION get_store_products(
     p_store_id text DEFAULT 'eloria',
     p_supplier_code text DEFAULT NULL
