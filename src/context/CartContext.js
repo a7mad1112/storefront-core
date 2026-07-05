@@ -47,9 +47,13 @@ export function CartProvider({ children, lang = 'ar', dict }) {
         (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === cartItemId)
       );
       if (existingIndex > -1) {
-        const copy = [...prev];
-        copy[existingIndex].quantity += quantity;
-        return copy;
+        // ✅ Create a new array + new object (immutable) — prevents React Strict Mode
+        //    double-invocation from mutating the same object reference twice.
+        return prev.map((item, idx) =>
+          idx === existingIndex
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
       } else {
         return [...prev, { ...product, cartItemId, selectedColor, image_url: itemImage, quantity }];
       }

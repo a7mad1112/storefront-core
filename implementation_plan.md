@@ -1311,8 +1311,8 @@ Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exa
 
 **Problem:** Adding a product to cart once shows quantity 1 ✅. Adding it again shows 3, then 5 (adds 2 per click instead of 1). Root cause: The `addItem` function in `CartContext.js` uses `useEffect` to open the drawer `setIsDrawerOpen(true)` causing a React re-render loop that triggers `addItem` twice.
 
-- [ ] **Fix `CartContext.js` `addItem`**: Move `setIsDrawerOpen(true)` out of the state updater function — call it after `setItems(...)` separately so it doesn't trigger an extra render cycle that re-fires the add logic.
-- [ ] **Verify fix**: Add same product twice and confirm quantity goes 1 → 2 → 3 correctly.
+- [x] **Fix `CartContext.js` `addItem`**: Move `setIsDrawerOpen(true)` out of the state updater function — call it after `setItems(...)` separately so it doesn't trigger an extra render cycle that re-fires the add logic.
+- [x] **Verify fix**: Add same product twice and confirm quantity goes 1 → 2 → 3 correctly.
 
 ---
 
