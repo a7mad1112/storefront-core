@@ -1321,8 +1321,8 @@ Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exa
 **Problem:** Currently colors are only distinguishable by image thumbnail. Users (and the store owner) have no text label to identify which color they're viewing or ordering. Also, no size concept exists in the current system.
 
 #### 8b-1: Color Name Labels (All Suppliers)
-- [ ] **`ColorSwatchSelector.jsx`**: Show the `color_name` as a text label *below* each swatch thumbnail so visitors can clearly identify color names (e.g. "أحمر", "Burgundy").
-- [ ] **Cart & WhatsApp message**: Already uses `color_name` in the order text ✅ (no change needed).
+- [x] **`ColorSwatchSelector.jsx`**: Show the `color_name` as a text label *below* each swatch thumbnail so visitors can clearly identify color names (e.g. "أحمر", "Burgundy").
+- [x] **Cart & WhatsApp message**: Already uses `color_name` in the order text ✅ (no change needed).
 
 #### 8b-2: Size Support — DB Schema Extension
 New JSONB structure for `color_variants` in the `products` table (stored in the existing `color_variants` JSONB column — no DB migration needed as it's schema-free):

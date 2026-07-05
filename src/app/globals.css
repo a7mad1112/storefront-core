@@ -498,35 +498,69 @@ ul, ol {
   gap: 0.5rem;
 }
 
-.color-swatch {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all var(--transition-fast);
-  padding: 0;
+/* ── Color Card (image + label below) ── */
+.color-swatch-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
+  width: 60px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
 }
 
-.color-swatch:hover:not(:disabled) {
-  border-color: var(--color-text-secondary);
+.color-swatch-card:hover:not(:disabled) {
   transform: translateY(-2px);
 }
 
-.color-swatch.selected {
+.color-swatch-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.color-swatch-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.color-swatch-card.selected .color-swatch-thumb {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 2px var(--color-accent-soft);
 }
 
-.color-swatch.unavailable {
-  opacity: 0.5;
-  cursor: not-allowed;
+.color-swatch-card:hover:not(:disabled) .color-swatch-thumb {
+  border-color: var(--color-text-secondary);
+}
+
+.color-swatch-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
+  line-height: 1.2;
+}
+
+.color-swatch-card.selected .color-swatch-label {
+  color: var(--color-accent);
+  font-weight: 800;
+}
+
+.color-swatch-card.unavailable .color-swatch-label {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
 }
 
 .swatch-unavailable-overlay {
