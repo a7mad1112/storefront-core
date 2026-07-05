@@ -100,7 +100,7 @@ BEGIN
     LEFT JOIN product_availability_overrides ov ON p.supplier_id = ov.product_supplier_id AND ov.store_id = p_store_id
     WHERE p.is_active = true AND c.is_active = true;
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 4. Recreate public_products view using default 'eloria' store
 DROP VIEW IF EXISTS public_products;

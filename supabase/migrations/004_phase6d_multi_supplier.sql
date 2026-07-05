@@ -83,7 +83,7 @@ BEGIN
       AND c.is_active = true
       AND (p_supplier_code IS NULL OR p_supplier_code = 'all' OR p.supplier_code = p_supplier_code);
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 4. Recreate public_products view using default 'eloria' store and all suppliers
 DROP VIEW IF EXISTS public_products;
