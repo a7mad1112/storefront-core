@@ -15,10 +15,10 @@ This document tracks all manual steps, database migrations, and configurations t
 - [x] **Populate Product/Category Translations**: The system currently falls back to Arabic if English or Hebrew names are empty. When available, manually populate `name_en` and `name_he` in your database (or update the scraper pipeline to auto-translate) so English and Hebrew visitors see translated product and brand names.
 
 ### 3. Verification & Testing
-- [x] **Test Language Switcher**: Go to the website header and click between **AR**, **EN**, and **HE**. Verify that:
+- [ ] **Test Language Switcher**: Go to the website header and click between **AR**, **EN**, and **HE**. Verify that:
   - The URL switches between `/ar/...`, `/en/...`, and `/he/...`.
   - The layout direction switches between RTL (Right-to-Left for Arabic/Hebrew) and LTR (Left-to-Right for English).
-- [x] **Verify Visitor Analytics**: Browse a few pages on the site, then log into the Admin Dashboard (`/ar/admin`). Scroll down to **إحصائيات الزوار والتصفح (Visitor Analytics)** and verify that your visits appear under the Day/Week/Month tabs and Top Visited Pages.
+- [ ] **Verify Visitor Analytics**: Browse a few pages on the site, then log into the Admin Dashboard (`/ar/admin`). Scroll down to **إحصائيات الزوار والتصفح (Visitor Analytics)** and verify that your visits appear under the Day/Week/Month tabs and Top Visited Pages.
 
 ---
 
@@ -31,7 +31,7 @@ This document tracks all manual steps, database migrations, and configurations t
   - It creates the Postgres RPC `get_store_products(p_store_id)` for dynamic catalog querying per store instance.
 
 ### 2. Multi-Instance Client Configuration
-- [x] **Cloning for a New Store Client**: When deploying a second store instance (e.g., Client B) against the same Supabase backend:
+- [ ] **Cloning for a New Store Client**: When deploying a second store instance (e.g., Client B) against the same Supabase backend:
   - When Client B's admin logs into their admin panel, any custom price margins or availability overrides they save will be tagged with `store_id = 'client_b'` and will not affect Eloria's storefront!
 
 ---
