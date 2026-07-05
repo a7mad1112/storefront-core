@@ -1298,7 +1298,122 @@ Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exa
 ### Phase 7: Future Enhancements & Automated Scraper Translation (Optional / Planned)
 - [ ] **Automated Scraper Translation**: Integrate a translation library (e.g., `deep-translator` or AI API) into `scraper/extractor.py` or `scraper/db.py` to automatically translate newly scraped category, brand, and product names/descriptions into English (`name_en`, `description_en`) and Hebrew (`name_he`, `description_he`) during scraping, ensuring zero runtime overhead and perfect SEO.
 
-### Estimated Total: ~35+ working days
+---
+
+## Phase 8: Cart Bug Fix, Color/Size Names & Multi-Supplier Expansion (Balagan + Sakher)
+
+> [!IMPORTANT]
+> This phase was planned after live analysis of the Balagan (balagan.ps) and Sakher Brands (sakherbrands.com) supplier websites and investigation of the cart duplication bug.
+
+---
+
+### Phase 8a: Fix Cart Duplication Bug
+
+**Problem:** Adding a product to cart once shows quantity 1 ✅. Adding it again shows 3, then 5 (adds 2 per click instead of 1). Root cause: The `addItem` function in `CartContext.js` uses `useEffect` to open the drawer `setIsDrawerOpen(true)` causing a React re-render loop that triggers `addItem` twice.
+
+- [ ] **Fix `CartContext.js` `addItem`**: Move `setIsDrawerOpen(true)` out of the state updater function — call it after `setItems(...)` separately so it doesn't trigger an extra render cycle that re-fires the add logic.
+- [ ] **Verify fix**: Add same product twice and confirm quantity goes 1 → 2 → 3 correctly.
+
+---
+
+### Phase 8b: Color Name Labels & Size Support
+
+**Problem:** Currently colors are only distinguishable by image thumbnail. Users (and the store owner) have no text label to identify which color they're viewing or ordering. Also, no size concept exists in the current system.
+
+#### 8b-1: Color Name Labels (All Suppliers)
+- [ ] **`ColorSwatchSelector.jsx`**: Show the `color_name` as a text label *below* each swatch thumbnail so visitors can clearly identify color names (e.g. "أحمر", "Burgundy").
+- [ ] **Cart & WhatsApp message**: Already uses `color_name` in the order text ✅ (no change needed).
+
+#### 8b-2: Size Support — DB Schema Extension
+New JSONB structure for `color_variants` in the `products` table (stored in the existing `color_variants` JSONB column — no DB migration needed as it's schema-free):
+
+```json
+// CURRENT (GBStore — no sizes):
+{ "color_name": "أحمر", "image_url": "...", "is_available": true }
+
+// NEW (Balagan/Sakher — with sizes):
+{
+  "color_name": "Burgundy",
+  "image_url": "...",
+  "is_available": true,
+  "sizes": [
+    { "size": "38", "is_available": true },
+    { "size": "39", "is_available": false },
+    { "size": "40", "is_available": true }
+  ]
+}
+```
+> [!NOTE]
+> GBStore products continue to work unchanged since `sizes` is optional. Balagan/Sakher products will have `sizes` populated.
+
+- [ ] **`ColorSwatchSelector.jsx`**: After selecting a color, if `variant.sizes` exists, render a size selector row below the color row. Available sizes are clickable buttons; unavailable sizes are grayed out with strikethrough.
+- [ ] **`CartContext.js` `addItem`**: Extend `cartItemId` to include size: `product.id:::color_name:::size` so the same color in different sizes is a separate cart entry.
+- [ ] **Cart Drawer & WhatsApp message**: Show selected size in the cart line item and in the WhatsApp order text (e.g. "القياس: 40").
+
+---
+
+### Phase 8c: Supplier Separation — Navigation & UX
+
+**Problem:** All 3 suppliers (GBStore, Balagan, Sakher) sell completely different product types (clothing vs. shoes vs. apparel). Mixing them in one catalog is confusing. The store owner wants each supplier to feel like a separate "section" with its own branded entry point.
+
+**Approach:** Use the existing `supplier_code` architecture. Create dedicated landing pages (supplier "portals") accessible from the main navigation, each showing only that supplier's categories and products.
+
+- [ ] **Header navigation**: Add 3 top-level nav links (or a dropdown): "جي بي ستور", "بلاجان - الأحذية", "ساخر - الأزياء". Each links to `/[lang]/supplier/[supplier_code]`.
+- [ ] **`/[lang]/supplier/[supplier_code]/page.js`** (New Page): A landing page showing the supplier's name, logo/banner, their categories grid, and featured products — all filtered by `supplier_code`.
+- [ ] **`/[lang]/supplier/[supplier_code]/category/[slug]/page.js`** (New Page): Category page scoped to a specific supplier.
+- [ ] **Supplier metadata** (`NEXT_PUBLIC_SUPPLIER_NAMES` env): Extend to include logo URL, banner text, and theme color per supplier.
+
+---
+
+### Phase 8d: Balagan Scraper (Shoes — Colors + Sizes)
+
+**Site analysis summary:**
+- **URL patterns:** `?app=product.cat.{id}` (categories), `?app=product.show.{id}` (products), `?app=product.cat.{id}.{page}` (pagination)
+- **Login:** Session-based (cookie), same `/account=login` pattern as GBStore
+- **Color structure:** Color options are rendered as clickable `<label>` elements with thumbnail images. Each color has a `color_name` text label. Unavailable colors are absent from DOM (server-side filtered).
+- **Size structure:** Each color has its OWN set of sizes. Sizes are `<input type="radio" name="size">` elements. Clicking a color calls `showSize(colorIndex)` to swap the visible size list. Unavailable sizes have `disabled` attribute or are rendered as plain text (crossed out visually via CSS).
+- **Data per size:** `setMaxMinQuantity(stock)`, `changePrice(salePrice, originalPrice)`, `liveImageTocarousel(imageHash)` — all embedded in `onclick` attributes of size radio inputs.
+- **No JSON payload** — all data is in the rendered HTML.
+
+**Scraper tasks:**
+- [ ] **`scraper/suppliers/balagan/config.py`**: Add Balagan config (`BASE_URL`, `SUPPLIER_CODE='balagan'`, credentials).
+- [ ] **`scraper/suppliers/balagan/extractor.py`**: Parse category list, product list pages (with pagination), and product detail page. Extract:
+  - Product: `supplier_id`, `name`, `description`, `wholesale_price`, `image_url`, `category`
+  - Colors: For each color `<label>`: `color_name` (from text label), `image_url` (from `<img src>`), `is_available: true` (only available colors are in DOM).
+  - Sizes per color: For each color's size container `#cs{colorIndex}`: parse `input[type=radio]` — extract `size` value from radio label text, `is_available` = true if clickable (no `disabled`), false if disabled/crossed.
+- [ ] **`scraper/suppliers/balagan/sync.py`**: Upsert products with `supplier_code='balagan'`, storing colors+sizes in `color_variants` JSONB.
+
+---
+
+### Phase 8e: Sakher Scraper (Clothing — Colors + Sizes)
+
+**Site analysis summary:**
+- **URL patterns:** `?app=product.cat.{id}`, `?app=product.show.{id}`, pagination: `?app=product.cat.{id}.{page}`, all-products: `?app=product.all`, all-products pagination: `?app=product.all..{page}`
+- **Platform:** "Digital Life CMS" — jQuery AJAX router, updates `#dynamic-content` container
+- **Login:** Same pattern as GBStore/Balagan
+- **Color structure:** Colors rendered as `<label class="color-selector">` with `<img>` thumbnails. Color name is shown in a label below the selector ("اختر اللون: [ColorName]"). Unavailable/out-of-stock colors are visually crossed out but still present in DOM (differ from Balagan where they're absent).
+- **Size structure:** Sizes are color-specific — selecting a color shows `#cs{colorId}` wrapper with sizes hidden for other colors. Size elements are `<label class="color-selector">` with size text inside. Out-of-stock sizes render as plain text (no `<label>` wrapper — just a `<span>`).
+- **Data per size:** `setMaxMinQuantity(stock)`, `changePrice()`, `liveImageTocarousel()` in inline `onclick` attributes.
+- **No JSON payload** — same pattern as Balagan.
+
+**Scraper tasks:**
+- [ ] **`scraper/suppliers/sakher/config.py`**: Add Sakher config (`BASE_URL='https://sakherbrands.com'`, `SUPPLIER_CODE='sakher'`, credentials).
+- [ ] **`scraper/suppliers/sakher/extractor.py`**: Parse categories, product list (with pagination for both `product.cat.{id}.{page}` and `product.all..{page}`), and product detail. Extract:
+  - Product: `supplier_id`, `name`, `description`, `wholesale_price`, `image_url`, `category`
+  - Colors: For each `<label class="color-selector">`: `color_name` (from image alt or sibling text), `image_url`, `is_available` = true (has `<label>` wrapper), false (only `<span>` — crossed out).
+  - Sizes per color: For each `#cs{colorId}` div: active size = `<label class="color-selector">`, out-of-stock size = plain `<span>` without the label wrapper.
+- [ ] **`scraper/suppliers/sakher/sync.py`**: Upsert products with `supplier_code='sakher'`, storing colors+sizes in `color_variants` JSONB.
+
+---
+
+### Phase 8f: Unified Multi-Supplier Runner
+
+- [ ] **`scraper/run_all.py`**: A single orchestrator script that sequentially (or in parallel) runs GBStore, Balagan, and Sakher scrapers in one execution. Supports `--supplier gbstore|balagan|sakher|all` argument.
+- [ ] **GitHub Actions / Cron**: Update the scheduled job to call `run_all.py --supplier all` daily.
+
+---
+
+### Estimated Total: ~40+ working days
 
 ---
 
