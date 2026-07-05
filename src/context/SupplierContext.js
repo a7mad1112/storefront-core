@@ -1,17 +1,18 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getSupplierConfig } from '../lib/supplierConfig';
 
 const SupplierContext = createContext(null);
 
 export function SupplierProvider({ children }) {
-  const [supportedSuppliers, setSupportedSuppliers] = useState(['gbstore']);
-  const [supplierNames, setSupplierNames] = useState({ gbstore: 'جي بي ستور (GB Store)' });
+  const [supportedSuppliers, setSupportedSuppliers] = useState(['gbstore', 'balagan', 'sakher']);
+  const [supplierNames, setSupplierNames] = useState({});
   const [activeSupplier, setActiveSupplier] = useState('all'); // 'all' or specific supplier code
 
   useEffect(() => {
     // Parse supported suppliers from environment
-    const suppliersEnv = process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS || 'gbstore';
+    const suppliersEnv = process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS || 'gbstore,balagan,sakher';
     const list = suppliersEnv.split(',').map((s) => s.trim()).filter(Boolean);
     setSupportedSuppliers(list.length > 0 ? list : ['gbstore']);
 
@@ -46,6 +47,11 @@ export function SupplierProvider({ children }) {
     }
   };
 
+  const getSupplierName = (code, lang = 'ar') => {
+    if (supplierNames[code]) return supplierNames[code];
+    return getSupplierConfig(code, lang).name;
+  };
+
   return (
     <SupplierContext.Provider
       value={{
@@ -53,6 +59,8 @@ export function SupplierProvider({ children }) {
         supplierNames,
         activeSupplier,
         changeSupplier,
+        getSupplierName,
+        getSupplierMeta: (code, lang = 'ar') => getSupplierConfig(code, lang),
         hasMultipleSuppliers: supportedSuppliers.length > 1,
       }}
     >

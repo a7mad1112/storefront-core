@@ -1358,10 +1358,10 @@ New JSONB structure for `color_variants` in the `products` table (stored in the 
 
 **Approach:** Use the existing `supplier_code` architecture. Create dedicated landing pages (supplier "portals") accessible from the main navigation, each showing only that supplier's categories and products.
 
-- [ ] **Header navigation**: Add 3 top-level nav links (or a dropdown): "جي بي ستور", "بلاجان - الأحذية", "ساخر - الأزياء". Each links to `/[lang]/supplier/[supplier_code]`.
-- [ ] **`/[lang]/supplier/[supplier_code]/page.js`** (New Page): A landing page showing the supplier's name, logo/banner, their categories grid, and featured products — all filtered by `supplier_code`.
-- [ ] **`/[lang]/supplier/[supplier_code]/category/[slug]/page.js`** (New Page): Category page scoped to a specific supplier.
-- [ ] **Supplier metadata** (`NEXT_PUBLIC_SUPPLIER_NAMES` env): Extend to include logo URL, banner text, and theme color per supplier.
+- [x] **Header navigation**: Add 3 top-level nav links (or a dropdown): "جي بي ستور", "بلاجان - الأحذية", "ساخر - الأزياء". Each links to `/[lang]/supplier/[supplier_code]`.
+- [x] **`/[lang]/supplier/[supplier_code]/page.js`** (New Page): A landing page showing the supplier's name, logo/banner, their categories grid, and featured products — all filtered by `supplier_code`.
+- [x] **`/[lang]/supplier/[supplier_code]/category/[slug]/page.js`** (New Page): Category page scoped to a specific supplier.
+- [x] **Supplier metadata** (`NEXT_PUBLIC_SUPPLIER_NAMES` env): Extend to include logo URL, banner text, and theme color per supplier.
 
 ---
 

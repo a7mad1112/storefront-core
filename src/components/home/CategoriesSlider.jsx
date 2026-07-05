@@ -7,7 +7,7 @@ import Link from 'next/link';
  * Horizontal scrolling categories carousel for the homepage.
  * Mobile: swipe to scroll. Desktop: arrow navigation.
  */
-export default function CategoriesSlider({ categories = [], lang = 'ar', dict }) {
+export default function CategoriesSlider({ categories = [], lang = 'ar', dict, supplierCode = null }) {
   const scrollRef = useRef(null);
 
   if (!categories || categories.length === 0) return null;
@@ -29,6 +29,14 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict })
     if (name.includes('ساع')) return '⌚';
     if (name.includes('نظار')) return '🕶️';
     return '🎁';
+  };
+
+  const getCategoryHref = (catSlug) => {
+    return supplierCode ? `/${lang}/supplier/${supplierCode}/category/${catSlug}` : `/${lang}/category/${catSlug}`;
+  };
+
+  const getAllCategoriesHref = () => {
+    return supplierCode ? `/${lang}/supplier/${supplierCode}` : `/${lang}/categories`;
   };
 
   return (
@@ -67,7 +75,7 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict })
         {categories.map((cat) => (
           <Link
             key={cat.id}
-            href={`/${lang}/category/${cat.slug || cat.id}`}
+            href={getCategoryHref(cat.slug || cat.id)}
             className="brand-pill"
           >
             <div
@@ -96,7 +104,7 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict })
       {/* View All link */}
       <div style={{ textAlign: 'center', marginTop: '1rem' }}>
         <Link
-          href={`/${lang}/categories`}
+          href={getAllCategoriesHref()}
           className="btn btn-secondary"
           style={{ fontSize: '0.875rem' }}
         >

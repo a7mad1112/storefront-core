@@ -3,7 +3,7 @@
 import React, { useRef } from 'react';
 import Link from 'next/link';
 
-export default function BrandsSlider({ brands = [], lang = 'ar', dict }) {
+export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierCode = null }) {
   const scrollRef = useRef(null);
 
   if (!brands || brands.length === 0) return null;
@@ -17,6 +17,14 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict }) {
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth',
     });
+  };
+
+  const getBrandHref = (brandSlug) => {
+    return supplierCode ? `/${lang}/supplier/${supplierCode}/brand/${brandSlug}` : `/${lang}/brand/${brandSlug}`;
+  };
+
+  const getAllBrandsHref = () => {
+    return supplierCode ? `/${lang}/supplier/${supplierCode}` : `/${lang}/brands`;
   };
 
   return (
@@ -53,7 +61,7 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict }) {
         {brands.map((brand) => (
           <Link
             key={brand.id}
-            href={`/${lang}/brand/${brand.slug || brand.id}`}
+            href={getBrandHref(brand.slug || brand.id)}
             className="brand-pill"
           >
             {brand.image_url ? (
@@ -96,7 +104,7 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict }) {
 
       <div style={{ textAlign: 'center', marginTop: '1rem' }}>
         <Link
-          href={`/${lang}/brands`}
+          href={getAllBrandsHref()}
           className="btn btn-secondary"
           style={{ fontSize: '0.875rem' }}
         >

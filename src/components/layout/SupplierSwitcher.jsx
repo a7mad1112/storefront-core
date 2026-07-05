@@ -1,14 +1,19 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSupplier } from '../../context/SupplierContext';
 
 export default function SupplierSwitcher({ lang = 'ar' }) {
-  const { supportedSuppliers, supplierNames, activeSupplier, changeSupplier, hasMultipleSuppliers } = useSupplier();
+  const { supportedSuppliers, getSupplierName, changeSupplier, hasMultipleSuppliers } = useSupplier();
+  const pathname = usePathname();
 
   if (!hasMultipleSuppliers) {
     return null;
   }
+
+  const isAllActive = !pathname.includes('/supplier/');
 
   return (
     <div
@@ -24,40 +29,40 @@ export default function SupplierSwitcher({ lang = 'ar' }) {
       }}
     >
       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--color-text-muted)' }}>
-        {lang === 'en' ? 'Supplier:' : lang === 'he' ? 'ספק:' : 'المورد:'}
+        {lang === 'en' ? 'Supplier / Section:' : lang === 'he' ? 'ספק / מדור:' : 'المورد / القسم:'}
       </span>
       
-      <button
-        type="button"
+      <Link
+        href={`/${lang}`}
         onClick={() => changeSupplier('all')}
         style={{
           padding: '4px 12px',
           borderRadius: '20px',
           fontSize: '0.85rem',
-          border: 'none',
+          textDecoration: 'none',
           cursor: 'pointer',
-          background: activeSupplier === 'all' ? 'var(--color-primary, #000)' : 'transparent',
-          color: activeSupplier === 'all' ? '#fff' : 'var(--color-text, #333)',
-          fontWeight: activeSupplier === 'all' ? 'bold' : 'normal',
+          background: isAllActive ? 'var(--color-primary, #000)' : 'transparent',
+          color: isAllActive ? '#fff' : 'var(--color-text, #333)',
+          fontWeight: isAllActive ? 'bold' : 'normal',
           transition: 'all 0.2s ease',
         }}
       >
-        {lang === 'en' ? 'All Suppliers' : lang === 'he' ? 'כל הספקים' : 'كل الموردين'}
-      </button>
+        🏠 {lang === 'en' ? 'All Suppliers' : lang === 'he' ? 'כל הספקים' : 'كل الموردين'}
+      </Link>
 
       {supportedSuppliers.map((code) => {
-        const name = supplierNames[code] || code;
-        const isActive = activeSupplier === code;
+        const name = getSupplierName ? getSupplierName(code, lang) : code;
+        const isActive = pathname.startsWith(`/${lang}/supplier/${code}`);
         return (
-          <button
+          <Link
             key={code}
-            type="button"
+            href={`/${lang}/supplier/${code}`}
             onClick={() => changeSupplier(code)}
             style={{
               padding: '4px 12px',
               borderRadius: '20px',
               fontSize: '0.85rem',
-              border: 'none',
+              textDecoration: 'none',
               cursor: 'pointer',
               background: isActive ? 'var(--color-primary, #000)' : 'transparent',
               color: isActive ? '#fff' : 'var(--color-text, #333)',
@@ -66,7 +71,7 @@ export default function SupplierSwitcher({ lang = 'ar' }) {
             }}
           >
             {name}
-          </button>
+          </Link>
         );
       })}
     </div>

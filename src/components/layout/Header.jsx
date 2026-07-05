@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
 import { useDictionary } from '../../context/DictionaryContext';
+import { useSupplier } from '../../context/SupplierContext';
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
 const LOCALES = [
@@ -15,8 +16,10 @@ const LOCALES = [
 
 export default function Header({ lang = 'ar' }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSuppliersOpen, setIsSuppliersOpen] = useState(false);
   const { totalCount, setIsDrawerOpen } = useCart();
   const { dict } = useDictionary();
+  const { supportedSuppliers, getSupplierMeta } = useSupplier();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -101,6 +104,95 @@ export default function Header({ lang = 'ar' }) {
               </button>
             ))}
           </div>
+
+          {/* Suppliers Dropdown */}
+          {supportedSuppliers && supportedSuppliers.length > 1 && (
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setIsSuppliersOpen(!isSuppliersOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: isSuppliersOpen ? 'var(--color-accent)' : 'var(--color-bg-secondary)',
+                  color: isSuppliersOpen ? '#fff' : 'inherit',
+                  border: '1px solid var(--color-border)',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                }}
+              >
+                🏪 {t.suppliers || (lang === 'en' ? 'Suppliers' : lang === 'he' ? 'ספקים' : 'الموردين')} ▾
+              </button>
+              {isSuppliersOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: lang === 'en' ? 'auto' : 0,
+                    left: lang === 'en' ? 0 : 'auto',
+                    marginTop: '0.5rem',
+                    backgroundColor: 'var(--color-bg-elevated)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    padding: '0.5rem',
+                    minWidth: '220px',
+                    zIndex: 100,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                  }}
+                >
+                  <Link
+                    href={`/${lang}`}
+                    onClick={() => setIsSuppliersOpen(false)}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      color: 'var(--color-text-primary)',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    🏠 {lang === 'en' ? 'All Suppliers' : lang === 'he' ? 'כל הספקים' : 'كل الموردين'}
+                  </Link>
+                  {supportedSuppliers.map((code) => {
+                    const meta = getSupplierMeta(code, lang);
+                    return (
+                      <Link
+                        key={code}
+                        href={`/${lang}/supplier/${code}`}
+                        onClick={() => setIsSuppliersOpen(false)}
+                        style={{
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          color: 'var(--color-text-primary)',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        <span>{meta.icon || '🏪'}</span>
+                        <span>{meta.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <Link
             href={`/${lang}/categories`}

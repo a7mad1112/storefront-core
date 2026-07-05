@@ -123,13 +123,19 @@ export async function getCategoryBySlug(slugOrId) {
 /**
  * Fetch subcategories for a given parent category ID.
  */
-export async function getSubcategories(parentId) {
-  const { data, error } = await supabase
+export async function getSubcategories(parentId, { supplierCode = null } = {}) {
+  let query = supabase
     .from('categories')
     .select('id, name, slug, image_url')
     .eq('parent_id', parentId)
     .eq('is_active', true)
     .order('name');
+
+  if (supplierCode && supplierCode !== 'all') {
+    query = query.eq('supplier_code', supplierCode);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[getSubcategories]', error.message);
