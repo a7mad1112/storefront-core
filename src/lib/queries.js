@@ -9,6 +9,19 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-server';
 
+export const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID || 'eloria';
+
+/**
+ * Helper to query catalog: uses public_products view for default store ('eloria'),
+ * or dynamically calls get_store_products RPC for multi-tenant client isolation.
+ */
+function getCatalogTable() {
+  if (STORE_ID === 'eloria') {
+    return supabase.from('public_products');
+  }
+  return supabase.rpc('get_store_products', { p_store_id: STORE_ID });
+}
+
 // ─────────────────────────────────────────────
 // CATEGORIES
 // ─────────────────────────────────────────────
@@ -177,8 +190,7 @@ export async function getBrandBySlug(slugOrId) {
  * Fetch products belonging to a brand (from public_products view).
  */
 export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sort = 'default' } = {}) {
-  let query = supabase
-    .from('public_products')
+  let query = getCatalogTable()
     .select(PUBLIC_PRODUCT_FIELDS)
     .eq('brand_id', brandId)
     .range(offset, offset + limit - 1);
@@ -199,7 +211,7 @@ export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sor
 // ─────────────────────────────────────────────
 
 const PUBLIC_PRODUCT_FIELDS =
-  'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, color_variants, retail_price, updated_at';
+  'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, color_variants, retail_price, updated_at, name_en, name_he, description_en, description_he';
 
 /**
  * Apply sort order to a Supabase query.
@@ -220,8 +232,7 @@ function applySortOrder(query, sort) {
  * Supports pagination, category filtering, and sorting.
  */
 export async function getProducts({ categoryId, limit = 24, offset = 0, sort = 'default' } = {}) {
-  let query = supabase
-    .from('public_products')
+  let query = getCatalogTable()
     .select(PUBLIC_PRODUCT_FIELDS)
     .range(offset, offset + limit - 1);
 
@@ -253,8 +264,7 @@ export async function getProductsForCategory(categoryId, { limit = 24, offset = 
 
   const ids = [categoryId, ...(subs ?? []).map((s) => s.id)];
 
-  let query = supabase
-    .from('public_products')
+  let query = getCatalogTable()
     .select(PUBLIC_PRODUCT_FIELDS)
     .in('category_id', ids)
     .range(offset, offset + limit - 1);
@@ -278,16 +288,14 @@ export async function getProductById(idOrSlug) {
   const decoded = decodeURIComponent(idOrSlug);
 
   // 1. Try match by UUID id
-  let { data } = await supabase
-    .from('public_products')
+  let { data } = await getCatalogTable()
     .select(PUBLIC_PRODUCT_FIELDS)
     .eq('id', decoded)
     .maybeSingle();
 
   // 2. Try match by slug
   if (!data) {
-    const res = await supabase
-      .from('public_products')
+    const res = await getCatalogTable()
       .select(PUBLIC_PRODUCT_FIELDS)
       .eq('slug', decoded)
       .maybeSingle();
@@ -303,8 +311,7 @@ export async function getProductById(idOrSlug) {
 export async function searchProducts(query, { limit = 30 } = {}) {
   if (!query || query.trim().length < 1) return [];
 
-  const { data, error } = await supabase
-    .from('public_products')
+  const { data, error } = await getCatalogTable()
     .select(PUBLIC_PRODUCT_FIELDS)
     .ilike('name', `%${query}%`)
     .order('updated_at', { ascending: false })
@@ -346,7 +353,8 @@ export async function getAdminProducts({ limit = 50, offset = 0 } = {}) {
 export async function getAvailabilityOverrides() {
   const { data, error } = await supabaseAdmin
     .from('product_availability_overrides')
-    .select('id, product_supplier_id, is_available, override_reason, overridden_by, updated_at');
+    .select('id, product_supplier_id, is_available, override_reason, overridden_by, updated_at')
+    .eq('store_id', STORE_ID);
 
   if (error) {
     console.error('[getAvailabilityOverrides]', error.message);
@@ -369,13 +377,14 @@ export async function upsertAvailabilityOverride(productSupplierId, isAvailable,
     .from('product_availability_overrides')
     .upsert(
       {
+        store_id: STORE_ID,
         product_supplier_id: productSupplierId,
         is_available: isAvailable,
         override_reason: reason,
         overridden_by: overriddenBy,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'product_supplier_id' }
+      { onConflict: 'store_id,product_supplier_id' }
     );
 
   if (error) {
@@ -391,6 +400,7 @@ export async function deleteAvailabilityOverride(productSupplierId) {
   const { error } = await supabaseAdmin
     .from('product_availability_overrides')
     .delete()
+    .eq('store_id', STORE_ID)
     .eq('product_supplier_id', productSupplierId);
 
   if (error) {
@@ -424,7 +434,7 @@ export async function getSyncLogs({ limit = 10 } = {}) {
 export async function getMarginsWithCategories() {
   const { data, error } = await supabaseAdmin
     .from('categories')
-    .select('id, name, slug, margins(id, margin_type, margin_value)')
+    .select('id, name, slug, margins(id, margin_type, margin_value, store_id)')
     .eq('is_active', true)
     .order('name');
 
@@ -432,15 +442,18 @@ export async function getMarginsWithCategories() {
     console.error('[getMarginsWithCategories]', error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map((cat) => ({
+    ...cat,
+    margins: (cat.margins || []).filter((m) => !m.store_id || m.store_id === STORE_ID),
+  }));
 }
 
 export async function upsertMargin(categoryId, marginType, marginValue) {
   const { error } = await supabaseAdmin
     .from('margins')
     .upsert(
-      { category_id: categoryId, margin_type: marginType, margin_value: marginValue, updated_at: new Date().toISOString() },
-      { onConflict: 'category_id' }
+      { store_id: STORE_ID, category_id: categoryId, margin_type: marginType, margin_value: marginValue, updated_at: new Date().toISOString() },
+      { onConflict: 'store_id,category_id' }
     );
 
   if (error) {

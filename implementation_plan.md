@@ -1284,10 +1284,10 @@ Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exa
 - [x] **Admin: Visitor Analytics Dashboard** — Line/bar charts with day/week/month filters in `/admin`
 
 ### Phase 6c: Shared Database Multi-Tenancy (`store_id` Client Isolation) (Days 29-31)
-- [ ] **DB Migration (`003_phase6c_client_isolation.sql`)**: Add `store_id` column to `price_margins` and `product_availability_overrides`; create dynamic function `get_public_products(p_store_id text)`
-- [ ] **Backend Queries (`queries.js`)**: Update catalog queries to call `get_public_products`; update admin queries to filter/save by `STORE_ID`
-- [ ] **Admin UI & API Routes**: Scope `/api/admin/availability`, `/api/admin/margins`, and admin pages to `STORE_ID`
-- [ ] **Environment Configuration**: Add `NEXT_PUBLIC_STORE_ID="eloria"` in `.env.local`
+- [x] **DB Migration (`003_phase6c_client_isolation.sql`)**: Add `store_id` column to `price_margins` and `product_availability_overrides`; create dynamic function `get_public_products(p_store_id text)`
+- [x] **Backend Queries (`queries.js`)**: Update catalog queries to call `get_public_products`; update admin queries to filter/save by `STORE_ID`
+- [x] **Admin UI & API Routes**: Scope `/api/admin/availability`, `/api/admin/margins`, and admin pages to `STORE_ID`
+- [x] **Environment Configuration**: Add `NEXT_PUBLIC_STORE_ID="eloria"` in `.env.local`
 
 ### Phase 6d: Multi-Supplier Architecture & Catalog Switching (Days 32-35)
 - [ ] **DB Migration (`004_phase6d_multi_supplier.sql`)**: Add `supplier_code` to `products`, `categories`, and `brands`; update unique constraints and RPCs
