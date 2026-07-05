@@ -113,26 +113,123 @@ export async function getSubcategories(parentId) {
 }
 
 // ─────────────────────────────────────────────
+// BRANDS
+// ─────────────────────────────────────────────
+
+/**
+ * Fetch all active brands ordered by name.
+ */
+export async function getBrands() {
+  const { data, error } = await supabase
+    .from('brands')
+    .select('id, name, slug, image_url, is_active')
+    .eq('is_active', true)
+    .order('name');
+
+  if (error) {
+    console.error('[getBrands]', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+/**
+ * Fetch a single brand by slug, supplier_id, or UUID.
+ */
+export async function getBrandBySlug(slugOrId) {
+  if (!slugOrId) return null;
+  const decoded = decodeURIComponent(slugOrId);
+
+  // 1. Try match by slug
+  let { data } = await supabase
+    .from('brands')
+    .select('id, name, slug, image_url')
+    .eq('slug', decoded)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  // 2. Try match by supplier_id
+  if (!data) {
+    const res = await supabase
+      .from('brands')
+      .select('id, name, slug, image_url')
+      .eq('supplier_id', decoded)
+      .eq('is_active', true)
+      .maybeSingle();
+    data = res.data;
+  }
+
+  // 3. Try match by UUID
+  if (!data && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded)) {
+    const res = await supabase
+      .from('brands')
+      .select('id, name, slug, image_url')
+      .eq('id', decoded)
+      .eq('is_active', true)
+      .maybeSingle();
+    data = res.data;
+  }
+
+  return data || null;
+}
+
+/**
+ * Fetch products belonging to a brand (from public_products view).
+ */
+export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sort = 'default' } = {}) {
+  let query = supabase
+    .from('public_products')
+    .select(PUBLIC_PRODUCT_FIELDS)
+    .eq('brand_id', brandId)
+    .range(offset, offset + limit - 1);
+
+  query = applySortOrder(query, sort);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('[getProductsForBrand]', error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+// ─────────────────────────────────────────────
 // PRODUCTS (public — no wholesale_price)
 // ─────────────────────────────────────────────
 
 const PUBLIC_PRODUCT_FIELDS =
-  'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, retail_price, updated_at';
+  'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, color_variants, retail_price, updated_at';
+
+/**
+ * Apply sort order to a Supabase query.
+ */
+function applySortOrder(query, sort) {
+  switch (sort) {
+    case 'price_asc':
+      return query.order('retail_price', { ascending: true });
+    case 'price_desc':
+      return query.order('retail_price', { ascending: false });
+    default:
+      return query.order('updated_at', { ascending: false });
+  }
+}
 
 /**
  * Fetch products from the public_products view.
- * Supports pagination and category filtering.
+ * Supports pagination, category filtering, and sorting.
  */
-export async function getProducts({ categoryId, limit = 24, offset = 0 } = {}) {
+export async function getProducts({ categoryId, limit = 24, offset = 0, sort = 'default' } = {}) {
   let query = supabase
     .from('public_products')
     .select(PUBLIC_PRODUCT_FIELDS)
-    .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (categoryId) {
     query = query.eq('category_id', categoryId);
   }
+
+  query = applySortOrder(query, sort);
 
   const { data, error } = await query;
 
@@ -146,7 +243,7 @@ export async function getProducts({ categoryId, limit = 24, offset = 0 } = {}) {
 /**
  * Fetch all products in a category subtree (category + all its subcategories).
  */
-export async function getProductsForCategory(categoryId, { limit = 24, offset = 0 } = {}) {
+export async function getProductsForCategory(categoryId, { limit = 24, offset = 0, sort = 'default' } = {}) {
   // First get subcategory IDs
   const { data: subs } = await supabase
     .from('categories')
@@ -156,12 +253,15 @@ export async function getProductsForCategory(categoryId, { limit = 24, offset = 
 
   const ids = [categoryId, ...(subs ?? []).map((s) => s.id)];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('public_products')
     .select(PUBLIC_PRODUCT_FIELDS)
     .in('category_id', ids)
-    .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
+
+  query = applySortOrder(query, sort);
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[getProductsForCategory]', error.message);
@@ -224,7 +324,7 @@ export async function searchProducts(query, { limit = 30 } = {}) {
 export async function getAdminProducts({ limit = 50, offset = 0 } = {}) {
   const { data, error } = await supabaseAdmin
     .from('products')
-    .select('id, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, updated_at')
+    .select('id, supplier_id, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at')
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -233,6 +333,70 @@ export async function getAdminProducts({ limit = 50, offset = 0 } = {}) {
     return [];
   }
   return data ?? [];
+}
+
+// ─────────────────────────────────────────────
+// ADMIN — Availability Overrides
+// ─────────────────────────────────────────────
+
+/**
+ * Fetch all availability overrides.
+ * Returns a map of product_supplier_id → override record.
+ */
+export async function getAvailabilityOverrides() {
+  const { data, error } = await supabaseAdmin
+    .from('product_availability_overrides')
+    .select('id, product_supplier_id, is_available, override_reason, overridden_by, updated_at');
+
+  if (error) {
+    console.error('[getAvailabilityOverrides]', error.message);
+    return {};
+  }
+
+  // Convert to a map keyed by product_supplier_id for easy lookup
+  const map = {};
+  for (const row of (data ?? [])) {
+    map[row.product_supplier_id] = row;
+  }
+  return map;
+}
+
+/**
+ * Upsert an availability override for a product.
+ */
+export async function upsertAvailabilityOverride(productSupplierId, isAvailable, reason = null, overriddenBy = null) {
+  const { error } = await supabaseAdmin
+    .from('product_availability_overrides')
+    .upsert(
+      {
+        product_supplier_id: productSupplierId,
+        is_available: isAvailable,
+        override_reason: reason,
+        overridden_by: overriddenBy,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'product_supplier_id' }
+    );
+
+  if (error) {
+    console.error('[upsertAvailabilityOverride]', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Delete an availability override (revert to supplier-driven).
+ */
+export async function deleteAvailabilityOverride(productSupplierId) {
+  const { error } = await supabaseAdmin
+    .from('product_availability_overrides')
+    .delete()
+    .eq('product_supplier_id', productSupplierId);
+
+  if (error) {
+    console.error('[deleteAvailabilityOverride]', error.message);
+    throw error;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -290,13 +454,15 @@ export async function upsertMargin(categoryId, marginType, marginValue) {
 // ─────────────────────────────────────────────
 
 export async function getDashboardCounts() {
-  const [products, categories] = await Promise.all([
+  const [products, categories, brands] = await Promise.all([
     supabaseAdmin.from('products').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('is_active', true),
   ]);
 
   return {
     products: products.count ?? 0,
     categories: categories.count ?? 0,
+    brands: brands.count ?? 0,
   };
 }

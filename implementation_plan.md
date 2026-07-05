@@ -990,19 +990,19 @@ When the customer sends their cart via WhatsApp, the message includes:
 Phase 6a: Multi-Instance, Brands, Availability Override & Color Variants
 ```
 
-- [ ] **DB Migration (Master)**: Add `brands` table, `product_brands` join table, `brand_id` on `products`, `color_variants JSONB` column on `products`
-- [ ] **DB Migration (Client)**: Add `product_availability_overrides` table; update `public_products` view to use `COALESCE(override.is_available, p.is_available)`
-- [ ] **Scraper: Brand Discovery** — `extractor.py`: Discover and extract brands from supplier navigation; upsert to `brands` table; link to products
-- [ ] **Scraper: Color Variants** — `extractor.py`: Visit product detail page per product; extract all color swatches (name, image URL, availability); upload each color image to R2; store as `color_variants` JSONB
-- [ ] **Scraper: `db.py` updates** — Handle brand upsert + product→brand linking; handle `color_variants` diff (re-scrape if product updated)
-- [ ] **Frontend: `/brand/[slug]`** — Brand product grid page with sort selector (Default / Low→High / High→Low)
-- [ ] **Frontend: `/brands`** — Brands directory page (handles 0 products gracefully)
-- [ ] **Frontend: `BrandsSlider`** — Homepage horizontal scrolling brands carousel
-- [ ] **Frontend: Color Swatch UI** — On `/product/[slug]`, show interactive color thumbnails; clicking changes main image; unavailable colors slashed/greyed; selection required before ordering
-- [ ] **Frontend: WhatsApp message** — Include selected color name in cart order message
-- [ ] **Admin: Product Availability Override** — Toggle + optional reason field per product in `/admin/products`; visually distinguish "admin override active" state from normal availability
-- [ ] **Multi-instance `.env.local` template** — Document all per-client env vars; update `README.md` with cloning instructions for new client instances
-- [ ] **Admin panel link removal** — Remove any public footer/header link to `/admin/login` across all layouts
+- [x] **DB Migration (Master)**: Add `brands` table, `product_brands` join table, `brand_id` on `products`, `color_variants JSONB` column on `products`
+- [x] **DB Migration (Client)**: Add `product_availability_overrides` table; update `public_products` view to use `COALESCE(override.is_available, p.is_available)`
+- [x] **Scraper: Brand Discovery** — `extractor.py`: Discover and extract brands from supplier navigation; upsert to `brands` table; link to products
+- [x] **Scraper: Color Variants** — `extractor.py`: Visit product detail page per product; extract all color swatches (name, image URL, availability); upload each color image to R2; store as `color_variants` JSONB
+- [x] **Scraper: `db.py` updates** — Handle brand upsert + product→brand linking; handle `color_variants` diff (re-scrape if product updated)
+- [x] **Frontend: `/brand/[slug]`** — Brand product grid page with sort selector (Default / Low→High / High→Low)
+- [x] **Frontend: `/brands`** — Brands directory page (handles 0 products gracefully)
+- [x] **Frontend: `BrandsSlider`** — Homepage horizontal scrolling brands carousel
+- [x] **Frontend: Color Swatch UI** — On `/product/[slug]`, show interactive color thumbnails; clicking changes main image; unavailable colors slashed/greyed; selection required before ordering
+- [x] **Frontend: WhatsApp message** — Include selected color name in cart order message
+- [x] **Admin: Product Availability Override** — Toggle + optional reason field per product in `/admin/products`; visually distinguish "admin override active" state from normal availability
+- [x] **Multi-instance `.env.local` template** — Document all per-client env vars; update `README.md` with cloning instructions for new client instances
+- [x] **Admin panel link removal** — Remove any public footer/header link to `/admin/login` across all layouts
 
 ---
 
@@ -1060,17 +1060,122 @@ CREATE TABLE analytics_visits (
 
 ### Phase 6b Implementation Tasks
 
+> [!CAUTION]
+> **HIGH PRIORITY TASK (FIRST THING TO BE DONE)**: The scraper currently takes 12+ hours to complete after adding brands and color variant extraction in Phase 6a (previously ~2 hours). We must audit and fix this performance bottleneck before proceeding with other tasks.
+
+- [x] **CRITICAL: Scraper Performance & 12-Hour Bug Fix** — Audit why `sync.py` takes 12+ hours. Implement optimizations: skip detail page scraping when product/swatches haven't changed, add request concurrency/asyncio, optimize HTTP session reuse, and reduce redundant R2 image checks/uploads.
 - [ ] **DB Migration**: Add multilingual columns (`name_en`, `name_he`, etc.) to `products`, `categories`, `brands`; add `analytics_visits` table
-- [ ] **Scraper: Translation** — On product insert/update, call translation API (or mapping dict) to populate `name_en`, `name_he`, `description_en`, `description_he`
+- [x] **Scraper: Translation & Retries** — On product insert/update, populate translations; implement 3-try retry mechanism with backoff for failed image downloads and network requests
 - [ ] **Next.js i18n config** — Set up locale routing (`/ar`, `/en`, `/he`); configure `dir` attribute per locale in root layout
 - [ ] **Translation context** — React context or hook (`useTranslation`) to serve the correct locale's strings throughout the app
 - [ ] **Language switcher component** — Header `AR / EN / HE` toggle; persists preference to cookie; redirects to locale-prefixed URL
 - [ ] **All UI strings localized** — Replace hardcoded Arabic strings with translation keys across all pages and components
 - [ ] **`CategoriesSlider`** — Horizontal scroll carousel for categories on homepage
-- [ ] **`BrandsSlider`** — Horizontal scroll carousel for brands on homepage
+- [x] **`BrandsSlider`** — Horizontal scroll carousel for brands on homepage
 - [ ] **Smart CTA hide logic** — Conditionally render "عرض كل منتجات القسم" only when section has > 4 products
 - [ ] **`analytics_visits` beacon** — Lightweight visit tracker (page path + session ID) fired on route change
 - [ ] **Admin: Visitor Analytics Dashboard** — Charts (line/bar) with day/week/month filters in `/admin`
+
+---
+
+## Phase 6c: Shared Database Multi-Tenancy (`store_id` Client Isolation)
+
+### Goal
+Allow multiple client e-commerce websites (e.g. Client A, Client B) to connect to the **same shared Supabase database** (sharing the scraped `products`, `categories`, `brands`, `images`), while keeping **price margins**, **availability overrides**, and **admin authentication** completely isolated per client instance.
+
+### User Review Required
+
+> [!IMPORTANT]
+> **Database Architecture**: We will introduce a `store_id` column to `price_margins` and `product_availability_overrides`. The shared catalog (`products`, `categories`, `brands`) remains read-only for client apps and has no `store_id`.
+
+> [!IMPORTANT]
+> **Dynamic Product View via RPC**: Since standard PostgreSQL views cannot accept runtime parameters like `store_id` in joins, we will replace the static `public_products` view with a table-valued PostgreSQL function `get_public_products(p_store_id text DEFAULT 'default')`.
+
+> [!IMPORTANT]
+> **Environment Configuration**: Each client instance will define `NEXT_PUBLIC_STORE_ID="store_name"` in their `.env.local`. For this client, we will set `NEXT_PUBLIC_STORE_ID="eloria"` along with their branding variables.
+
+### Proposed Changes
+
+#### Database Schema & RPC
+- Create migration `003_phase6c_client_isolation.sql`:
+  - Add `store_id TEXT NOT NULL DEFAULT 'default'` to `price_margins` and `product_availability_overrides`.
+  - Update unique/primary constraints to composite keys: `UNIQUE(store_id, category_id)` and `PRIMARY KEY (store_id, product_supplier_id)`.
+  - Create function `get_public_products(p_store_id text DEFAULT 'default')` returning `SETOF products` joined with store-specific margins and overrides.
+
+#### Backend Queries & API
+- **[MODIFY] [queries.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/lib/queries.js)**:
+  - Define `const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID || 'default';`.
+  - Update all public queries (`getProducts`, `getProductsForCategory`, `getProductsForBrand`, `getProductById`, `searchProducts`) to query `supabase.rpc('get_public_products', { p_store_id: STORE_ID })`.
+  - Update admin queries (`getAvailabilityOverrides`, `upsertAvailabilityOverride`, `deleteAvailabilityOverride`, `getMarginsWithCategories`, `upsertMargin`) to scope by `STORE_ID`.
+
+#### Admin UI & API Routes
+- **[MODIFY] [availability/route.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/app/api/admin/availability/route.js)** & **[margins/route.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/app/api/admin/margins/route.js)**: Pass `STORE_ID` when saving or reverting.
+- **[MODIFY] [admin/products/page.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/app/admin/products/page.js)** & **[admin/margins/page.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/app/admin/margins/page.js)**: Load only data belonging to `STORE_ID`.
+
+#### Environment Configuration
+- **[MODIFY] [.env.local](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/.env.local)** & **[.env.local.example](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/.env.local.example)**:
+  - Add `NEXT_PUBLIC_STORE_ID="eloria"` (and `"default"` in example).
+
+### Verification Plan
+
+#### Automated Tests
+- Run `npm run build` to verify TypeScript and Next.js Turbopack compilation.
+
+#### Manual Verification
+- Execute `003_phase6c_client_isolation.sql` in Supabase SQL Editor.
+- Verify in SQL Editor that calling `get_public_products('eloria')` vs `get_public_products('other_store')` returns isolated prices and availability overrides.
+- Test toggling availability and setting margins in `/admin` and confirm changes only apply to the current `STORE_ID`.
+
+---
+
+## Phase 6d: Multi-Supplier Architecture & Catalog Switching
+
+### Goal
+Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exact same scraper architecture and e-commerce template, while keeping their catalogs completely separated in the shared database. Allow each client website instance to configure which suppliers they support (via `.env`) and provide an intuitive storefront toggle for customers to switch between supported supplier catalogs without exposing raw supplier names.
+
+### User Review Required
+
+> [!IMPORTANT]
+> **Database Architecture**: We will add a `supplier_code` column (e.g., `'gb'`, `'shoes'`) to `products`, `categories`, and `brands`. This prevents mixing or overwriting items from different suppliers that happen to have similar brand/category names.
+
+> [!IMPORTANT]
+> **Scraper Extensibility**: The Python scraper will be updated to support a list of supplier configurations (each with its base URL, login credentials, and `supplier_code`). When scraping, every inserted/updated product, category, and brand will be tagged with its corresponding `supplier_code`.
+
+> [!IMPORTANT]
+> **Client Instance Configuration via `.env`**: Each client instance will configure their supported suppliers and friendly display names using environment variables:
+> - `NEXT_PUBLIC_SUPPORTED_SUPPLIERS="gb,shoes"` (comma-separated list of supplier codes)
+> - `NEXT_PUBLIC_SUPPLIER_NAMES='{"gb":"شنط وموضة", "shoes":"أحذية وعطور"}'` (JSON map of friendly names for storefront buttons/tabs)
+
+> [!IMPORTANT]
+> **Storefront UX & Browsing Flow**:
+> - If a client instance only supports **1 supplier**: The website operates normally without any supplier switcher.
+> - If a client instance supports **2+ suppliers**: A prominent switcher (buttons or tab bar on the homepage/header) displays the friendly names (e.g., "شنط وموضة" / "أحذية وعطور"). Selecting a supplier filters all category menus, brand sliders, product grids, and search results to show only items belonging to that selected `supplier_code`.
+
+### Proposed Changes
+
+#### Database Schema (`004_phase6d_multi_supplier.sql`)
+- Add `supplier_code TEXT NOT NULL DEFAULT 'gb'` to `products`, `categories`, and `brands`.
+- Update indexes and unique constraints to include `supplier_code` (e.g., `UNIQUE(supplier_code, slug)` and `UNIQUE(supplier_code, supplier_id)`).
+- Update `get_public_products` RPC function to accept an optional `p_supplier_code text DEFAULT NULL` parameter to filter products by supplier.
+
+#### Scraper Extensibility
+- **[MODIFY] [config.py](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/scraper/config.py)** & **[sync.py](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/scraper/sync.py)**: Define a `SUPPLIERS` configuration dictionary/list supporting multiple base URLs and credentials. Loop through each enabled supplier during sync.
+- **[MODIFY] [db.py](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/scraper/db.py)**: Tag all category, brand, and product upserts with `supplier_code`. Scope zero-qty deletion and cleanup queries by `supplier_code`.
+
+#### Frontend Catalog Switching & UI
+- **[NEW/MODIFY] Supplier Context (`SupplierContext.js`)**: React context to track the currently active `supplier_code` (defaulting to the first supported supplier in `.env`). Persisted via localStorage or URL query param (`?supplier=gb`).
+- **[MODIFY] [Header.jsx](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/components/layout/Header.jsx)** & **[page.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/app/page.js)**: If `NEXT_PUBLIC_SUPPORTED_SUPPLIERS` contains > 1 supplier, render a stylish supplier switcher button group using the friendly names from `NEXT_PUBLIC_SUPPLIER_NAMES`.
+- **[MODIFY] [queries.js](file:///c:/Users/AhmedAlawneh/Desktop/custom-store/src/lib/queries.js)**: Update `getCategories`, `getBrands`, `getProducts`, and `searchProducts` to accept and filter by `supplierCode`.
+
+### Verification Plan
+
+#### Automated Tests
+- Run `npm run build` to verify clean compilation with multi-supplier context and queries.
+
+#### Manual Verification
+- Execute `004_phase6d_multi_supplier.sql` in Supabase SQL Editor.
+- Configure `.env.local` with two suppliers (`"gb,shoes"`).
+- Verify on homepage that switching between supplier tabs dynamically swaps out the categories, brands, and products displayed without mixing them.
 
 ---
 
@@ -1150,34 +1255,47 @@ CREATE TABLE analytics_visits (
 - [ ] Final GitHub Actions cron test (User step: configure GitHub repository secrets)
 
 ### Phase 6a: Multi-Instance, Brands, Availability Override & Color Variants (Days 16-22)
-- [ ] **DB Migration (Master)**: Add `brands` table, `product_brands` join table, `brand_id` on `products`, `color_variants JSONB` column on `products`
-- [ ] **DB Migration (Client)**: Add `product_availability_overrides` table; update `public_products` view with `COALESCE(override.is_available, p.is_available)` logic
-- [ ] **Scraper: Brand Discovery** — `extractor.py`: Discover and extract brands from supplier navigation; upsert to `brands` table; link products to brands
-- [ ] **Scraper: Color Variants** — `extractor.py` + `image_pipeline.py`: Visit each product detail page; extract all color swatches (name, image, availability); upload each to R2; store as `color_variants` JSONB
-- [ ] **Scraper: `db.py` updates** — Handle brand upsert + product→brand linking; handle `color_variants` diff logic
-- [ ] **Frontend: `/brand/[slug]`** — Brand product grid page with sort selector (Default / Low→High / High→Low)
-- [ ] **Frontend: `/brands`** — Brands directory page (handles 0 products gracefully, no 404)
-- [ ] **Frontend: `BrandsSlider`** — Homepage horizontal scrolling brands carousel
-- [ ] **Frontend: Color Swatch UI** — On `/product/[slug]`, interactive color thumbnails; clicking changes main image; unavailable colors slashed/greyed with tooltip; selection required before ordering
-- [ ] **Frontend: WhatsApp message** — Include selected color name (and image URL if possible) in cart order message
-- [ ] **Admin: Product Availability Override** — Toggle + optional reason field per product in `/admin/products`; visually distinguish "Admin Override Active" state
-- [ ] **Multi-instance env template** — Document all per-client env vars; update `README.md` with client cloning instructions
-- [ ] **Admin panel link removal** — Remove any public footer/header link to `/admin/login` across all layouts
+- [x] **DB Migration (Master)**: Add `brands` table, `product_brands` join table, `brand_id` on `products`, `color_variants JSONB` column on `products`
+- [x] **DB Migration (Client)**: Add `product_availability_overrides` table; update `public_products` view with `COALESCE(override.is_available, p.is_available)` logic
+- [x] **Scraper: Brand Discovery** — `extractor.py`: Discover and extract brands from supplier navigation; upsert to `brands` table; link products to brands
+- [x] **Scraper: Color Variants** — `extractor.py` + `image_pipeline.py`: Visit each product detail page; extract all color swatches (name, image, availability); upload each to R2; store as `color_variants` JSONB
+- [x] **Scraper: `db.py` updates** — Handle brand upsert + product→brand linking; handle `color_variants` diff logic
+- [x] **Frontend: `/brand/[slug]`** — Brand product grid page with sort selector (Default / Low→High / High→Low)
+- [x] **Frontend: `/brands`** — Brands directory page (handles 0 products gracefully, no 404)
+- [x] **Frontend: `BrandsSlider`** — Homepage horizontal scrolling brands carousel
+- [x] **Frontend: Color Swatch UI** — On `/product/[slug]`, interactive color thumbnails; clicking changes main image; unavailable colors slashed/greyed with tooltip; selection required before ordering
+- [x] **Frontend: WhatsApp message** — Include selected color name (and image URL if possible) in cart order message
+- [x] **Admin: Product Availability Override** — Toggle + optional reason field per product in `/admin/products`; visually distinguish "Admin Override Active" state
+- [x] **Multi-instance env template** — Document all per-client env vars; update `README.md` with client cloning instructions
+- [x] **Admin panel link removal** — Remove any public footer/header link to `/admin/login` across all layouts
 
 ### Phase 6b: Internationalization, Homepage Polish & Visitor Analytics (Days 23-28)
-- [ ] **DB Migration**: Add multilingual columns (`name_en`, `name_he`, `description_en`, `description_he`) to `products`, `categories`, `brands`; add `analytics_visits` table
-- [ ] **Scraper: Translation** — On product insert/update, call translation API (or mapping dict) to populate `name_en`, `name_he`, `description_en`, `description_he`
-- [ ] **Next.js i18n config** — Set up locale routing (`/ar`, `/en`, `/he`); configure `dir` attribute per locale in root layout
-- [ ] **Translation context** — React context or hook (`useTranslation`) to serve the correct locale's strings throughout the app
-- [ ] **Language switcher component** — Header `AR / EN / HE` toggle; persists preference to cookie; redirects to locale-prefixed URL
-- [ ] **All UI strings localized** — Replace hardcoded Arabic strings with translation keys across all pages and components
-- [ ] **`CategoriesSlider`** — Horizontal scroll carousel for categories on homepage (mobile swipeable, desktop arrow-navigated)
-- [ ] **`BrandsSlider`** — Horizontal scroll carousel for brands on homepage
-- [ ] **Smart CTA hide logic** — Conditionally render "عرض كل منتجات القسم" only when section has > 4 products
-- [ ] **`analytics_visits` beacon** — Lightweight client-side visit tracker (page path + anonymous session ID) fired on route change
-- [ ] **Admin: Visitor Analytics Dashboard** — Line/bar charts with day/week/month filters in `/admin`
+- [x] **CRITICAL: Scraper Performance & 12-Hour Bug Fix (FIRST TASK)** — Audit and fix scraper taking 12+ hours after Phase 6a; skip unchanged detail pages, optimize concurrency and R2 checks
+- [x] **DB Migration**: Add multilingual columns (`name_en`, `name_he`, `description_en`, `description_he`) to `products`, `categories`, `brands`; add `analytics_visits` table
+- [x] **Scraper: Translation & Retries** — On product insert/update, populate translations; implement 3-try retry mechanism with backoff for failed image downloads and network requests
+- [x] **Next.js i18n config** — Set up locale routing (`/ar`, `/en`, `/he`); configure `dir` attribute per locale in root layout
+- [x] **Translation context** — React context or hook (`useTranslation`) to serve the correct locale's strings throughout the app
+- [x] **Language switcher component** — Header `AR / EN / HE` toggle; persists preference to cookie; redirects to locale-prefixed URL
+- [x] **All UI strings localized** — Replace hardcoded Arabic strings with translation keys across all pages and components
+- [x] **`CategoriesSlider`** — Horizontal scroll carousel for categories on homepage (mobile swipeable, desktop arrow-navigated)
+- [x] **`BrandsSlider`** — Horizontal scroll carousel for brands on homepage
+- [x] **Smart CTA hide logic** — Conditionally render "عرض كل منتجات القسم" only when section has > 4 products
+- [x] **`analytics_visits` beacon** — Lightweight client-side visit tracker (page path + anonymous session ID) fired on route change
+- [x] **Admin: Visitor Analytics Dashboard** — Line/bar charts with day/week/month filters in `/admin`
 
-### Estimated Total: ~28 working days
+### Phase 6c: Shared Database Multi-Tenancy (`store_id` Client Isolation) (Days 29-31)
+- [ ] **DB Migration (`003_phase6c_client_isolation.sql`)**: Add `store_id` column to `price_margins` and `product_availability_overrides`; create dynamic function `get_public_products(p_store_id text)`
+- [ ] **Backend Queries (`queries.js`)**: Update catalog queries to call `get_public_products`; update admin queries to filter/save by `STORE_ID`
+- [ ] **Admin UI & API Routes**: Scope `/api/admin/availability`, `/api/admin/margins`, and admin pages to `STORE_ID`
+- [ ] **Environment Configuration**: Add `NEXT_PUBLIC_STORE_ID="eloria"` in `.env.local`
+
+### Phase 6d: Multi-Supplier Architecture & Catalog Switching (Days 32-35)
+- [ ] **DB Migration (`004_phase6d_multi_supplier.sql`)**: Add `supplier_code` to `products`, `categories`, and `brands`; update unique constraints and RPCs
+- [ ] **Scraper Extensibility**: Support multiple supplier configs in `config.py`/`sync.py`; tag all upserts and cleanups with `supplier_code`
+- [ ] **Client Instance Config (`.env`)**: Add `NEXT_PUBLIC_SUPPORTED_SUPPLIERS` and `NEXT_PUBLIC_SUPPLIER_NAMES`
+- [ ] **Storefront Supplier Switcher**: Create `SupplierContext`; render friendly supplier toggle tabs when > 1 supplier is supported; filter all catalog queries by active supplier
+
+### Estimated Total: ~35 working days
 
 ---
 

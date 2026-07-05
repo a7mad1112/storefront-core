@@ -124,6 +124,58 @@ def upsert_categories(supabase, categories):
 
 
 # ---------------------------------------------------------------------------
+# Brand Operations
+# ---------------------------------------------------------------------------
+
+def upsert_brands(supabase, brands):
+    """
+    Upsert brands into the database.
+
+    Args:
+        supabase: Supabase client.
+        brands: List of brand dicts from extractor.
+
+    Returns:
+        Dict mapping supplier_id → brand UUID.
+    """
+    logger.info("Upserting %d brands", len(brands))
+    id_map = {}
+
+    for brand in brands:
+        try:
+            slug = generate_slug(brand["name"], brand["supplier_id"], prefix="brand")
+
+            data = {
+                "supplier_id": brand["supplier_id"],
+                "name": brand["name"],
+                "slug": slug,
+                "image_url": brand.get("image_url"),
+                "is_active": True,
+            }
+
+            result = (
+                supabase.table("brands")
+                .upsert(data, on_conflict="supplier_id")
+                .execute()
+            )
+
+            if result.data:
+                row = result.data[0]
+                id_map[brand["supplier_id"]] = row["id"]
+                logger.debug(
+                    "Upserted brand: %s → %s", brand["name"], row["id"]
+                )
+
+        except Exception as e:
+            logger.error(
+                "Failed to upsert brand %s: %s", brand["supplier_id"], e
+            )
+
+    logger.info("Brand upsert complete. %d brands mapped.", len(id_map))
+    return id_map
+
+
+# ---------------------------------------------------------------------------
 # Product Operations
 # ---------------------------------------------------------------------------
 
@@ -148,7 +200,8 @@ def get_existing_products(supabase):
                 .select(
                     "id, supplier_id, name, wholesale_price, quantity, "
                     "image_url, additional_images, supplier_image_url, "
-                    "consecutive_zero_qty, is_available, is_active"
+                    "consecutive_zero_qty, is_available, is_active, "
+                    "brand_id, color_variants"
                 )
                 .range(offset, offset + page_size - 1)
                 .execute()
@@ -172,7 +225,7 @@ def get_existing_products(supabase):
     return products
 
 
-def upsert_product(supabase, product, category_id_map):
+def upsert_product(supabase, product, category_id_map, brand_id_map=None):
     """
     Insert or update a single product in the database.
 
@@ -180,6 +233,7 @@ def upsert_product(supabase, product, category_id_map):
         supabase: Supabase client.
         product: Product dict from extractor + image pipeline.
         category_id_map: Dict mapping category supplier_id → UUID.
+        brand_id_map: Dict mapping brand supplier_id → UUID (optional).
 
     Returns:
         Tuple of (action, product_id) where action is 'added', 'updated', or 'skipped'.
@@ -202,10 +256,17 @@ def upsert_product(supabase, product, category_id_map):
         "quantity": product.get("quantity"),
         "is_available": True if product.get("quantity") is None else product.get("quantity") > 0,
         "tags": product.get("tags", []),
+        "color_variants": product.get("r2_color_variants", []),
     }
 
     if category_id:
         data["category_id"] = category_id
+
+    # Set brand_id if we have a brand map and the product has a brand
+    if brand_id_map:
+        brand_sid = product.get("brand_supplier_id")
+        if brand_sid and brand_sid in brand_id_map:
+            data["brand_id"] = brand_id_map[brand_sid]
 
     # Reset consecutive_zero_qty if product was found on supplier store
     if data.get("quantity") is None or data["quantity"] > 0:
@@ -249,6 +310,12 @@ def diff_product(existing, scraped):
     existing_qty = existing.get("quantity", 0) or 0
     scraped_qty = scraped.get("quantity", 1) or 1
     if existing_qty != scraped_qty:
+        checks.append(True)
+
+    # Color variants change (compare as JSON strings for simplicity)
+    existing_colors = existing.get("color_variants") or []
+    scraped_colors = scraped.get("color_variants") or []
+    if len(existing_colors) != len(scraped_colors):
         checks.append(True)
 
     return any(checks)

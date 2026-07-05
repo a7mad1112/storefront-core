@@ -1,0 +1,108 @@
+'use client';
+
+import React, { useRef } from 'react';
+import Link from 'next/link';
+
+export default function BrandsSlider({ brands = [], lang = 'ar', dict }) {
+  const scrollRef = useRef(null);
+
+  if (!brands || brands.length === 0) return null;
+
+  const tSections = dict?.sections || {};
+
+  const scroll = (direction) => {
+    if (!scrollRef.current) return;
+    const scrollAmount = 200;
+    scrollRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <section className="container" style={{ padding: '2rem var(--space-4)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{tSections.shopByBrand || '🏷️ تسوق حسب الماركة'}</h2>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            {tSections.shopByBrandDesc || 'أشهر الماركات العالمية في متجرنا'}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => scroll('left')}
+            className="slider-arrow"
+            aria-label="Previous"
+          >
+            →
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            className="slider-arrow"
+            aria-label="Next"
+          >
+            ←
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="brands-scroll-container"
+      >
+        {brands.map((brand) => (
+          <Link
+            key={brand.id}
+            href={`/${lang}/brand/${brand.slug || brand.id}`}
+            className="brand-pill"
+          >
+            {brand.image_url ? (
+              <img
+                src={brand.image_url}
+                alt={brand.name}
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  objectFit: 'contain',
+                  backgroundColor: 'var(--color-bg-secondary)',
+                  border: '1px solid var(--color-border)',
+                }}
+                loading="lazy"
+              />
+            ) : (
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--color-bg-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.25rem',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                🏷️
+              </div>
+            )}
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+              {brand.name}
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+        <Link
+          href={`/${lang}/brands`}
+          className="btn btn-secondary"
+          style={{ fontSize: '0.875rem' }}
+        >
+          {tSections.viewAllBrands || 'عرض جميع الماركات ←'}
+        </Link>
+      </div>
+    </section>
+  );
+}

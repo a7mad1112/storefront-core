@@ -1,0 +1,89 @@
+{
+  "common": {
+    "storeName": "Eloria FASHION",
+    "home": "Home",
+    "categories": "Categories",
+    "brands": "Brands",
+    "search": "Search",
+    "cart": "Cart",
+    "currency": "₪",
+    "allRightsReserved": "All rights reserved",
+    "contactWhatsApp": "Contact via WhatsApp",
+    "viewAll": "View All",
+    "close": "Close"
+  },
+  "hero": {
+    "badge": "✨ Latest collection of fashion & luxury bags",
+    "title": "Elegance & luxury made for you at",
+    "subtitle": "Shop the finest bags, perfumes, watches, and accessories with the highest quality standards. Fast and guaranteed delivery to your doorstep.",
+    "browseProducts": "🛍️ Browse Latest Products",
+    "askWhatsApp": "💬 Ask via WhatsApp"
+  },
+  "sections": {
+    "shopByCategory": "Shop by Category",
+    "shopByCategoryDesc": "Choose from our wide selection of premium categories",
+    "shopByBrand": "🏷️ Shop by Brand",
+    "shopByBrandDesc": "The world's most famous brands in our store",
+    "viewAllBrands": "View All Brands →",
+    "viewAllCategories": "View All Categories →",
+    "viewCategoryProducts": "View All Products →",
+    "latestFrom": "Latest curated selection from"
+  },
+  "product": {
+    "addToCart": "+ Add to Cart",
+    "colors": "Colors",
+    "outOfStock": "Out of Stock",
+    "selectColor": "Select a color",
+    "noProducts": "No matching products currently available",
+    "showingAllIn": "Showing all available products in",
+    "notFound": "Product not found",
+    "categoryNotFound": "Category not found",
+    "bestPricesIn": "Shop the best products in",
+    "withQuality": "at great prices and high quality from"
+  },
+  "sort": {
+    "sortBy": "Sort by:",
+    "default": "Default",
+    "priceAsc": "Price: Low to High",
+    "priceDesc": "Price: High to Low"
+  },
+  "cart": {
+    "shoppingCart": "Shopping Cart",
+    "emptyCart": "Your cart is empty",
+    "total": "Total:",
+    "orderWhatsApp": "💬 Order via WhatsApp Now",
+    "clearCart": "Clear Cart",
+    "closeCart": "Close Cart",
+    "orderIntro": "Hello, I would like to order the following products from",
+    "colorLabel": "Color",
+    "totalLabel": "Total",
+    "thanks": "Thank you!"
+  },
+  "search": {
+    "searchPlaceholder": "Search bags, perfumes, watches...",
+    "resultsFor": "Search results for:",
+    "searchProducts": "Search Products",
+    "foundProducts": "Found",
+    "matchingProduct": "matching product(s)",
+    "searchHint": "Type a product name or brand in the search bar above",
+    "noResults": "No products found matching",
+    "tryOther": "Try different keywords like: bag, perfume, glasses."
+  },
+  "footer": {
+    "storeDesc": "The luxury fashion store. Master quality bags, perfumes, watches, and international brands at special prices with fast delivery across Palestine."
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "searchResults": "Search Results"
+  },
+  "brands": {
+    "title": "All Brands",
+    "subtitle": "Browse all international brands available in our store",
+    "noProducts": "No products for this brand currently",
+    "productsIn": "products"
+  },
+  "meta": {
+    "homeTitle": "Fashion, Elegance & Luxury Bags Store",
+    "homeDesc": "Shop the best luxury bags, perfumes, watches, and accessories at great prices and high quality. Fast delivery across Palestine."
+  }
+}

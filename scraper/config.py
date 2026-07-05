@@ -85,6 +85,12 @@ def load_config():
         os.environ.get("REQUEST_DELAY_MAX", "4.0")
     )
 
+    # Whether to visit individual product detail pages for color variants,
+    # descriptions, and brand extraction. Set to "false" to skip detail pages.
+    config["SCRAPE_PRODUCT_DETAILS"] = os.environ.get(
+        "SCRAPE_PRODUCT_DETAILS", "true"
+    ).lower() in ("true", "1", "yes")
+
     return config
 
 

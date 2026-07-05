@@ -8,7 +8,7 @@ const CartContext = createContext(null);
 const CART_STORAGE_KEY = 'gb_store_cart';
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
 
-export function CartProvider({ children }) {
+export function CartProvider({ children, lang = 'ar', dict }) {
   const [items, setItems] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -38,29 +38,36 @@ export function CartProvider({ children }) {
     }
   }, [items, isLoaded]);
 
-  const addItem = (product, quantity = 1) => {
+  const addItem = (product, quantity = 1, selectedColor = null) => {
+    const cartItemId = selectedColor ? `${product.id}:::${selectedColor.color_name}` : product.id;
+    const itemImage = selectedColor?.image_url || product.image_url;
+
     setItems((prev) => {
-      const existingIndex = prev.findIndex((item) => item.id === product.id);
+      const existingIndex = prev.findIndex(
+        (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === cartItemId)
+      );
       if (existingIndex > -1) {
         const copy = [...prev];
         copy[existingIndex].quantity += quantity;
         return copy;
       } else {
-        return [...prev, { ...product, quantity }];
+        return [...prev, { ...product, cartItemId, selectedColor, image_url: itemImage, quantity }];
       }
     });
     setIsDrawerOpen(true);
   };
 
-  const removeItem = (productId) => {
-    setItems((prev) => prev.filter((item) => item.id !== productId));
+  const removeItem = (cartItemIdOrId) => {
+    setItems((prev) =>
+      prev.filter((item) => (item.cartItemId || item.id) !== cartItemIdOrId)
+    );
   };
 
-  const updateQuantity = (productId, delta) => {
+  const updateQuantity = (cartItemIdOrId, delta) => {
     setItems((prev) =>
       prev
         .map((item) => {
-          if (item.id === productId) {
+          if ((item.cartItemId || item.id) === cartItemIdOrId) {
             const newQty = item.quantity + delta;
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
@@ -80,11 +87,21 @@ export function CartProvider({ children }) {
   const getWhatsAppOrderUrl = () => {
     if (items.length === 0) return '';
 
-    let text = 'مرحباً، أريد طلب المنتجات التالية من متجر Eloria FASHION:\n\n';
+    const tCart = dict?.cart || {};
+    const orderIntro = tCart.orderIntro || 'مرحباً، أريد طلب المنتجات التالية من متجر Eloria FASHION:';
+    const colorLabel = tCart.colorLabel || 'اللون';
+    const totalLabel = tCart.totalLabel || 'المجموع الكلي';
+    const thanks = tCart.thanks || 'شكراً لكم!';
+
+    let text = `${orderIntro}\n\n`;
     items.forEach((item, index) => {
-      text += `${index + 1}. ${item.name} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity)}\n`;
+      const displayName = (lang === 'en' && item.name_en) ? item.name_en :
+                          (lang === 'he' && item.name_he) ? item.name_he :
+                          item.name;
+      const colorText = item.selectedColor ? ` (${colorLabel}: ${item.selectedColor.color_name})` : '';
+      text += `${index + 1}. ${displayName}${colorText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity)}\n`;
     });
-    text += `\nالمجموع الكلي: ${formatPrice(totalPrice)}\n\nشكراً لكم!`;
+    text += `\n${totalLabel}: ${formatPrice(totalPrice)}\n\n${thanks}`;
 
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
   };

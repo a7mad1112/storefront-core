@@ -38,24 +38,51 @@ def create_r2_client(config):
     )
 
 
+MAX_IMAGE_RETRIES = 3
+IMAGE_BACKOFF = 2  # seconds
+
+
 def download_image(session, url):
     """
-    Download an image from the given URL.
+    Download an image from the given URL with retry logic.
+    Retries up to MAX_IMAGE_RETRIES times with exponential backoff.
 
     Args:
         session: requests.Session (authenticated).
         url: Full URL to the image.
 
     Returns:
-        Bytes of the downloaded image, or None on failure.
+        Bytes of the downloaded image.
+
+    Raises:
+        RuntimeError: If download fails after all retries.
     """
-    try:
-        response = session.get(url, timeout=30, stream=True)
-        response.raise_for_status()
-        return response.content
-    except Exception as e:
-        logger.warning("Failed to download image %s: %s", url, e)
-        return None
+    import random
+
+    last_error = None
+    for attempt in range(1, MAX_IMAGE_RETRIES + 1):
+        try:
+            response = session.get(url, timeout=30, stream=True)
+            response.raise_for_status()
+            return response.content
+        except Exception as e:
+            last_error = e
+            if attempt < MAX_IMAGE_RETRIES:
+                wait = IMAGE_BACKOFF ** attempt + random.uniform(0, 1)
+                logger.warning(
+                    "[Retry %d/%d] Image download %s failed: %s — retrying in %.1fs",
+                    attempt, MAX_IMAGE_RETRIES, url, e, wait,
+                )
+                import time
+                time.sleep(wait)
+            else:
+                logger.error(
+                    "[FAILED] Image download %s failed after %d attempts: %s",
+                    url, MAX_IMAGE_RETRIES, e,
+                )
+    raise RuntimeError(
+        f"Image download failed after {MAX_IMAGE_RETRIES} attempts: {url} — {last_error}"
+    )
 
 
 def convert_to_webp(image_bytes, quality=80):
@@ -194,17 +221,26 @@ def process_product_images(session, r2_client, config, product, existing_image_u
     1. Download main image
     2. Convert to WebP
     3. Upload to R2
-    4. Process color variant images
+    4. Process additional images (legacy color images from listing)
+    5. Process color variant images (from detail page)
+
+    All image downloads use retry logic internally (3 retries with backoff).
+    If an image still fails after retries, RuntimeError propagates to the caller
+    so the product can be retried at a higher level.
 
     Args:
         session: Authenticated requests.Session.
         r2_client: boto3 S3 client.
         config: Dict with R2_BUCKET, R2_PUBLIC_URL.
-        product: Product dict with supplier_id, supplier_image_url, additional_images.
+        product: Product dict with supplier_id, supplier_image_url, additional_images, color_variants.
         existing_image_url: Current image_url in DB (skip if unchanged).
 
     Returns:
-        Tuple of (main_image_url, additional_r2_urls)
+        Tuple of (main_image_url, additional_r2_urls, r2_color_variants)
+        r2_color_variants is a list of dicts: [{color_name, image_url (R2), supplier_image_url, is_available}, ...]
+
+    Raises:
+        RuntimeError: If any critical image download fails after 3 retries.
     """
     bucket = config["R2_BUCKET"]
     supplier_id = product["supplier_id"]
@@ -212,6 +248,7 @@ def process_product_images(session, r2_client, config, product, existing_image_u
 
     main_image_url = None
     additional_r2_urls = []
+    r2_color_variants = []
 
     # --- Process main image ---
     if supplier_image_url:
@@ -227,14 +264,13 @@ def process_product_images(session, r2_client, config, product, existing_image_u
             )
         else:
             image_bytes = download_image(session, supplier_image_url)
-            if image_bytes:
-                webp_bytes = convert_to_webp(image_bytes)
-                if webp_bytes:
-                    result = upload_to_r2(r2_client, bucket, key, webp_bytes)
-                    if result:
-                        main_image_url = public_url
+            webp_bytes = convert_to_webp(image_bytes)
+            if webp_bytes:
+                result = upload_to_r2(r2_client, bucket, key, webp_bytes)
+                if result:
+                    main_image_url = public_url
 
-    # --- Process color variant images ---
+    # --- Process additional images (legacy) ---
     for idx, color_url in enumerate(product.get("additional_images", [])):
         if not color_url:
             continue
@@ -243,14 +279,34 @@ def process_product_images(session, r2_client, config, product, existing_image_u
         public_url = get_public_url(config, key)
 
         image_bytes = download_image(session, color_url)
-        if image_bytes:
-            webp_bytes = convert_to_webp(image_bytes)
-            if webp_bytes:
-                result = upload_to_r2(r2_client, bucket, key, webp_bytes)
-                if result:
-                    additional_r2_urls.append(public_url)
+        webp_bytes = convert_to_webp(image_bytes)
+        if webp_bytes:
+            result = upload_to_r2(r2_client, bucket, key, webp_bytes)
+            if result:
+                additional_r2_urls.append(public_url)
 
-    return main_image_url, additional_r2_urls
+    # --- Process color variant images (from detail page extraction) ---
+    for idx, variant in enumerate(product.get("color_variants", [])):
+        variant_url = variant.get("supplier_image_url")
+        if not variant_url:
+            continue
+
+        key = generate_r2_key(supplier_id, variant_url, f"variant-{idx}")
+        public_url = get_public_url(config, key)
+
+        image_bytes = download_image(session, variant_url)
+        webp_bytes = convert_to_webp(image_bytes)
+        if webp_bytes:
+            result = upload_to_r2(r2_client, bucket, key, webp_bytes)
+            if result:
+                r2_color_variants.append({
+                    "color_name": variant.get("color_name", f"لون {idx + 1}"),
+                    "image_url": public_url,
+                    "supplier_image_url": variant_url,
+                    "is_available": variant.get("is_available", True),
+                })
+
+    return main_image_url, additional_r2_urls, r2_color_variants
 
 
 def collect_image_keys_for_product(product_row):
