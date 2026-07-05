@@ -32,7 +32,25 @@ This document tracks all manual steps, database migrations, and configurations t
 
 ### 2. Multi-Instance Client Configuration
 - [ ] **Cloning for a New Store Client**: When deploying a second store instance (e.g., Client B) against the same Supabase backend:
-  - Copy `.env.local.example` to `.env.local`.
-  - Change `NEXT_PUBLIC_STORE_ID="client_b"` (or whatever unique ID assigned to the new client).
-  - Change `NEXT_PUBLIC_STORE_NAME`, `NEXT_PUBLIC_STORE_DESC`, and `NEXT_PUBLIC_WHATSAPP_NUMBER` to match the new client's branding.
   - When Client B's admin logs into their admin panel, any custom price margins or availability overrides they save will be tagged with `store_id = 'client_b'` and will not affect Eloria's storefront!
+
+---
+
+## 📌 Phase 6d: Multi-Supplier Architecture
+
+### 1. Database Migration (Supabase SQL Editor)
+- [ ] **Run Phase 6d Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/004_phase6d_multi_supplier.sql`.
+  - This adds the `supplier_code` column (defaulting to `'gbstore'`) to `products`, `categories`, and `brands`, and creates indexes on them.
+  - It drops and recreates `public_products` view to include `supplier_code`.
+  - It drops and recreates the Postgres RPC `get_store_products(p_store_id, p_supplier_code)` to support optional filtering by supplier.
+
+### 2. Scraper Configuration (for Additional Suppliers)
+- [ ] **Configuring a Second Supplier**: When adding a new supplier scraper:
+  - In your scraper environment variables (or GitHub Actions secrets), set `SUPPLIER_CODE="supplier_b"`, along with the new supplier's base URL and credentials.
+  - When the scraper runs, all categories, brands, and products it extracts will be upserted with `supplier_code = 'supplier_b'`.
+
+### 3. Storefront Multi-Supplier Switcher
+- [ ] **Enable Storefront Switcher**: In `.env.local` (or Vercel / hosting environment variables), configure:
+  - `NEXT_PUBLIC_SUPPORTED_SUPPLIERS="gbstore,supplier_b"`
+  - `NEXT_PUBLIC_SUPPLIER_NAMES='{"gbstore": "جي بي ستور (GB Store)", "supplier_b": "مورد آخر (Supplier B)"}'`
+  - Once multiple suppliers are listed, a supplier switcher bar will automatically appear below the site header, allowing visitors to view all products or filter by specific supplier.

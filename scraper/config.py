@@ -77,6 +77,9 @@ def load_config():
         "SUPPLIER_BASE_URL", "https://gbstore.ps"
     )
 
+    # Supplier identifier (for multi-supplier catalog switching)
+    config["SUPPLIER_CODE"] = os.environ.get("SUPPLIER_CODE", "gbstore")
+
     # Request pacing (seconds)
     config["REQUEST_DELAY_MIN"] = float(
         os.environ.get("REQUEST_DELAY_MIN", "2.0")

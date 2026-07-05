@@ -204,7 +204,9 @@ def main():
         logger.info("[OK] %d brands synced", len(brand_id_map))
 
         # --- 6. Get existing products for diff ---
-        existing_products = get_existing_products(supabase)
+        existing_products = get_existing_products(
+            supabase, config.get("SUPPLIER_CODE", "gbstore")
+        )
 
         # --- 7. Scrape and sync products ---
         all_scraped_ids = set()

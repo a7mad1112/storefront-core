@@ -3,8 +3,10 @@ import { Inter } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { CartProvider } from "../../context/CartContext";
+import { SupplierProvider } from "../../context/SupplierContext";
 import { DictionaryProvider } from "../../context/DictionaryContext";
 import Header from "../../components/layout/Header";
+import SupplierSwitcher from "../../components/layout/SupplierSwitcher";
 import Footer from "../../components/layout/Footer";
 import CartDrawer from "../../components/cart/CartDrawer";
 import VisitTracker from "../../components/analytics/VisitTracker";
@@ -58,13 +60,16 @@ export default async function LangLayout({ children, params }) {
     <html lang={lang} dir={dir} className={fontClass}>
       <body className={fontBody}>
         <CartProvider lang={lang} dict={dict}>
-          <DictionaryProvider dictionary={dict} lang={lang}>
-            <Header lang={lang} />
-            <CartDrawer />
-            <VisitTracker />
-            <main style={{ flexGrow: 1 }}>{children}</main>
-            <Footer lang={lang} dict={dict} />
-          </DictionaryProvider>
+          <SupplierProvider>
+            <DictionaryProvider dictionary={dict} lang={lang}>
+              <Header lang={lang} />
+              <SupplierSwitcher lang={lang} />
+              <CartDrawer />
+              <VisitTracker />
+              <main style={{ flexGrow: 1 }}>{children}</main>
+              <Footer lang={lang} dict={dict} />
+            </DictionaryProvider>
+          </SupplierProvider>
         </CartProvider>
       </body>
     </html>

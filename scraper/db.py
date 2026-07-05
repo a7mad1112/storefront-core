@@ -80,16 +80,17 @@ def upsert_categories(supabase, categories):
 
             data = {
                 "supplier_id": cat["supplier_id"],
+                "supplier_code": cat.get("supplier_code", "gbstore"),
                 "name": cat["name"],
                 "slug": slug,
                 "image_url": cat.get("image_url"),
                 "is_active": True,
             }
 
-            # Upsert by supplier_id
+            # Upsert by supplier_code,supplier_id
             result = (
                 supabase.table("categories")
-                .upsert(data, on_conflict="supplier_id")
+                .upsert(data, on_conflict="supplier_code,supplier_id")
                 .execute()
             )
 
@@ -147,6 +148,7 @@ def upsert_brands(supabase, brands):
 
             data = {
                 "supplier_id": brand["supplier_id"],
+                "supplier_code": brand.get("supplier_code", "gbstore"),
                 "name": brand["name"],
                 "slug": slug,
                 "image_url": brand.get("image_url"),
@@ -155,7 +157,7 @@ def upsert_brands(supabase, brands):
 
             result = (
                 supabase.table("brands")
-                .upsert(data, on_conflict="supplier_id")
+                .upsert(data, on_conflict="supplier_code,supplier_id")
                 .execute()
             )
 
@@ -179,7 +181,7 @@ def upsert_brands(supabase, brands):
 # Product Operations
 # ---------------------------------------------------------------------------
 
-def get_existing_products(supabase):
+def get_existing_products(supabase, supplier_code="gbstore"):
     """
     Fetch all existing products from the database for diff comparison.
 
@@ -198,11 +200,12 @@ def get_existing_products(supabase):
             result = (
                 supabase.table("products")
                 .select(
-                    "id, supplier_id, name, wholesale_price, quantity, "
+                    "id, supplier_id, supplier_code, name, wholesale_price, quantity, "
                     "image_url, additional_images, supplier_image_url, "
                     "consecutive_zero_qty, is_available, is_active, "
                     "brand_id, color_variants"
                 )
+                .eq("supplier_code", supplier_code)
                 .range(offset, offset + page_size - 1)
                 .execute()
             )
@@ -246,6 +249,7 @@ def upsert_product(supabase, product, category_id_map, brand_id_map=None):
 
     data = {
         "supplier_id": supplier_id,
+        "supplier_code": product.get("supplier_code", "gbstore"),
         "name": product["name"],
         "slug": slug,
         "description": product.get("description"),
@@ -276,7 +280,7 @@ def upsert_product(supabase, product, category_id_map, brand_id_map=None):
     try:
         result = (
             supabase.table("products")
-            .upsert(data, on_conflict="supplier_id")
+            .upsert(data, on_conflict="supplier_code,supplier_id")
             .execute()
         )
 

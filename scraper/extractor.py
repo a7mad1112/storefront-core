@@ -108,6 +108,9 @@ def extract_categories(session, config):
         _parse_category_li(li, None, categories, seen_ids, base_url)
 
     logger.info("Discovered %d unique categories", len(categories))
+    supplier_code = config.get("SUPPLIER_CODE", "gbstore")
+    for cat in categories:
+        cat["supplier_code"] = supplier_code
     return categories
 
 
@@ -236,6 +239,9 @@ def extract_brands(session, config):
         })
 
     logger.info("Discovered %d unique brands", len(brands))
+    supplier_code = config.get("SUPPLIER_CODE", "gbstore")
+    for brand in brands:
+        brand["supplier_code"] = supplier_code
     return brands
 
 
@@ -321,6 +327,9 @@ def extract_products_for_category(session, config, category):
 
         page += 1
 
+    supplier_code = config.get("SUPPLIER_CODE", "gbstore")
+    for prod in products:
+        prod["supplier_code"] = supplier_code
     return products
 
 
@@ -532,6 +541,7 @@ def extract_product_details(session, config, supplier_id):
         "quantity": quantity,
         "color_variants": color_variants,
         "brand_supplier_id": brand_supplier_id,
+        "supplier_code": config.get("SUPPLIER_CODE", "gbstore"),
     }
 
 

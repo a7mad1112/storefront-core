@@ -15,11 +15,18 @@ export const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID || 'eloria';
  * Helper to query catalog: uses public_products view for default store ('eloria'),
  * or dynamically calls get_store_products RPC for multi-tenant client isolation.
  */
-function getCatalogTable() {
+function getCatalogTable(supplierCode = null) {
   if (STORE_ID === 'eloria') {
-    return supabase.from('public_products');
+    let query = supabase.from('public_products');
+    if (supplierCode && supplierCode !== 'all') {
+      query = query.eq('supplier_code', supplierCode);
+    }
+    return query;
   }
-  return supabase.rpc('get_store_products', { p_store_id: STORE_ID });
+  return supabase.rpc('get_store_products', {
+    p_store_id: STORE_ID,
+    p_supplier_code: supplierCode && supplierCode !== 'all' ? supplierCode : null,
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -30,12 +37,18 @@ function getCatalogTable() {
  * Fetch all active categories ordered by name.
  * Returns flat list; caller groups by parent_id if needed.
  */
-export async function getCategories() {
-  const { data, error } = await supabase
+export async function getCategories({ supplierCode = null } = {}) {
+  let query = supabase
     .from('categories')
     .select('id, name, slug, parent_id, image_url, is_active')
     .eq('is_active', true)
     .order('name');
+
+  if (supplierCode && supplierCode !== 'all') {
+    query = query.eq('supplier_code', supplierCode);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[getCategories]', error.message);
@@ -132,12 +145,18 @@ export async function getSubcategories(parentId) {
 /**
  * Fetch all active brands ordered by name.
  */
-export async function getBrands() {
-  const { data, error } = await supabase
+export async function getBrands({ supplierCode = null } = {}) {
+  let query = supabase
     .from('brands')
     .select('id, name, slug, image_url, is_active')
     .eq('is_active', true)
     .order('name');
+
+  if (supplierCode && supplierCode !== 'all') {
+    query = query.eq('supplier_code', supplierCode);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[getBrands]', error.message);
@@ -189,8 +208,8 @@ export async function getBrandBySlug(slugOrId) {
 /**
  * Fetch products belonging to a brand (from public_products view).
  */
-export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sort = 'default' } = {}) {
-  let query = getCatalogTable()
+export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sort = 'default', supplierCode = null } = {}) {
+  let query = getCatalogTable(supplierCode)
     .select(PUBLIC_PRODUCT_FIELDS)
     .eq('brand_id', brandId)
     .range(offset, offset + limit - 1);
@@ -211,7 +230,7 @@ export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sor
 // ─────────────────────────────────────────────
 
 const PUBLIC_PRODUCT_FIELDS =
-  'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, color_variants, retail_price, updated_at, name_en, name_he, description_en, description_he';
+  'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, color_variants, retail_price, updated_at, name_en, name_he, description_en, description_he, supplier_code';
 
 /**
  * Apply sort order to a Supabase query.
@@ -231,8 +250,8 @@ function applySortOrder(query, sort) {
  * Fetch products from the public_products view.
  * Supports pagination, category filtering, and sorting.
  */
-export async function getProducts({ categoryId, limit = 24, offset = 0, sort = 'default' } = {}) {
-  let query = getCatalogTable()
+export async function getProducts({ categoryId, limit = 24, offset = 0, sort = 'default', supplierCode = null } = {}) {
+  let query = getCatalogTable(supplierCode)
     .select(PUBLIC_PRODUCT_FIELDS)
     .range(offset, offset + limit - 1);
 
@@ -254,7 +273,7 @@ export async function getProducts({ categoryId, limit = 24, offset = 0, sort = '
 /**
  * Fetch all products in a category subtree (category + all its subcategories).
  */
-export async function getProductsForCategory(categoryId, { limit = 24, offset = 0, sort = 'default' } = {}) {
+export async function getProductsForCategory(categoryId, { limit = 24, offset = 0, sort = 'default', supplierCode = null } = {}) {
   // First get subcategory IDs
   const { data: subs } = await supabase
     .from('categories')
@@ -264,7 +283,7 @@ export async function getProductsForCategory(categoryId, { limit = 24, offset = 
 
   const ids = [categoryId, ...(subs ?? []).map((s) => s.id)];
 
-  let query = getCatalogTable()
+  let query = getCatalogTable(supplierCode)
     .select(PUBLIC_PRODUCT_FIELDS)
     .in('category_id', ids)
     .range(offset, offset + limit - 1);
@@ -308,10 +327,10 @@ export async function getProductById(idOrSlug) {
 /**
  * Full-text search across product names and tags.
  */
-export async function searchProducts(query, { limit = 30 } = {}) {
+export async function searchProducts(query, { limit = 30, supplierCode = null } = {}) {
   if (!query || query.trim().length < 1) return [];
 
-  const { data, error } = await getCatalogTable()
+  const { data, error } = await getCatalogTable(supplierCode)
     .select(PUBLIC_PRODUCT_FIELDS)
     .ilike('name', `%${query}%`)
     .order('updated_at', { ascending: false })

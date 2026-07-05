@@ -1290,10 +1290,10 @@ Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exa
 - [x] **Environment Configuration**: Add `NEXT_PUBLIC_STORE_ID="eloria"` in `.env.local`
 
 ### Phase 6d: Multi-Supplier Architecture & Catalog Switching (Days 32-35)
-- [ ] **DB Migration (`004_phase6d_multi_supplier.sql`)**: Add `supplier_code` to `products`, `categories`, and `brands`; update unique constraints and RPCs
-- [ ] **Scraper Extensibility**: Support multiple supplier configs in `config.py`/`sync.py`; tag all upserts and cleanups with `supplier_code`
-- [ ] **Client Instance Config (`.env`)**: Add `NEXT_PUBLIC_SUPPORTED_SUPPLIERS` and `NEXT_PUBLIC_SUPPLIER_NAMES`
-- [ ] **Storefront Supplier Switcher**: Create `SupplierContext`; render friendly supplier toggle tabs when > 1 supplier is supported; filter all catalog queries by active supplier
+- [x] **DB Migration (`004_phase6d_multi_supplier.sql`)**: Add `supplier_code` to `products`, `categories`, and `brands`; update unique constraints and RPCs
+- [x] **Scraper Extensibility**: Support multiple supplier configs in `config.py`/`sync.py`; tag all upserts and cleanups with `supplier_code`
+- [x] **Client Instance Config (`.env`)**: Add `NEXT_PUBLIC_SUPPORTED_SUPPLIERS` and `NEXT_PUBLIC_SUPPLIER_NAMES`
+- [x] **Storefront Supplier Switcher**: Create `SupplierContext`; render friendly supplier toggle tabs when > 1 supplier is supported; filter all catalog queries by active supplier
 
 ### Estimated Total: ~35 working days
 
