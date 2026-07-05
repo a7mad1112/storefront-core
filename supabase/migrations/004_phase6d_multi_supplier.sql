@@ -96,3 +96,6 @@ GRANT SELECT ON public_products TO anon;
 GRANT SELECT ON public_products TO authenticated;
 GRANT EXECUTE ON FUNCTION get_store_products(text, text) TO anon;
 GRANT EXECUTE ON FUNCTION get_store_products(text, text) TO authenticated;
+
+-- 6. Grant SELECT on new columns in products to anon (since products uses column-level grants)
+GRANT SELECT (name_en, name_he, description_en, description_he, supplier_code) ON products TO anon;

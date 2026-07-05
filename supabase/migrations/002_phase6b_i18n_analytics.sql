@@ -96,3 +96,6 @@ WHERE p.is_active = true AND c.is_active = true;
 
 GRANT SELECT ON public_products TO anon;
 GRANT SELECT ON public_products TO authenticated;
+
+-- 7. Grant SELECT on multilingual columns in products to anon (since products uses column-level grants)
+GRANT SELECT (name_en, name_he, description_en, description_he) ON products TO anon;

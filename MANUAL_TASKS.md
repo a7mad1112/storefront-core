@@ -7,7 +7,7 @@ This document tracks all manual steps, database migrations, and configurations t
 ## 📌 Phase 6b: Internationalization, Homepage Polish & Visitor Analytics
 
 ### 1. Database Migration (Supabase SQL Editor)
-- [ ] **Run Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/002_phase6b_i18n_analytics.sql` (if not already applied to your production database).
+- [x] **Run Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/002_phase6b_i18n_analytics.sql` (if not already applied to your production database).
   - This adds multilingual columns (`name_en`, `name_he`, `description_en`, `description_he`) to `products`, `categories`, and `brands`.
   - It also creates the `analytics_visits` table with appropriate Row Level Security (RLS) policies.
 
@@ -25,7 +25,7 @@ This document tracks all manual steps, database migrations, and configurations t
 ## 📌 Phase 6c: Shared Database Multi-Tenancy (`store_id` Client Isolation)
 
 ### 1. Database Migration (Supabase SQL Editor)
-- [ ] **Run Phase 6c Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/003_phase6c_client_isolation.sql`.
+- [x] **Run Phase 6c Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/003_phase6c_client_isolation.sql`.
   - This adds the `store_id` column to `margins` and `product_availability_overrides` (defaulting to `'eloria'`).
   - It creates composite unique constraints `UNIQUE(store_id, category_id)` and `UNIQUE(store_id, product_supplier_id)`.
   - It creates the Postgres RPC `get_store_products(p_store_id)` for dynamic catalog querying per store instance.
@@ -39,7 +39,7 @@ This document tracks all manual steps, database migrations, and configurations t
 ## 📌 Phase 6d: Multi-Supplier Architecture
 
 ### 1. Database Migration (Supabase SQL Editor)
-- [ ] **Run Phase 6d Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/004_phase6d_multi_supplier.sql`.
+- [x] **Run Phase 6d Migration SQL**: Open your Supabase Dashboard → **SQL Editor** → create a new query and paste/run the contents of `supabase/migrations/004_phase6d_multi_supplier.sql`.
   - This adds the `supplier_code` column (defaulting to `'gbstore'`) to `products`, `categories`, and `brands`, and creates indexes on them.
   - It drops and recreates `public_products` view to include `supplier_code`.
   - It drops and recreates the Postgres RPC `get_store_products(p_store_id, p_supplier_code)` to support optional filtering by supplier.
