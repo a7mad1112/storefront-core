@@ -637,3 +637,45 @@ ul, ol {
   gap: 0.5rem;
 }
 
+/* ── Size Selector (Phase 8b-2) ── */
+.size-selector-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.size-btn {
+  min-width: 42px;
+  height: 36px;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.size-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.size-btn.selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(197, 152, 80, 0.35);
+}
+
+.size-btn.unavailable {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+

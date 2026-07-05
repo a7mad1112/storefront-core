@@ -38,8 +38,13 @@ export function CartProvider({ children, lang = 'ar', dict }) {
     }
   }, [items, isLoaded]);
 
-  const addItem = (product, quantity = 1, selectedColor = null) => {
-    const cartItemId = selectedColor ? `${product.id}:::${selectedColor.color_name}` : product.id;
+  const addItem = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    // Unique cart key: product + color + size (any combination is a distinct line item)
+    const cartItemId = [
+      product.id,
+      selectedColor?.color_name ?? '',
+      selectedSize ?? '',
+    ].filter(Boolean).join(':::') || product.id;
     const itemImage = selectedColor?.image_url || product.image_url;
 
     setItems((prev) => {
@@ -47,15 +52,14 @@ export function CartProvider({ children, lang = 'ar', dict }) {
         (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === cartItemId)
       );
       if (existingIndex > -1) {
-        // ✅ Create a new array + new object (immutable) — prevents React Strict Mode
-        //    double-invocation from mutating the same object reference twice.
+        // ✅ Immutable update — React Strict Mode safe
         return prev.map((item, idx) =>
           idx === existingIndex
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       } else {
-        return [...prev, { ...product, cartItemId, selectedColor, image_url: itemImage, quantity }];
+        return [...prev, { ...product, cartItemId, selectedColor, selectedSize, image_url: itemImage, quantity }];
       }
     });
     setIsDrawerOpen(true);
@@ -102,8 +106,9 @@ export function CartProvider({ children, lang = 'ar', dict }) {
       const displayName = (lang === 'en' && item.name_en) ? item.name_en :
                           (lang === 'he' && item.name_he) ? item.name_he :
                           item.name;
-      const colorText = item.selectedColor ? ` (${colorLabel}: ${item.selectedColor.color_name})` : '';
-      text += `${index + 1}. ${displayName}${colorText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity)}\n`;
+      const colorText = item.selectedColor ? ` (اللون: ${item.selectedColor.color_name})` : '';
+      const sizeText = item.selectedSize ? ` (القياس: ${item.selectedSize})` : '';
+      text += `${index + 1}. ${displayName}${colorText}${sizeText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity)}\n`;
     });
     text += `\n${totalLabel}: ${formatPrice(totalPrice)}\n\n${thanks}`;
 

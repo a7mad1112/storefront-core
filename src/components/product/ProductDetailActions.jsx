@@ -11,6 +11,7 @@ const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023
 export default function ProductDetailActions({ product, category, parentCategory, lang = 'ar', dict = {} }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [currentImage, setCurrentImage] = useState(product.image_url || '/placeholder.webp');
   const { addItem } = useCart();
 
@@ -49,11 +50,13 @@ export default function ProductDetailActions({ product, category, parentCategory
 
   const handleDirectWhatsAppBuy = () => {
     const colorText = selectedColor ? `🎨 ${tCart.colorLabel || 'اللون'}: ${selectedColor.color_name}\n` : '';
+    const sizeText = selectedSize ? `📐 ${tCart.sizeLabel || 'القياس'}: ${selectedSize}\n` : '';
     const imgUrl = selectedColor?.image_url || product.image_url || '';
 
     const text = `${tCart.orderIntro || 'مرحباً، أريد طلب هذا المنتج من متجر Eloria FASHION:'}\n\n` +
       `📦 الاسم: ${displayName}\n` +
       colorText +
+      sizeText +
       `🔢 العدد: ${quantity}\n` +
       `💰 السعر الإجمالي: ${formatPrice((product.retail_price || 0) * quantity)}\n\n` +
       `رابط الصورة: ${imgUrl}\n\n${tCart.thanks || 'شكراً!'}`;
@@ -62,7 +65,7 @@ export default function ProductDetailActions({ product, category, parentCategory
   };
 
   const handleAddToCart = () => {
-    addItem(product, quantity, selectedColor);
+    addItem(product, quantity, selectedColor, selectedSize);
   };
 
   return (
@@ -192,7 +195,10 @@ export default function ProductDetailActions({ product, category, parentCategory
         <ColorSwatchSelector
           colorVariants={product.color_variants}
           mainImage={product.image_url || '/placeholder.webp'}
-          onColorSelect={setSelectedColor}
+          onColorSelect={(color, size) => {
+            setSelectedColor(color);
+            setSelectedSize(size ?? null);
+          }}
           onImageChange={setCurrentImage}
         />
 

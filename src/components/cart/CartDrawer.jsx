@@ -84,10 +84,19 @@ export default function CartDrawer() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <p style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.3 }}>{displayName}</p>
-                        {item.selectedColor && (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 700, display: 'inline-block', marginTop: '4px', backgroundColor: 'rgba(197, 152, 80, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
-                            🎨 {item.selectedColor.color_name}
-                          </span>
+                        {(item.selectedColor || item.selectedSize) && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                            {item.selectedColor && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 700, backgroundColor: 'rgba(197, 152, 80, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
+                                🎨 {item.selectedColor.color_name}
+                              </span>
+                            )}
+                            {item.selectedSize && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 700, backgroundColor: 'rgba(197, 152, 80, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
+                                📐 {item.selectedSize}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                       <button

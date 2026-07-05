@@ -1346,9 +1346,9 @@ New JSONB structure for `color_variants` in the `products` table (stored in the 
 > [!NOTE]
 > GBStore products continue to work unchanged since `sizes` is optional. Balagan/Sakher products will have `sizes` populated.
 
-- [ ] **`ColorSwatchSelector.jsx`**: After selecting a color, if `variant.sizes` exists, render a size selector row below the color row. Available sizes are clickable buttons; unavailable sizes are grayed out with strikethrough.
-- [ ] **`CartContext.js` `addItem`**: Extend `cartItemId` to include size: `product.id:::color_name:::size` so the same color in different sizes is a separate cart entry.
-- [ ] **Cart Drawer & WhatsApp message**: Show selected size in the cart line item and in the WhatsApp order text (e.g. "القياس: 40").
+- [x] **`ColorSwatchSelector.jsx`**: After selecting a color, if `variant.sizes` exists, render a size selector row below the color row. Available sizes are clickable buttons; unavailable sizes are grayed out with strikethrough.
+- [x] **`CartContext.js` `addItem`**: Extend `cartItemId` to include size: `product.id:::color_name:::size` so the same color in different sizes is a separate cart entry.
+- [x] **Cart Drawer & WhatsApp message**: Show selected size in the cart line item and in the WhatsApp order text (e.g. "القياس: 40").
 
 ---
 
