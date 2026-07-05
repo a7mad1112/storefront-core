@@ -27,7 +27,7 @@ RETURNS TABLE (
     slug TEXT,
     description TEXT,
     image_url TEXT,
-    additional_images JSONB,
+    additional_images TEXT[],
     quantity INTEGER,
     is_available BOOLEAN,
     tags TEXT[],
