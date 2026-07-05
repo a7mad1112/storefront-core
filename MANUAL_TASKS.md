@@ -15,10 +15,10 @@ This document tracks all manual steps, database migrations, and configurations t
 - [x] **Populate Product/Category Translations**: The system currently falls back to Arabic if English or Hebrew names are empty. When available, manually populate `name_en` and `name_he` in your database (or update the scraper pipeline to auto-translate) so English and Hebrew visitors see translated product and brand names.
 
 ### 3. Verification & Testing
-- [ ] **Test Language Switcher**: Go to the website header and click between **AR**, **EN**, and **HE**. Verify that:
+- [x] **Test Language Switcher**: Go to the website header and click between **AR**, **EN**, and **HE**. Verify that:
   - The URL switches between `/ar/...`, `/en/...`, and `/he/...`.
   - The layout direction switches between RTL (Right-to-Left for Arabic/Hebrew) and LTR (Left-to-Right for English).
-- [ ] **Verify Visitor Analytics**: Browse a few pages on the site, then log into the Admin Dashboard (`/ar/admin`). Scroll down to **إحصائيات الزوار والتصفح (Visitor Analytics)** and verify that your visits appear under the Day/Week/Month tabs and Top Visited Pages.
+- [x] **Verify Visitor Analytics**: Browse a few pages on the site, then log into the Admin Dashboard (`/ar/admin`). Scroll down to **إحصائيات الزوار والتصفح (Visitor Analytics)** and verify that your visits appear under the Day/Week/Month tabs and Top Visited Pages.
 
 ---
 
@@ -31,7 +31,7 @@ This document tracks all manual steps, database migrations, and configurations t
   - It creates the Postgres RPC `get_store_products(p_store_id)` for dynamic catalog querying per store instance.
 
 ### 2. Multi-Instance Client Configuration
-- [ ] **Cloning for a New Store Client**: When deploying a second store instance (e.g., Client B) against the same Supabase backend:
+- [x] **Cloning for a New Store Client**: When deploying a second store instance (e.g., Client B) against the same Supabase backend:
   - When Client B's admin logs into their admin panel, any custom price margins or availability overrides they save will be tagged with `store_id = 'client_b'` and will not affect Eloria's storefront!
 
 ---
@@ -45,12 +45,12 @@ This document tracks all manual steps, database migrations, and configurations t
   - It drops and recreates the Postgres RPC `get_store_products(p_store_id, p_supplier_code)` to support optional filtering by supplier.
 
 ### 2. Scraper Configuration (for Additional Suppliers)
-- [ ] **Configuring a Second Supplier**: When adding a new supplier scraper:
+- [x] **Configuring a Second Supplier**: When adding a new supplier scraper:
   - In your scraper environment variables (or GitHub Actions secrets), set `SUPPLIER_CODE="supplier_b"`, along with the new supplier's base URL and credentials.
   - When the scraper runs, all categories, brands, and products it extracts will be upserted with `supplier_code = 'supplier_b'`.
 
 ### 3. Storefront Multi-Supplier Switcher
-- [ ] **Enable Storefront Switcher**: In `.env.local` (or Vercel / hosting environment variables), configure:
+- [x] **Enable Storefront Switcher**: In `.env.local` (or Vercel / hosting environment variables), configure:
   - `NEXT_PUBLIC_SUPPORTED_SUPPLIERS="gbstore,supplier_b"`
   - `NEXT_PUBLIC_SUPPLIER_NAMES='{"gbstore": "جي بي ستور (GB Store)", "supplier_b": "مورد آخر (Supplier B)"}'`
   - Once multiple suppliers are listed, a supplier switcher bar will automatically appear below the site header, allowing visitors to view all products or filter by specific supplier.
