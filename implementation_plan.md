@@ -1376,12 +1376,12 @@ New JSONB structure for `color_variants` in the `products` table (stored in the 
 - **No JSON payload** — all data is in the rendered HTML.
 
 **Scraper tasks:**
-- [ ] **`scraper/suppliers/balagan/config.py`**: Add Balagan config (`BASE_URL`, `SUPPLIER_CODE='balagan'`, credentials).
-- [ ] **`scraper/suppliers/balagan/extractor.py`**: Parse category list, product list pages (with pagination), and product detail page. Extract:
+- [x] **`scraper/suppliers/balagan/config.py`**: Add Balagan config (`BASE_URL`, `SUPPLIER_CODE='balagan'`, credentials).
+- [x] **`scraper/suppliers/balagan/extractor.py`**: Parse category list, product list pages (with pagination), and product detail page. Extract:
   - Product: `supplier_id`, `name`, `description`, `wholesale_price`, `image_url`, `category`
   - Colors: For each color `<label>`: `color_name` (from text label), `image_url` (from `<img src>`), `is_available: true` (only available colors are in DOM).
   - Sizes per color: For each color's size container `#cs{colorIndex}`: parse `input[type=radio]` — extract `size` value from radio label text, `is_available` = true if clickable (no `disabled`), false if disabled/crossed.
-- [ ] **`scraper/suppliers/balagan/sync.py`**: Upsert products with `supplier_code='balagan'`, storing colors+sizes in `color_variants` JSONB.
+- [x] **`scraper/suppliers/balagan/sync.py`**: Upsert products with `supplier_code='balagan'`, storing colors+sizes in `color_variants` JSONB.
 
 ---
 
@@ -1397,12 +1397,12 @@ New JSONB structure for `color_variants` in the `products` table (stored in the 
 - **No JSON payload** — same pattern as Balagan.
 
 **Scraper tasks:**
-- [ ] **`scraper/suppliers/sakher/config.py`**: Add Sakher config (`BASE_URL='https://sakherbrands.com'`, `SUPPLIER_CODE='sakher'`, credentials).
-- [ ] **`scraper/suppliers/sakher/extractor.py`**: Parse categories, product list (with pagination for both `product.cat.{id}.{page}` and `product.all..{page}`), and product detail. Extract:
+- [x] **`scraper/suppliers/sakher/config.py`**: Add Sakher config (`BASE_URL='https://sakherbrands.com'`, `SUPPLIER_CODE='sakher'`, credentials).
+- [x] **`scraper/suppliers/sakher/extractor.py`**: Parse categories, product list (with pagination for both `product.cat.{id}.{page}` and `product.all..{page}`), and product detail. Extract:
   - Product: `supplier_id`, `name`, `description`, `wholesale_price`, `image_url`, `category`
   - Colors: For each `<label class="color-selector">`: `color_name` (from image alt or sibling text), `image_url`, `is_available` = true (has `<label>` wrapper), false (only `<span>` — crossed out).
   - Sizes per color: For each `#cs{colorId}` div: active size = `<label class="color-selector">`, out-of-stock size = plain `<span>` without the label wrapper.
-- [ ] **`scraper/suppliers/sakher/sync.py`**: Upsert products with `supplier_code='sakher'`, storing colors+sizes in `color_variants` JSONB.
+- [x] **`scraper/suppliers/sakher/sync.py`**: Upsert products with `supplier_code='sakher'`, storing colors+sizes in `color_variants` JSONB.
 
 ---
 

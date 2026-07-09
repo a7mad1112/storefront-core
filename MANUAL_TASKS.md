@@ -54,3 +54,16 @@ This document tracks all manual steps, database migrations, and configurations t
   - `NEXT_PUBLIC_SUPPORTED_SUPPLIERS="gbstore,supplier_b"`
   - `NEXT_PUBLIC_SUPPLIER_NAMES='{"gbstore": "جي بي ستور (GB Store)", "supplier_b": "مورد آخر (Supplier B)"}'`
   - Once multiple suppliers are listed, a supplier switcher bar will automatically appear below the site header, allowing visitors to view all products or filter by specific supplier.
+
+---
+
+## 📌 Phase 8d: Balagan Scraper (Shoes — Colors + Sizes)
+
+### 1. Database Migrations
+- **None required!** The database schema (`supplier_code` and `color_variants` JSONB) was already set up in previous migrations (`004_phase6d_multi_supplier.sql`). No SQL queries need to be run in Supabase.
+
+### 2. Scraper Execution & Credentials
+- When executing the Balagan scraper (`py -m scraper.suppliers.balagan.sync` or via automated cron jobs), ensure the following environment variables are configured in `.env` or GitHub Actions secrets:
+  - `BALAGAN_PHONE` (or `SUPPLIER_PHONE`): Phone number for logging into `balagan.ps`
+  - `BALAGAN_PASSWORD` (or `SUPPLIER_PASSWORD`): Password for logging into `balagan.ps`
+  - All existing Supabase (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`) and Cloudflare R2 credentials.

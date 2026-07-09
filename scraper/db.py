@@ -316,10 +316,10 @@ def diff_product(existing, scraped):
     if existing_qty != scraped_qty:
         checks.append(True)
 
-    # Color variants change (compare as JSON strings for simplicity)
+    # Color variants change (compare as lists/dicts of sizes and colors)
     existing_colors = existing.get("color_variants") or []
     scraped_colors = scraped.get("color_variants") or []
-    if len(existing_colors) != len(scraped_colors):
+    if existing_colors != scraped_colors:
         checks.append(True)
 
     return any(checks)

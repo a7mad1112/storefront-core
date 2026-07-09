@@ -299,12 +299,12 @@ def process_product_images(session, r2_client, config, product, existing_image_u
         if webp_bytes:
             result = upload_to_r2(r2_client, bucket, key, webp_bytes)
             if result:
-                r2_color_variants.append({
-                    "color_name": variant.get("color_name", f"لون {idx + 1}"),
-                    "image_url": public_url,
-                    "supplier_image_url": variant_url,
-                    "is_available": variant.get("is_available", True),
-                })
+                variant_data = dict(variant)
+                variant_data["color_name"] = variant.get("color_name", f"لون {idx + 1}")
+                variant_data["image_url"] = public_url
+                variant_data["supplier_image_url"] = variant_url
+                variant_data["is_available"] = variant.get("is_available", True)
+                r2_color_variants.append(variant_data)
 
     return main_image_url, additional_r2_urls, r2_color_variants
 

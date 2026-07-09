@@ -272,10 +272,13 @@ def extract_products_for_category(session, config, category):
     seen_product_ids = set()
 
     while True:
-        # Build URL (page 1 has no page param, page 2+ appends &page=N)
-        url = f"{base_url}/?app=product.cat.{cat_id}"
-        if page > 1:
-            url += f"&page={page}"
+        # Build URL (page 1 has no page param, page 2+ appends &page=N or ..N)
+        if cat_id == "all":
+            url = f"{base_url}/?app=product.all" if page == 1 else f"{base_url}/?app=product.all..{page}"
+        else:
+            url = f"{base_url}/?app=product.cat.{cat_id}"
+            if page > 1:
+                url += f"&page={page}"
 
         logger.info(
             "Fetching category '%s' (id=%s), page %d", cat_name, cat_id, page
@@ -488,7 +491,7 @@ def _has_next_page(soup, current_page):
     return False
 
 
-def extract_product_details(session, config, supplier_id):
+def extract_product_details(session, config, supplier_id, product=None):
     """
     Fetch the individual product detail page for richer data
     (description, quantity, color variants, brand).

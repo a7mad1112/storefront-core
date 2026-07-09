@@ -112,7 +112,7 @@ def _process_single_product(
 
     if scrape_details and needs_detail:
         # Fetch detail page (has its own 3-retry logic internally)
-        details = extract_product_details(session, config, sid)
+        details = extract_product_details(session, config, sid, product=product)
         product["description"] = details.get("description")
         product["quantity"] = details.get("quantity")
         product["color_variants"] = details.get("color_variants", [])
@@ -244,7 +244,7 @@ def main():
 
                             if scrape_details and needs_detail:
                                 # Fetch detail page (has its own retry logic)
-                                details = extract_product_details(session, config, sid)
+                                details = extract_product_details(session, config, sid, product=product)
                                 product["description"] = details.get("description")
                                 product["quantity"] = details.get("quantity")
                                 product["color_variants"] = details.get("color_variants", [])
