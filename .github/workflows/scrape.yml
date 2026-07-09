@@ -1,16 +1,26 @@
 # .github/workflows/scrape.yml
-# GB Store — Daily Product Sync from gbstore.ps
-name: Daily Product Sync
+# Multi-Supplier Daily Product Sync (GB Store, Balagan, Sakher Brands)
+name: Daily Multi-Supplier Product Sync
 
 on:
   schedule:
     - cron: '0 3 * * *'        # Daily at 3 AM UTC (6 AM Palestine time)
   workflow_dispatch:              # Manual trigger button in GitHub UI
+    inputs:
+      supplier:
+        description: 'Supplier to run (gbstore, balagan, sakher, or all)'
+        required: false
+        default: 'all'
+      parallel:
+        description: 'Run scrapers concurrently (--parallel)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repository
@@ -26,11 +36,27 @@ jobs:
       - name: Install dependencies
         run: pip install -r scraper/requirements.txt
 
-      - name: Run product sync
-        run: python scraper/sync.py
+      - name: Run multi-supplier product sync
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SUPPLIER_ARG="${{ github.event.inputs.supplier || 'all' }}"
+            PARALLEL_FLAG=""
+            if [ "${{ github.event.inputs.parallel }}" = "true" ]; then
+              PARALLEL_FLAG="--parallel"
+            fi
+            python -m scraper.run_all --supplier $SUPPLIER_ARG $PARALLEL_FLAG
+          else
+            python -m scraper.run_all --supplier all
+          fi
         env:
           SUPPLIER_PHONE: ${{ secrets.SUPPLIER_PHONE }}
           SUPPLIER_PASSWORD: ${{ secrets.SUPPLIER_PASSWORD }}
+          GBSTORE_PHONE: ${{ secrets.GBSTORE_PHONE }}
+          GBSTORE_PASSWORD: ${{ secrets.GBSTORE_PASSWORD }}
+          BALAGAN_PHONE: ${{ secrets.BALAGAN_PHONE }}
+          BALAGAN_PASSWORD: ${{ secrets.BALAGAN_PASSWORD }}
+          SAKHER_PHONE: ${{ secrets.SAKHER_PHONE }}
+          SAKHER_PASSWORD: ${{ secrets.SAKHER_PASSWORD }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}

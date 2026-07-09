@@ -1064,17 +1064,17 @@ CREATE TABLE analytics_visits (
 > **HIGH PRIORITY TASK (FIRST THING TO BE DONE)**: The scraper currently takes 12+ hours to complete after adding brands and color variant extraction in Phase 6a (previously ~2 hours). We must audit and fix this performance bottleneck before proceeding with other tasks.
 
 - [x] **CRITICAL: Scraper Performance & 12-Hour Bug Fix** — Audit why `sync.py` takes 12+ hours. Implement optimizations: skip detail page scraping when product/swatches haven't changed, add request concurrency/asyncio, optimize HTTP session reuse, and reduce redundant R2 image checks/uploads.
-- [ ] **DB Migration**: Add multilingual columns (`name_en`, `name_he`, etc.) to `products`, `categories`, `brands`; add `analytics_visits` table
+- [x] **DB Migration**: Add multilingual columns (`name_en`, `name_he`, etc.) to `products`, `categories`, `brands`; add `analytics_visits` table
 - [x] **Scraper: Translation & Retries** — On product insert/update, populate translations; implement 3-try retry mechanism with backoff for failed image downloads and network requests
-- [ ] **Next.js i18n config** — Set up locale routing (`/ar`, `/en`, `/he`); configure `dir` attribute per locale in root layout
-- [ ] **Translation context** — React context or hook (`useTranslation`) to serve the correct locale's strings throughout the app
-- [ ] **Language switcher component** — Header `AR / EN / HE` toggle; persists preference to cookie; redirects to locale-prefixed URL
-- [ ] **All UI strings localized** — Replace hardcoded Arabic strings with translation keys across all pages and components
-- [ ] **`CategoriesSlider`** — Horizontal scroll carousel for categories on homepage
+- [x] **Next.js i18n config** — Set up locale routing (`/ar`, `/en`, `/he`); configure `dir` attribute per locale in root layout
+- [x] **Translation context** — React context or hook (`useTranslation`) to serve the correct locale's strings throughout the app
+- [x] **Language switcher component** — Header `AR / EN / HE` toggle; persists preference to cookie; redirects to locale-prefixed URL
+- [x] **All UI strings localized** — Replace hardcoded Arabic strings with translation keys across all pages and components
+- [x] **`CategoriesSlider`** — Horizontal scroll carousel for categories on homepage
 - [x] **`BrandsSlider`** — Horizontal scroll carousel for brands on homepage
-- [ ] **Smart CTA hide logic** — Conditionally render "عرض كل منتجات القسم" only when section has > 4 products
-- [ ] **`analytics_visits` beacon** — Lightweight visit tracker (page path + session ID) fired on route change
-- [ ] **Admin: Visitor Analytics Dashboard** — Charts (line/bar) with day/week/month filters in `/admin`
+- [x] **Smart CTA hide logic** — Conditionally render "عرض كل منتجات القسم" only when section has > 4 products
+- [x] **`analytics_visits` beacon** — Lightweight visit tracker (page path + session ID) fired on route change
+- [x] **Admin: Visitor Analytics Dashboard** — Charts (line/bar) with day/week/month filters in `/admin`
 
 ---
 
@@ -1408,8 +1408,8 @@ New JSONB structure for `color_variants` in the `products` table (stored in the 
 
 ### Phase 8f: Unified Multi-Supplier Runner
 
-- [ ] **`scraper/run_all.py`**: A single orchestrator script that sequentially (or in parallel) runs GBStore, Balagan, and Sakher scrapers in one execution. Supports `--supplier gbstore|balagan|sakher|all` argument.
-- [ ] **GitHub Actions / Cron**: Update the scheduled job to call `run_all.py --supplier all` daily.
+- [x] **`scraper/run_all.py`**: A single orchestrator script that sequentially (or in parallel) runs GBStore, Balagan, and Sakher scrapers in one execution. Supports `--supplier gbstore|balagan|sakher|all` argument.
+- [x] **GitHub Actions / Cron**: Update the scheduled job to call `run_all.py --supplier all` daily.
 
 ---
 

@@ -25,11 +25,10 @@ def load_config():
         load_dotenv(root_dir / ".env.local")
         load_dotenv(root_dir / ".env")
         load_dotenv(Path(__file__).resolve().parent / ".env")
-    required_vars = {
-        # Supplier credentials
-        "SUPPLIER_PHONE": "Phone number for gbstore.ps login",
-        "SUPPLIER_PASSWORD": "Password for gbstore.ps login",
+    phone = os.environ.get("GBSTORE_PHONE") or os.environ.get("SUPPLIER_PHONE")
+    password = os.environ.get("GBSTORE_PASSWORD") or os.environ.get("SUPPLIER_PASSWORD")
 
+    required_vars = {
         # Supabase
         "SUPABASE_URL": "Supabase project URL (e.g., https://xxx.supabase.co)",
         "SUPABASE_SERVICE_KEY": "Supabase service_role key (bypasses RLS)",
@@ -44,6 +43,16 @@ def load_config():
 
     config = {}
     missing = []
+
+    if not phone:
+        missing.append("  - GBSTORE_PHONE or SUPPLIER_PHONE: Phone number for gbstore.ps login")
+    else:
+        config["SUPPLIER_PHONE"] = phone
+
+    if not password:
+        missing.append("  - GBSTORE_PASSWORD or SUPPLIER_PASSWORD: Password for gbstore.ps login")
+    else:
+        config["SUPPLIER_PASSWORD"] = password
 
     for var, description in required_vars.items():
         value = os.environ.get(var)

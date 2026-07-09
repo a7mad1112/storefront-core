@@ -67,3 +67,19 @@ This document tracks all manual steps, database migrations, and configurations t
   - `BALAGAN_PHONE` (or `SUPPLIER_PHONE`): Phone number for logging into `balagan.ps`
   - `BALAGAN_PASSWORD` (or `SUPPLIER_PASSWORD`): Password for logging into `balagan.ps`
   - All existing Supabase (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`) and Cloudflare R2 credentials.
+
+---
+
+## 📌 Phase 8f: Unified Multi-Supplier Runner (`scraper/run_all.py`)
+
+### 1. Local Scraper Execution
+- You can run all suppliers (`gbstore`, `balagan`, `sakher`) cleanly in one execution:
+  - **Sequential execution (default):** `py -m scraper.run_all --supplier all`
+  - **Parallel execution:** `py -m scraper.run_all --supplier all --parallel`
+  - **Specific suppliers:** `py -m scraper.run_all --supplier gbstore balagan`
+
+### 2. GitHub Actions Secrets Configuration
+- When using `.github/workflows/scrape.yml` for automated daily cron syncs, verify that your repository **Settings → Secrets and variables → Actions** includes credentials for each supplier:
+  - `GBSTORE_PHONE` & `GBSTORE_PASSWORD` (or `SUPPLIER_PHONE` & `SUPPLIER_PASSWORD` fallback)
+  - `BALAGAN_PHONE` & `BALAGAN_PASSWORD`
+  - `SAKHER_PHONE` & `SAKHER_PASSWORD`
