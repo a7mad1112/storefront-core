@@ -9,6 +9,12 @@ import unicodedata
 
 from supabase import create_client
 
+try:
+    from scraper.translator import translate_entity
+except ImportError:
+    def translate_entity(data, **kwargs):
+        return data
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,6 +92,7 @@ def upsert_categories(supabase, categories):
                 "image_url": cat.get("image_url"),
                 "is_active": True,
             }
+            data = translate_entity(data, name_key="name", desc_key=None)
 
             # Upsert by supplier_code,supplier_id
             result = (
@@ -154,6 +161,7 @@ def upsert_brands(supabase, brands):
                 "image_url": brand.get("image_url"),
                 "is_active": True,
             }
+            data = translate_entity(data, name_key="name", desc_key=None)
 
             result = (
                 supabase.table("brands")
@@ -262,6 +270,7 @@ def upsert_product(supabase, product, category_id_map, brand_id_map=None):
         "tags": product.get("tags", []),
         "color_variants": product.get("r2_color_variants", []),
     }
+    data = translate_entity(data, name_key="name", desc_key="description")
 
     if category_id:
         data["category_id"] = category_id

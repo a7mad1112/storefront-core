@@ -1296,7 +1296,7 @@ Support multiple suppliers (e.g. `gbstore`, `shoes_store`, etc.) sharing the exa
 - [x] **Storefront Supplier Switcher**: Create `SupplierContext`; render friendly supplier toggle tabs when > 1 supplier is supported; filter all catalog queries by active supplier
 
 ### Phase 7: Future Enhancements & Automated Scraper Translation (Optional / Planned)
-- [ ] **Automated Scraper Translation**: Integrate a translation library (e.g., `deep-translator` or AI API) into `scraper/extractor.py` or `scraper/db.py` to automatically translate newly scraped category, brand, and product names/descriptions into English (`name_en`, `description_en`) and Hebrew (`name_he`, `description_he`) during scraping, ensuring zero runtime overhead and perfect SEO.
+- [x] **Automated Scraper Translation**: Integrate a translation library (e.g., `deep-translator` or AI API) into `scraper/extractor.py` or `scraper/db.py` to automatically translate newly scraped category, brand, and product names/descriptions into English (`name_en`, `description_en`) and Hebrew (`name_he`, `description_he`) during scraping, ensuring zero runtime overhead and perfect SEO.
 
 ---
 
