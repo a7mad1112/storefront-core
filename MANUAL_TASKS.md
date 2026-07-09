@@ -11,8 +11,8 @@ This document tracks all manual steps, database migrations, and configurations t
   - This adds multilingual columns (`name_en`, `name_he`, `description_en`, `description_he`) to `products`, `categories`, and `brands`.
   - It also creates the `analytics_visits` table with appropriate Row Level Security (RLS) policies.
 
-### 2. Translations Data Population
-- [x] **Populate Product/Category Translations**: The system currently falls back to Arabic if English or Hebrew names are empty. When available, manually populate `name_en` and `name_he` in your database (or update the scraper pipeline to auto-translate) so English and Hebrew visitors see translated product and brand names.
+### 2. Translations Data Population (`scraper/backfill_translations.py`)
+- [x] **Auto-Populate Product/Category Translations**: The scraper now automatically translates all newly scraped or updated records. To immediately backfill English (`name_en`, `description_en`) and Hebrew (`name_he`, `description_he`) translations for existing catalog items in your Supabase database without waiting for a re-scrape, run: `py -m scraper.backfill_translations`
 
 ### 3. Verification & Testing
 - [ ] **Test Language Switcher**: Go to the website header and click between **AR**, **EN**, and **HE**. Verify that:
