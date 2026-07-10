@@ -39,24 +39,25 @@ export default function ProductDetailActions({ product, category, parentCategory
         }))
       : [];
 
-  // Collect all gallery thumbnails
+  // Collect all gallery thumbnails cleanly without duplicates between main photo and options
   const thumbnails = [];
-  if (product.image_url) {
-    thumbnails.push({ url: product.image_url, label: dict.common?.home || 'الرئيسية' });
-  }
   if (effectiveColorVariants.length > 0) {
     effectiveColorVariants.forEach((v, idx) => {
       if (v.image_url && !thumbnails.some((t) => t.url === v.image_url)) {
-        thumbnails.push({ url: v.image_url, label: v.color_name || `${tProduct.colors || 'لون'} ${idx + 1}` });
+        thumbnails.push({ url: v.image_url, label: v.color_name || `خيار ${idx + 1}`, variant: v });
       }
     });
-  }
-  if (product.additional_images && product.additional_images.length > 0) {
-    product.additional_images.forEach((url, idx) => {
-      if (url && !thumbnails.some((t) => t.url === url)) {
-        thumbnails.push({ url, label: `صورة ${idx + 1}` });
-      }
-    });
+  } else {
+    if (product.image_url) {
+      thumbnails.push({ url: product.image_url, label: dict.common?.home || 'الرئيسية' });
+    }
+    if (product.additional_images && product.additional_images.length > 0) {
+      product.additional_images.forEach((url, idx) => {
+        if (url && !thumbnails.some((t) => t.url === url)) {
+          thumbnails.push({ url, label: `صورة ${idx + 1}` });
+        }
+      });
+    }
   }
 
   const handleDirectWhatsAppBuy = () => {
@@ -135,28 +136,45 @@ export default function ProductDetailActions({ product, category, parentCategory
                     } else if (thumb.url !== product.image_url) {
                       setSelectedColor({ color_name: thumb.label || `خيار ${idx + 1}`, image_url: thumb.url });
                     } else {
-                      setSelectedColor(null);
+                      setSelectedColor(effectiveColorVariants.length > 0 ? effectiveColorVariants[0] : null);
                     }
                   }}
                   style={{
-                    width: '64px',
-                    height: '64px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '68px',
                     borderRadius: 'var(--radius-md)',
                     border: `2px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border)'}`,
                     backgroundColor: 'var(--color-bg-secondary)',
                     overflow: 'hidden',
                     flexShrink: 0,
-                    padding: '2px',
+                    padding: '3px',
                     transition: 'all var(--transition-fast)',
-                    opacity: isActive ? 1 : 0.7,
+                    opacity: isActive ? 1 : 0.75,
+                    cursor: 'pointer',
                   }}
                   title={thumb.label}
                 >
-                  <img
-                    src={thumb.url}
-                    alt={thumb.label}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
+                  <div style={{ width: '60px', height: '60px', overflow: 'hidden', borderRadius: '4px' }}>
+                    <img
+                      src={thumb.url}
+                      alt={thumb.label}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                    marginTop: '2px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '62px',
+                  }}>
+                    {thumb.label}
+                  </span>
                 </button>
               );
             })}
@@ -228,6 +246,7 @@ export default function ProductDetailActions({ product, category, parentCategory
         {/* Color Swatch Selector */}
         <ColorSwatchSelector
           colorVariants={effectiveColorVariants}
+          selectedColor={selectedColor || (effectiveColorVariants.length > 0 ? effectiveColorVariants[0] : null)}
           mainImage={product.image_url || '/placeholder.webp'}
           onColorSelect={(color, size) => {
             setSelectedColor(color);

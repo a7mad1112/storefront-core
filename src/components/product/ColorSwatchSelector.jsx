@@ -9,13 +9,16 @@ import React, { useState } from 'react';
  * - If a color has a `sizes` array, a size selector appears after picking a color
  * - Emits selected color AND selected size via onColorSelect(variant, size) callback
  */
-export default function ColorSwatchSelector({ colorVariants = [], mainImage, onColorSelect, onImageChange }) {
+export default function ColorSwatchSelector({ colorVariants = [], selectedColor = null, mainImage, onColorSelect, onImageChange }) {
   const [selectedColorIndex, setSelectedColorIndex] = useState(-1);
   const [selectedSize, setSelectedSize] = useState(null);
 
   if (!colorVariants || colorVariants.length === 0) return null;
 
-  const selectedVariant = selectedColorIndex >= 0 ? colorVariants[selectedColorIndex] : null;
+  // Sync with controlled selectedColor prop if provided
+  const propIndex = selectedColor ? colorVariants.findIndex(v => v.image_url === selectedColor.image_url || v.color_name === selectedColor.color_name) : -1;
+  const activeColorIndex = propIndex >= 0 ? propIndex : (selectedColorIndex >= 0 ? selectedColorIndex : -1);
+  const selectedVariant = activeColorIndex >= 0 ? colorVariants[activeColorIndex] : null;
   const hasSizes = selectedVariant?.sizes && selectedVariant.sizes.length > 0;
 
   const handleColorSelect = (variant, index) => {
@@ -33,7 +36,6 @@ export default function ColorSwatchSelector({ colorVariants = [], mainImage, onC
   const handleSizeSelect = (sizeObj) => {
     if (!sizeObj.is_available) return;
     setSelectedSize(sizeObj.size);
-    // Emit updated color+size selection
     if (onColorSelect) onColorSelect(selectedVariant, sizeObj.size);
   };
 
@@ -52,7 +54,7 @@ export default function ColorSwatchSelector({ colorVariants = [], mainImage, onC
         <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
           اختر اللون:
         </span>
-        {selectedColorIndex >= 0 && (
+        {activeColorIndex >= 0 && (
           <span style={{
             fontSize: '0.8rem',
             color: 'var(--color-accent)',
@@ -61,7 +63,7 @@ export default function ColorSwatchSelector({ colorVariants = [], mainImage, onC
             padding: '2px 10px',
             borderRadius: 'var(--radius-full)',
           }}>
-            ✓ {colorVariants[selectedColorIndex]?.color_name}
+            ✓ {colorVariants[activeColorIndex]?.color_name}
           </span>
         )}
       </div>
@@ -69,7 +71,7 @@ export default function ColorSwatchSelector({ colorVariants = [], mainImage, onC
       {/* Color cards grid */}
       <div className="color-swatch-row">
         {colorVariants.map((variant, idx) => {
-          const isSelected = idx === selectedColorIndex;
+          const isSelected = idx === activeColorIndex;
           const isUnavailable = !variant.is_available;
 
           return (
