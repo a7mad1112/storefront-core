@@ -39,17 +39,21 @@ export function CartProvider({ children, lang = 'ar', dict }) {
   }, [items, isLoaded]);
 
   const addItem = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    // If no explicit color chosen but product has color variants, default to the first variant
+    const colorToUse = selectedColor || (product?.color_variants && product.color_variants.length > 0 ? product.color_variants[0] : null);
     // Unique cart key: product + color + size (any combination is a distinct line item)
+    const colorKey = colorToUse?.color_name || colorToUse?.image_url || '';
+    const sizeKey = selectedSize || '';
     const cartItemId = [
       product.id,
-      selectedColor?.color_name ?? '',
-      selectedSize ?? '',
+      colorKey,
+      sizeKey,
     ].filter(Boolean).join(':::') || product.id;
-    const itemImage = selectedColor?.image_url || product.image_url;
+    const itemImage = colorToUse?.image_url || product.image_url;
 
     setItems((prev) => {
       const existingIndex = prev.findIndex(
-        (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === cartItemId)
+        (item) => item.cartItemId === cartItemId || (!item.cartItemId && item.id === cartItemId && !colorKey && !sizeKey)
       );
       if (existingIndex > -1) {
         // ✅ Immutable update — React Strict Mode safe
@@ -59,7 +63,7 @@ export function CartProvider({ children, lang = 'ar', dict }) {
             : item
         );
       } else {
-        return [...prev, { ...product, cartItemId, selectedColor, selectedSize, image_url: itemImage, quantity }];
+        return [...prev, { ...product, cartItemId, selectedColor: colorToUse, selectedSize, image_url: itemImage, quantity }];
       }
     });
     setIsDrawerOpen(true);

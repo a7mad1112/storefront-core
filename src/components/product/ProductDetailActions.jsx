@@ -65,7 +65,19 @@ export default function ProductDetailActions({ product, category, parentCategory
   };
 
   const handleAddToCart = () => {
-    addItem(product, quantity, selectedColor, selectedSize);
+    let colorToPass = selectedColor;
+    if (!colorToPass && thumbnails.length > 1) {
+      const activeThumb = thumbnails.find((t) => t.url === currentImage);
+      if (activeThumb && activeThumb.url !== product.image_url) {
+        // If they clicked a specific photo, check if it matches a color variant or treat as variant
+        const matchedVar = product.color_variants?.find((v) => v.image_url === activeThumb.url);
+        colorToPass = matchedVar || {
+          color_name: activeThumb.label || 'خيار محدد',
+          image_url: activeThumb.url,
+        };
+      }
+    }
+    addItem(product, quantity, colorToPass, selectedSize);
   };
 
   return (
@@ -103,7 +115,17 @@ export default function ProductDetailActions({ product, category, parentCategory
               return (
                 <button
                   key={idx}
-                  onClick={() => setCurrentImage(thumb.url)}
+                  onClick={() => {
+                    setCurrentImage(thumb.url);
+                    if (product.color_variants && product.color_variants.length > 0) {
+                      const matchedVar = product.color_variants.find((v) => v.image_url === thumb.url);
+                      if (matchedVar) setSelectedColor(matchedVar);
+                    } else if (thumb.url !== product.image_url) {
+                      setSelectedColor({ color_name: thumb.label || `خيار ${idx + 1}`, image_url: thumb.url });
+                    } else {
+                      setSelectedColor(null);
+                    }
+                  }}
                   style={{
                     width: '64px',
                     height: '64px',
