@@ -86,7 +86,7 @@ export default function ProductCard({ product }) {
           })()}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justify-content: 'space-between', marginTop: 'auto', paddingTop: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '0.75rem' }}>
           <div className="product-card-price">
             {formatPrice(product.retail_price || 0)}
           </div>
