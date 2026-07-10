@@ -116,7 +116,7 @@ export default async function SupplierPortalPage({ params }) {
           </div>
         </div>
 
-        <ProductGrid products={products} emptyMessage={dict.product?.noProducts || 'لا توجد منتجات متوفرة لهذا المورد حالياً'} />
+        <ProductGrid products={products} emptyMessage={dict.product?.noProducts || 'لا توجد منتجات متوفرة في هذا القسم حالياً'} />
       </section>
     </div>
   );

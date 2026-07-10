@@ -16,31 +16,64 @@ import sys
 import time
 import random
 from datetime import datetime, timezone
+from pathlib import Path
 
-from config import load_config
-from auth import create_authenticated_session
-from extractor import (
-    extract_categories,
-    extract_brands,
-    extract_products_for_category,
-    extract_product_details,
-)
-from image_pipeline import (
-    create_r2_client,
-    delete_from_r2,
-    process_product_images,
-)
-from db import (
-    create_supabase_client,
-    upsert_categories,
-    upsert_brands,
-    get_existing_products,
-    upsert_product,
-    diff_product,
-    reconcile_products,
-    create_sync_log,
-    complete_sync_log,
-)
+scraper_dir = Path(__file__).resolve().parent
+if str(scraper_dir) not in sys.path:
+    sys.path.insert(0, str(scraper_dir))
+if str(scraper_dir.parent) not in sys.path:
+    sys.path.insert(0, str(scraper_dir.parent))
+
+try:
+    from scraper.config import load_config
+    from scraper.auth import create_authenticated_session
+    from scraper.extractor import (
+        extract_categories,
+        extract_brands,
+        extract_products_for_category,
+        extract_product_details,
+    )
+    from scraper.image_pipeline import (
+        create_r2_client,
+        delete_from_r2,
+        process_product_images,
+    )
+    from scraper.db import (
+        create_supabase_client,
+        upsert_categories,
+        upsert_brands,
+        get_existing_products,
+        upsert_product,
+        diff_product,
+        reconcile_products,
+        create_sync_log,
+        complete_sync_log,
+    )
+except ImportError:
+    from config import load_config
+    from auth import create_authenticated_session
+    from extractor import (
+        extract_categories,
+        extract_brands,
+        extract_products_for_category,
+        extract_product_details,
+    )
+    from image_pipeline import (
+        create_r2_client,
+        delete_from_r2,
+        process_product_images,
+    )
+    from db import (
+        create_supabase_client,
+        upsert_categories,
+        upsert_brands,
+        get_existing_products,
+        upsert_product,
+        diff_product,
+        reconcile_products,
+        create_sync_log,
+        complete_sync_log,
+    )
 
 # ---------------------------------------------------------------------------
 # Logging Setup

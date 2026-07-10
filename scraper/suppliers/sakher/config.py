@@ -73,8 +73,8 @@ def load_config():
     config["ZERO_QTY_DELETE_THRESHOLD"] = int(os.environ.get("ZERO_QTY_DELETE_THRESHOLD", "3"))
     config["SUPPLIER_BASE_URL"] = os.environ.get("SAKHER_BASE_URL", "https://sakherbrands.com")
     config["SUPPLIER_CODE"] = "sakher"
-    config["REQUEST_DELAY_MIN"] = float(os.environ.get("REQUEST_DELAY_MIN", "2.0"))
-    config["REQUEST_DELAY_MAX"] = float(os.environ.get("REQUEST_DELAY_MAX", "4.0"))
+    config["REQUEST_DELAY_MIN"] = float(os.environ.get("REQUEST_DELAY_MIN", "0.8"))
+    config["REQUEST_DELAY_MAX"] = float(os.environ.get("REQUEST_DELAY_MAX", "1.5"))
     config["SCRAPE_PRODUCT_DETAILS"] = os.environ.get("SCRAPE_PRODUCT_DETAILS", "true").lower() in ("true", "1", "yes")
 
     return config

@@ -82,7 +82,7 @@ export default async function SupplierBrandPage({ params, searchParams }) {
       </div>
 
       {/* Products Grid */}
-      <ProductGrid products={products} emptyMessage={dict.brands?.noProducts || "لا توجد منتجات متوفرة من هذه الماركة لدى هذا المورد حالياً"} />
+      <ProductGrid products={products} emptyMessage={dict.brands?.noProducts || "لا توجد منتجات متوفرة من هذه الماركة في هذا القسم حالياً"} />
     </div>
   );
 }

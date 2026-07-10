@@ -29,9 +29,9 @@ export default function SupplierSwitcher({ lang = 'ar' }) {
       }}
     >
       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--color-text-muted)' }}>
-        {lang === 'en' ? 'Supplier / Section:' : lang === 'he' ? 'ספק / מדור:' : 'المورد / القسم:'}
+        {lang === 'en' ? 'Department / Section:' : lang === 'he' ? 'מדור / קטגוריה:' : 'القسم / الصنف:'}
       </span>
-      
+
       <Link
         href={`/${lang}`}
         onClick={() => changeSupplier('all')}
@@ -47,7 +47,7 @@ export default function SupplierSwitcher({ lang = 'ar' }) {
           transition: 'all 0.2s ease',
         }}
       >
-        🏠 {lang === 'en' ? 'All Suppliers' : lang === 'he' ? 'כל הספקים' : 'كل الموردين'}
+        🏠 {lang === 'en' ? 'All Sections' : lang === 'he' ? 'כל המדורים' : 'كل الأقسام'}
       </Link>
 
       {supportedSuppliers.map((code) => {

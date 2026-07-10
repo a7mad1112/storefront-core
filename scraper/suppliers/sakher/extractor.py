@@ -171,10 +171,10 @@ def _extract_sakher_colors_and_sizes(soup, base_url, product):
         if src:
             seen_urls.add(src)
 
-    # Step 2: If no color elements found, check color images
+    # Step 2: If no color elements found, check color images only (do not turn gallery thumbnails into variants)
     if not variants:
-        color_imgs = soup.select(".color-image img, .gallery-thumb img, .product-thumb img")
-        for idx, img in enumerate(color_imgs):
+        color_imgs = soup.select(".color-image img, .color-swatch img")
+        for idx, img in enumerate(color_imgs[:10]):
             src = img.get("src", "")
             if not src:
                 continue

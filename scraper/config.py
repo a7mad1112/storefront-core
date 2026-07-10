@@ -91,10 +91,10 @@ def load_config():
 
     # Request pacing (seconds)
     config["REQUEST_DELAY_MIN"] = float(
-        os.environ.get("REQUEST_DELAY_MIN", "2.0")
+        os.environ.get("REQUEST_DELAY_MIN", "0.8")
     )
     config["REQUEST_DELAY_MAX"] = float(
-        os.environ.get("REQUEST_DELAY_MAX", "4.0")
+        os.environ.get("REQUEST_DELAY_MAX", "1.5")
     )
 
     # Whether to visit individual product detail pages for color variants,

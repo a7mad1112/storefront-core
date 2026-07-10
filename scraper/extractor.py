@@ -591,13 +591,15 @@ def _extract_color_variants(soup, base_url):
     variants = []
     seen_urls = set()
 
-    # Strategy 1: Look for color swatch containers
-    swatch_containers = soup.select(
+    # Search inside main product container only to avoid capturing related products at the bottom
+    main_container = soup.select_one(".product-details, .product-main, .product-body, #product-show, #product-details, .main-product") or soup
+
+    # Strategy 1: Look for explicit color swatch containers
+    swatch_containers = main_container.select(
         ".color-options .color-item, "
         ".product-colors .color-option, "
         ".color-swatches .swatch, "
-        ".variant-selector .variant-item, "
-        ".product-option-item"
+        ".variant-selector .variant-item"
     )
 
     for swatch in swatch_containers:
@@ -606,11 +608,10 @@ def _extract_color_variants(soup, base_url):
             seen_urls.add(variant["supplier_image_url"])
             variants.append(variant)
 
-    # Strategy 2: If no dedicated swatch container, look for color images
-    # (the existing .color-image elements from listing pages may also appear)
+    # Strategy 2: If no dedicated swatch container, look for explicit color images only (do NOT use gallery thumbnails or related items)
     if not variants:
-        color_imgs = soup.select(".color-image img, .gallery-thumb img, .product-thumb img")
-        for idx, img in enumerate(color_imgs):
+        color_imgs = main_container.select(".color-image img, .color-swatch img")
+        for idx, img in enumerate(color_imgs[:10]):  # limit max variants
             src = img.get("src", "")
             if not src:
                 continue

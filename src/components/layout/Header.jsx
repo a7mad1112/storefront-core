@@ -126,7 +126,7 @@ export default function Header({ lang = 'ar' }) {
                   cursor: 'pointer',
                 }}
               >
-                🏪 {t.suppliers || (lang === 'en' ? 'Suppliers' : lang === 'he' ? 'ספקים' : 'الموردين')} ▾
+                🏬 {lang === 'en' ? 'Departments' : lang === 'he' ? 'קטגוריות' : 'الأقسام'} ▾
               </button>
               {isSuppliersOpen && (
                 <div
@@ -163,7 +163,7 @@ export default function Header({ lang = 'ar' }) {
                       textDecoration: 'none',
                     }}
                   >
-                    🏠 {lang === 'en' ? 'All Suppliers' : lang === 'he' ? 'כל הספקים' : 'كل الموردين'}
+                    🏠 {lang === 'en' ? 'All Sections' : lang === 'he' ? 'כל המדורים' : 'كل الأقسام'}
                   </Link>
                   {supportedSuppliers.map((code) => {
                     const meta = getSupplierMeta(code, lang);
@@ -193,24 +193,6 @@ export default function Header({ lang = 'ar' }) {
               )}
             </div>
           )}
-
-          <Link
-            href={`/${lang}/categories`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              padding: '0.4rem 0.75rem',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-bg-secondary)',
-              border: '1px solid var(--color-border)',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            🛍️ {t.categories || 'الأقسام'}
-          </Link>
 
           <Link
             href={`/${lang}/brands`}
