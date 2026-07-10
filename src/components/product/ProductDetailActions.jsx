@@ -9,10 +9,58 @@ import ColorSwatchSelector from './ColorSwatchSelector';
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
 
 export default function ProductDetailActions({ product, category, parentCategory, lang = 'ar', dict = {} }) {
+  // Normalize color_variants: separate mixed color words from sizes, sync names & availabilities across variants
+  const rawColorVariants = (product.color_variants && product.color_variants.length > 0)
+    ? product.color_variants
+    : (product.additional_images && product.additional_images.length > 0)
+      ? product.additional_images.map((url, idx) => ({
+          color_name: `خيار ${idx + 1}`,
+          image_url: url,
+          is_available: true,
+        }))
+      : [];
+
+  const COLOR_WORDS = ['اسود', 'أسود', 'ابيض', 'أبيض', 'احمر', 'أحمر', 'ازرق', 'أزرق', 'اخضر', 'أخضر', 'وردي', 'بيج', 'بني', 'رمادي', 'زهري', 'اصفر', 'أصفر', 'بنفسجي', 'ذهبي', 'فضي', 'برتقالي', 'كحلي', 'black', 'white', 'red', 'blue', 'green', 'pink', 'beige', 'brown', 'grey', 'gray', 'yellow', 'purple', 'gold', 'silver', 'navy', 'orange'];
+
+  const effectiveColorVariants = rawColorVariants.map((v, idx, arr) => {
+    let sizesArr = v.sizes || [];
+    // Check if variant 0 holds the sizes/color words for the entire product
+    if (sizesArr.length === 0 && arr[0]?.sizes?.length > 0) {
+      sizesArr = arr[0].sizes;
+    }
+    const colorItems = sizesArr.filter(s => s?.size && COLOR_WORDS.some(cw => s.size.toLowerCase().includes(cw.toLowerCase())));
+    const realSizes = sizesArr.filter(s => s?.size && !COLOR_WORDS.some(cw => s.size.toLowerCase().includes(cw.toLowerCase())));
+
+    let updatedName = v.color_name;
+    let updatedAvail = v.is_available;
+    if (colorItems.length > 0) {
+      const matchedColorItem = colorItems[idx] || colorItems.find(ci => ci.size === v.color_name);
+      if (matchedColorItem) {
+        updatedName = matchedColorItem.size;
+        updatedAvail = matchedColorItem.is_available !== false && matchedColorItem.quantity !== 0;
+      }
+    }
+
+    const updatedSizes = realSizes.map(s => ({
+      ...s,
+      is_available: updatedAvail === false ? false : (s.is_available !== false && s.quantity !== 0)
+    }));
+
+    return {
+      ...v,
+      color_name: updatedName || `خيار ${idx + 1}`,
+      is_available: updatedAvail !== false,
+      sizes: updatedSizes,
+    };
+  });
+
+  const firstAvailableVariant = effectiveColorVariants.find(v => v.is_available !== false) || effectiveColorVariants[0] || null;
+  const defaultImage = firstAvailableVariant?.image_url || product.image_url || '/placeholder.webp';
+
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [currentImage, setCurrentImage] = useState(product.image_url || '/placeholder.webp');
+  const [currentImage, setCurrentImage] = useState(defaultImage);
   const { addItem } = useCart();
 
   const tProduct = dict.product || {};
@@ -27,17 +75,6 @@ export default function ProductDetailActions({ product, category, parentCategory
     (lang === 'he' && category.name_he) ? category.name_he :
     category.name
   ) : (product.category_name || '');
-
-  // If product has explicit color_variants, use them. Otherwise, if it has multiple additional_images, turn them into color variants!
-  const effectiveColorVariants = (product.color_variants && product.color_variants.length > 0)
-    ? product.color_variants
-    : (product.additional_images && product.additional_images.length > 0)
-      ? product.additional_images.map((url, idx) => ({
-          color_name: `خيار ${idx + 1}`,
-          image_url: url,
-          is_available: true,
-        }))
-      : [];
 
   // Collect all gallery thumbnails cleanly without duplicates between main photo and options
   const thumbnails = [];
@@ -60,7 +97,13 @@ export default function ProductDetailActions({ product, category, parentCategory
     }
   }
 
+  const activeColorVariant = selectedColor || firstAvailableVariant;
+  const isCurrentlyUnavailable = product?.in_stock === false || product?.is_available === false ||
+    (activeColorVariant && activeColorVariant.is_available === false) ||
+    (selectedSize && activeColorVariant?.sizes?.find(s => s.size === selectedSize)?.is_available === false);
+
   const handleDirectWhatsAppBuy = () => {
+    if (isCurrentlyUnavailable) return;
     const colorText = selectedColor ? `🎨 ${tCart.colorLabel || 'اللون'}: ${selectedColor.color_name}\n` : '';
     const sizeText = selectedSize ? `📐 ${tCart.sizeLabel || 'القياس'}: ${selectedSize}\n` : '';
     const imgUrl = selectedColor?.image_url || product.image_url || '';
@@ -77,6 +120,7 @@ export default function ProductDetailActions({ product, category, parentCategory
   };
 
   const handleAddToCart = () => {
+    if (isCurrentlyUnavailable) return;
     let colorToPass = selectedColor;
     if (!colorToPass && effectiveColorVariants.length > 0) {
       const activeThumb = effectiveColorVariants.find((v) => v.image_url === currentImage);
@@ -230,9 +274,15 @@ export default function ProductDetailActions({ product, category, parentCategory
           <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-accent)' }}>
             {formatPrice(product.retail_price || 0)}
           </span>
-          <span style={{ color: 'var(--color-success)', fontSize: '0.875rem', fontWeight: 700, backgroundColor: 'rgba(56, 161, 105, 0.15)', padding: '2px 8px', borderRadius: '4px' }}>
-            ✔ متوفر في المخزون
-          </span>
+          {isCurrentlyUnavailable ? (
+            <span style={{ color: '#e53e3e', fontSize: '0.875rem', fontWeight: 700, backgroundColor: 'rgba(229, 62, 62, 0.15)', padding: '2px 8px', borderRadius: '4px' }}>
+              ❌ غير متوفر حالياً
+            </span>
+          ) : (
+            <span style={{ color: 'var(--color-success)', fontSize: '0.875rem', fontWeight: 700, backgroundColor: 'rgba(56, 161, 105, 0.15)', padding: '2px 8px', borderRadius: '4px' }}>
+              ✔ متوفر في المخزون
+            </span>
+          )}
         </div>
 
         {/* Description */}
@@ -246,7 +296,7 @@ export default function ProductDetailActions({ product, category, parentCategory
         {/* Color Swatch Selector */}
         <ColorSwatchSelector
           colorVariants={effectiveColorVariants}
-          selectedColor={selectedColor || (effectiveColorVariants.length > 0 ? effectiveColorVariants[0] : null)}
+          selectedColor={selectedColor || firstAvailableVariant}
           mainImage={product.image_url || '/placeholder.webp'}
           onColorSelect={(color, size) => {
             setSelectedColor(color);
@@ -281,18 +331,36 @@ export default function ProductDetailActions({ product, category, parentCategory
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <button
               onClick={handleAddToCart}
+              disabled={isCurrentlyUnavailable}
               className="btn btn-primary"
-              style={{ padding: '1rem', fontSize: '1rem' }}
+              style={{
+                padding: '1rem',
+                fontSize: '1rem',
+                opacity: isCurrentlyUnavailable ? 0.5 : 1,
+                cursor: isCurrentlyUnavailable ? 'not-allowed' : 'pointer',
+                backgroundColor: isCurrentlyUnavailable ? 'var(--color-bg-elevated)' : '',
+                color: isCurrentlyUnavailable ? 'var(--color-text-muted)' : '',
+                border: isCurrentlyUnavailable ? '1px solid var(--color-border)' : '',
+              }}
             >
-              🛒 {tProduct.addToCart || 'أضف إلى السلة'}
+              {isCurrentlyUnavailable ? '❌ غير متوفر في المخزون' : `🛒 ${tProduct.addToCart || 'أضف إلى السلة'}`}
             </button>
 
             <button
               onClick={handleDirectWhatsAppBuy}
+              disabled={isCurrentlyUnavailable}
               className="btn btn-whatsapp"
-              style={{ padding: '1rem', fontSize: '1rem' }}
+              style={{
+                padding: '1rem',
+                fontSize: '1rem',
+                opacity: isCurrentlyUnavailable ? 0.5 : 1,
+                cursor: isCurrentlyUnavailable ? 'not-allowed' : 'pointer',
+                backgroundColor: isCurrentlyUnavailable ? 'var(--color-bg-elevated)' : '',
+                color: isCurrentlyUnavailable ? 'var(--color-text-muted)' : '',
+                border: isCurrentlyUnavailable ? '1px solid var(--color-border)' : '',
+              }}
             >
-              {tCart.orderWhatsApp || '💬 اطلب الآن عبر واتساب'}
+              {isCurrentlyUnavailable ? '❌ غير متوفر للطلب' : (tCart.orderWhatsApp || '💬 اطلب الآن عبر واتساب')}
             </button>
           </div>
         </div>

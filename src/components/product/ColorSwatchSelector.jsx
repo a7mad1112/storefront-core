@@ -22,8 +22,6 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
   const hasSizes = selectedVariant?.sizes && selectedVariant.sizes.length > 0;
 
   const handleColorSelect = (variant, index) => {
-    if (!variant.is_available) return;
-
     // Reset size when switching colors
     const sizeReset = null;
     setSelectedColorIndex(index);
@@ -34,7 +32,6 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
   };
 
   const handleSizeSelect = (sizeObj) => {
-    if (!sizeObj.is_available) return;
     setSelectedSize(sizeObj.size);
     if (onColorSelect) onColorSelect(selectedVariant, sizeObj.size);
   };
@@ -78,7 +75,6 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
             <button
               key={`${variant.color_name}-${idx}`}
               onClick={() => handleColorSelect(variant, idx)}
-              disabled={isUnavailable}
               title={isUnavailable ? `${variant.color_name} — غير متوفر` : variant.color_name}
               className={`color-swatch-card ${isSelected ? 'selected' : ''} ${isUnavailable ? 'unavailable' : ''}`}
             >
@@ -151,7 +147,6 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
                 <button
                   key={`${sizeObj.size}-${sIdx}`}
                   onClick={() => handleSizeSelect(sizeObj)}
-                  disabled={isUnavailable}
                   title={isUnavailable ? `${sizeObj.size} — غير متوفر` : sizeObj.size}
                   className={`size-btn ${isSelected ? 'selected' : ''} ${isUnavailable ? 'unavailable' : ''}`}
                 >

@@ -39,6 +39,9 @@ export function CartProvider({ children, lang = 'ar', dict }) {
   }, [items, isLoaded]);
 
   const addItem = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    // Abort immediately if product or selected variant/color is out of stock / unavailable
+    if (product?.in_stock === false || product?.is_available === false) return;
+    if (selectedColor && selectedColor.is_available === false) return;
     // If no explicit color chosen but product has color variants or additional images, default to the first variant
     const fallbackColor = (product?.color_variants && product.color_variants.length > 0)
       ? product.color_variants[0]
