@@ -28,13 +28,24 @@ export default function ProductDetailActions({ product, category, parentCategory
     category.name
   ) : (product.category_name || '');
 
+  // If product has explicit color_variants, use them. Otherwise, if it has multiple additional_images, turn them into color variants!
+  const effectiveColorVariants = (product.color_variants && product.color_variants.length > 0)
+    ? product.color_variants
+    : (product.additional_images && product.additional_images.length > 0)
+      ? product.additional_images.map((url, idx) => ({
+          color_name: `خيار ${idx + 1}`,
+          image_url: url,
+          is_available: true,
+        }))
+      : [];
+
   // Collect all gallery thumbnails
   const thumbnails = [];
   if (product.image_url) {
     thumbnails.push({ url: product.image_url, label: dict.common?.home || 'الرئيسية' });
   }
-  if (product.color_variants && product.color_variants.length > 0) {
-    product.color_variants.forEach((v, idx) => {
+  if (effectiveColorVariants.length > 0) {
+    effectiveColorVariants.forEach((v, idx) => {
       if (v.image_url && !thumbnails.some((t) => t.url === v.image_url)) {
         thumbnails.push({ url: v.image_url, label: v.color_name || `${tProduct.colors || 'لون'} ${idx + 1}` });
       }
@@ -66,12 +77,13 @@ export default function ProductDetailActions({ product, category, parentCategory
 
   const handleAddToCart = () => {
     let colorToPass = selectedColor;
-    if (!colorToPass && thumbnails.length > 1) {
+    if (!colorToPass && effectiveColorVariants.length > 0) {
+      const activeThumb = effectiveColorVariants.find((v) => v.image_url === currentImage);
+      colorToPass = activeThumb || effectiveColorVariants[0];
+    } else if (!colorToPass && thumbnails.length > 1) {
       const activeThumb = thumbnails.find((t) => t.url === currentImage);
       if (activeThumb && activeThumb.url !== product.image_url) {
-        // If they clicked a specific photo, check if it matches a color variant or treat as variant
-        const matchedVar = product.color_variants?.find((v) => v.image_url === activeThumb.url);
-        colorToPass = matchedVar || {
+        colorToPass = {
           color_name: activeThumb.label || 'خيار محدد',
           image_url: activeThumb.url,
         };
@@ -117,9 +129,9 @@ export default function ProductDetailActions({ product, category, parentCategory
                   key={idx}
                   onClick={() => {
                     setCurrentImage(thumb.url);
-                    if (product.color_variants && product.color_variants.length > 0) {
-                      const matchedVar = product.color_variants.find((v) => v.image_url === thumb.url);
-                      if (matchedVar) setSelectedColor(matchedVar);
+                    const matchedVar = effectiveColorVariants.find((v) => v.image_url === thumb.url);
+                    if (matchedVar) {
+                      setSelectedColor(matchedVar);
                     } else if (thumb.url !== product.image_url) {
                       setSelectedColor({ color_name: thumb.label || `خيار ${idx + 1}`, image_url: thumb.url });
                     } else {
@@ -215,7 +227,7 @@ export default function ProductDetailActions({ product, category, parentCategory
 
         {/* Color Swatch Selector */}
         <ColorSwatchSelector
-          colorVariants={product.color_variants}
+          colorVariants={effectiveColorVariants}
           mainImage={product.image_url || '/placeholder.webp'}
           onColorSelect={(color, size) => {
             setSelectedColor(color);

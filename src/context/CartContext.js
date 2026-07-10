@@ -39,8 +39,13 @@ export function CartProvider({ children, lang = 'ar', dict }) {
   }, [items, isLoaded]);
 
   const addItem = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
-    // If no explicit color chosen but product has color variants, default to the first variant
-    const colorToUse = selectedColor || (product?.color_variants && product.color_variants.length > 0 ? product.color_variants[0] : null);
+    // If no explicit color chosen but product has color variants or additional images, default to the first variant
+    const fallbackColor = (product?.color_variants && product.color_variants.length > 0)
+      ? product.color_variants[0]
+      : (product?.additional_images && product.additional_images.length > 0)
+        ? { color_name: 'خيار 1', image_url: product.additional_images[0] }
+        : null;
+    const colorToUse = selectedColor || fallbackColor;
     // Unique cart key: product + color + size (any combination is a distinct line item)
     const colorKey = colorToUse?.color_name || colorToUse?.image_url || '';
     const sizeKey = selectedSize || '';
