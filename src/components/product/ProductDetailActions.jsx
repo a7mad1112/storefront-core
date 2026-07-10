@@ -169,14 +169,16 @@ export default function ProductDetailActions({ product, category, parentCategory
           <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
             {thumbnails.map((thumb, idx) => {
               const isActive = currentImage === thumb.url;
+              const matchedVarForThumb = thumb.variant || effectiveColorVariants.find((v) => v.image_url === thumb.url || v.color_name === thumb.label);
+              const isThumbUnavailable = matchedVarForThumb && matchedVarForThumb.is_available === false;
+
               return (
                 <button
                   key={idx}
                   onClick={() => {
                     setCurrentImage(thumb.url);
-                    const matchedVar = effectiveColorVariants.find((v) => v.image_url === thumb.url);
-                    if (matchedVar) {
-                      setSelectedColor(matchedVar);
+                    if (matchedVarForThumb) {
+                      setSelectedColor(matchedVarForThumb);
                     } else if (thumb.url !== product.image_url) {
                       setSelectedColor({ color_name: thumb.label || `خيار ${idx + 1}`, image_url: thumb.url });
                     } else {
@@ -189,28 +191,36 @@ export default function ProductDetailActions({ product, category, parentCategory
                     alignItems: 'center',
                     width: '68px',
                     borderRadius: 'var(--radius-md)',
-                    border: `2px solid ${isActive ? 'var(--color-accent)' : 'var(--color-border)'}`,
+                    border: `2px solid ${isActive ? 'var(--color-accent)' : (isThumbUnavailable ? '#feb2b2' : 'var(--color-border)')}`,
                     backgroundColor: 'var(--color-bg-secondary)',
                     overflow: 'hidden',
                     flexShrink: 0,
                     padding: '3px',
                     transition: 'all var(--transition-fast)',
-                    opacity: isActive ? 1 : 0.75,
+                    opacity: isThumbUnavailable ? 0.5 : (isActive ? 1 : 0.75),
                     cursor: 'pointer',
                   }}
-                  title={thumb.label}
+                  title={isThumbUnavailable ? `${thumb.label} — غير متوفر` : thumb.label}
                 >
-                  <div style={{ width: '60px', height: '60px', overflow: 'hidden', borderRadius: '4px' }}>
+                  <div style={{ width: '60px', height: '60px', overflow: 'hidden', borderRadius: '4px', position: 'relative' }}>
                     <img
                       src={thumb.url}
                       alt={thumb.label}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
+                    {isThumbUnavailable && (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)' }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#e53e3e" strokeWidth="2.5" style={{ width: '100%', height: '100%' }}>
+                          <line x1="4" y1="4" x2="20" y2="20" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   <span style={{
                     fontSize: '0.65rem',
                     fontWeight: 700,
-                    color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                    color: isThumbUnavailable ? '#e53e3e' : (isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)'),
+                    textDecoration: isThumbUnavailable ? 'line-through' : 'none',
                     marginTop: '2px',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
