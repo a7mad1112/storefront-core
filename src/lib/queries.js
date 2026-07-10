@@ -78,7 +78,24 @@ export async function getCategories({ supplierCode = null } = {}) {
     console.error('[getCategories]', error.message);
     return [];
   }
-  return data ?? [];
+  let cats = data ?? [];
+
+  if (cats.length > 0) {
+    const prodTableQuery = getCatalogTable(supplierCode, 'category_id, category_slug, category_name');
+    const { data: prodCats } = await prodTableQuery.limit(2000);
+    if (prodCats && prodCats.length > 0) {
+      const activeCatIds = new Set(prodCats.map(p => p.category_id).filter(Boolean));
+      const activeCatSlugs = new Set(prodCats.map(p => p.category_slug).filter(Boolean));
+      const activeCatNames = new Set(prodCats.map(p => p.category_name).filter(Boolean));
+
+      cats = cats.filter(c =>
+        activeCatIds.has(c.id) || activeCatSlugs.has(c.slug) || activeCatNames.has(c.name) ||
+        cats.some(child => child.parent_id === c.id && (activeCatIds.has(child.id) || activeCatSlugs.has(child.slug) || activeCatNames.has(child.name)))
+      );
+    }
+  }
+
+  return cats;
 }
 
 /**
@@ -141,6 +158,47 @@ export async function getCategoryBySlug(slugOrId) {
     data = res.data;
   }
 
+  // 4. Try match by exact name
+  if (!data) {
+    const res = await supabase
+      .from('categories')
+      .select('id, name, slug, parent_id, image_url')
+      .eq('name', decoded)
+      .eq('is_active', true)
+      .maybeSingle();
+    data = res.data;
+  }
+
+  // 5. Try match by partial slug or name
+  if (!data) {
+    const res = await supabase
+      .from('categories')
+      .select('id, name, slug, parent_id, image_url')
+      .or(`slug.ilike.%${decoded}%,name.ilike.%${decoded}%`)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle();
+    data = res.data;
+  }
+
+  // 6. Fallback: find dynamically from active products if category row is missing
+  if (!data) {
+    const tableQuery = getCatalogTable(null, 'category_id, category_name, category_slug');
+    const { data: prodData } = await tableQuery
+      .or(`category_slug.eq.${decoded},category_name.ilike.%${decoded}%,category_id.eq.${decoded}`)
+      .limit(1)
+      .maybeSingle();
+    if (prodData) {
+      data = {
+        id: prodData.category_id || decoded,
+        name: prodData.category_name || decoded,
+        slug: prodData.category_slug || decoded,
+        parent_id: null,
+        image_url: null,
+      };
+    }
+  }
+
   return data || null;
 }
 
@@ -163,7 +221,23 @@ export async function getSubcategories(parentId, { supplierCode = null } = {}) {
     console.error('[getSubcategories]', error.message);
     return [];
   }
-  return data ?? [];
+  let cats = data ?? [];
+
+  if (cats.length > 0) {
+    const prodTableQuery = getCatalogTable(supplierCode, 'category_id, category_slug, category_name');
+    const { data: prodCats } = await prodTableQuery.limit(2000);
+    if (prodCats && prodCats.length > 0) {
+      const activeCatIds = new Set(prodCats.map(p => p.category_id).filter(Boolean));
+      const activeCatSlugs = new Set(prodCats.map(p => p.category_slug).filter(Boolean));
+      const activeCatNames = new Set(prodCats.map(p => p.category_name).filter(Boolean));
+
+      cats = cats.filter(c =>
+        activeCatIds.has(c.id) || activeCatSlugs.has(c.slug) || activeCatNames.has(c.name)
+      );
+    }
+  }
+
+  return cats;
 }
 
 // ─────────────────────────────────────────────
@@ -188,7 +262,23 @@ export async function getBrands({ supplierCode = null } = {}) {
     console.error('[getBrands]', error.message);
     return [];
   }
-  return data ?? [];
+  let brands = data ?? [];
+
+  if (brands.length > 0) {
+    const prodTableQuery = getCatalogTable(supplierCode, 'brand_id, brand_slug, brand_name');
+    const { data: prodBrands } = await prodTableQuery.limit(2000);
+    if (prodBrands && prodBrands.length > 0) {
+      const activeBrandIds = new Set(prodBrands.map(p => p.brand_id).filter(Boolean));
+      const activeBrandSlugs = new Set(prodBrands.map(p => p.brand_slug).filter(Boolean));
+      const activeBrandNames = new Set(prodBrands.map(p => p.brand_name).filter(Boolean));
+
+      brands = brands.filter(b =>
+        activeBrandIds.has(b.id) || activeBrandSlugs.has(b.slug) || activeBrandNames.has(b.name)
+      );
+    }
+  }
+
+  return brands;
 }
 
 /**

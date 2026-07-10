@@ -52,16 +52,18 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => scroll('left')}
+            onClick={() => scroll('right')}
             className="slider-arrow"
-            aria-label="Previous"
+            aria-label="Next"
+            title="تمرير لليمين"
           >
             →
           </button>
           <button
-            onClick={() => scroll('right')}
+            onClick={() => scroll('left')}
             className="slider-arrow"
-            aria-label="Next"
+            aria-label="Previous"
+            title="تمرير لليسار"
           >
             ←
           </button>

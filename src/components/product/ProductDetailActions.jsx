@@ -8,6 +8,21 @@ import ColorSwatchSelector from './ColorSwatchSelector';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
 
+function cleanDescription(text = '') {
+  if (!text) return '';
+  let cleaned = text;
+  const deliveryIndex = cleaned.indexOf('التوصيل متاح');
+  if (deliveryIndex !== -1) {
+    cleaned = cleaned.substring(0, deliveryIndex);
+  }
+  cleaned = cleaned.replace(/where_to_vote/g, '');
+  cleaned = cleaned.replace(/تفاصيل المنتج\s*/g, '');
+  cleaned = cleaned.replace(/رقم المنتج\s*[\d-]+\s*/g, '');
+  cleaned = cleaned.replace(/الباركود\s*(?:\(\d+\)\s*)+/g, '');
+  cleaned = cleaned.trim();
+  return cleaned || 'منتج عالي الجودة ومميز من متجرنا، تم اختياره بعناية ليلبي تطلعاتك ويضمن لك أفضل أداء وتجربة استخدام رائعة، أو ليكون خياراً مميزاً للإهداء لمن تحب.';
+}
+
 export default function ProductDetailActions({ product, category, parentCategory, lang = 'ar', dict = {} }) {
   // Normalize color_variants: separate mixed color words from sizes, sync names & availabilities across variants
   const rawColorVariants = (product.color_variants && product.color_variants.length > 0)
@@ -298,8 +313,8 @@ export default function ProductDetailActions({ product, category, parentCategory
         {/* Description */}
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.8, marginBottom: '0.5rem' }}>
           <h3 style={{ color: 'var(--color-text-primary)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.5rem' }}>وصف المنتج والمواصفات:</h3>
-          <p>
-            {product.description || 'منتج عالي الجودة ومميز من متجرنا، تم اختياره بعناية ليلبي تطلعاتك ويضمن لك أفضل أداء وتجربة استخدام رائعة، أو ليكون خياراً مميزاً للإهداء لمن تحب.'}
+          <p style={{ whiteSpace: 'pre-line' }}>
+            {cleanDescription(product.description)}
           </p>
         </div>
 
