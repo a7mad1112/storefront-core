@@ -575,18 +575,54 @@ export async function searchProducts(query, { limit = 30, supplierCode = null } 
 // ADMIN — Products with wholesale prices
 // ─────────────────────────────────────────────
 
-export async function getAdminProducts({ limit = 50, offset = 0 } = {}) {
-  const { data, error } = await supabaseAdmin
+export async function getAdminProducts({ limit = 50, offset = 0, supplierCode = null, search = null } = {}) {
+  let query = supabaseAdmin
     .from('products')
-    .select('id, supplier_id, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at')
-    .order('updated_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .select('id, supplier_id, supplier_code, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at', { count: 'exact' });
 
-  if (error) {
-    console.error('[getAdminProducts]', error.message);
-    return [];
+  if (supplierCode && supplierCode !== 'all') {
+    query = query.eq('supplier_code', supplierCode);
   }
-  return data ?? [];
+  if (search && search.trim()) {
+    query = query.or(`name.ilike.%${search.trim()}%,supplier_id.ilike.%${search.trim()}%`);
+  }
+
+  const [productsRes, marginsRes] = await Promise.all([
+    query.order('updated_at', { ascending: false }).range(offset, offset + limit - 1),
+    supabaseAdmin.from('margins').select('category_id, margin_type, margin_value').eq('store_id', STORE_ID),
+  ]);
+
+  if (productsRes.error) {
+    console.error('[getAdminProducts]', productsRes.error.message);
+    return { products: [], totalCount: 0 };
+  }
+
+  const marginsMap = {};
+  for (const m of (marginsRes.data || [])) {
+    marginsMap[m.category_id] = m;
+  }
+
+  const products = (productsRes.data || []).map((p) => {
+    const m = marginsMap[p.category_id];
+    const wholesale = Number(p.wholesale_price) || 0;
+    let retail = wholesale * 1.2; // default 20%
+    if (m) {
+      if (m.margin_type === 'percentage') {
+        retail = wholesale * (1 + Number(m.margin_value) / 100);
+      } else if (m.margin_type === 'fixed') {
+        retail = wholesale + Number(m.margin_value);
+      }
+    }
+    return {
+      ...p,
+      retail_price: Math.round(retail * 10) / 10,
+    };
+  });
+
+  return {
+    products,
+    totalCount: productsRes.count ?? products.length,
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -714,23 +750,29 @@ export async function upsertMargin(categoryId, marginType, marginValue) {
 // ─────────────────────────────────────────────
 
 export async function getDashboardCounts() {
-  const [products, categories, brands, productsData] = await Promise.all([
+  const [products, categories, brands, gbstore, balagan, sakher] = await Promise.all([
     supabaseAdmin.from('products').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabaseAdmin.from('products').select('supplier_code').eq('is_available', true),
+    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'gbstore'),
+    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'balagan'),
+    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'sakher'),
   ]);
 
-  const supplierCounts = {};
-  if (productsData.data) {
-    productsData.data.forEach((r) => {
-      const s = r.supplier_code || 'other';
-      supplierCounts[s] = (supplierCounts[s] || 0) + 1;
-    });
+  const supplierCounts = {
+    gbstore: gbstore.count ?? 0,
+    balagan: balagan.count ?? 0,
+    sakher: sakher.count ?? 0,
+  };
+
+  const knownSum = supplierCounts.gbstore + supplierCounts.balagan + supplierCounts.sakher;
+  const totalProducts = products.count ?? 0;
+  if (totalProducts > knownSum) {
+    supplierCounts.other = totalProducts - knownSum;
   }
 
   return {
-    products: products.count ?? 0,
+    products: totalProducts,
     categories: categories.count ?? 0,
     brands: brands.count ?? 0,
     supplierCounts,

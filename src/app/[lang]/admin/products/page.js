@@ -1,62 +1,42 @@
 import React from 'react';
 import { getAdminProducts, getAvailabilityOverrides } from '../../../../lib/queries';
-import { formatPrice } from '../../../../lib/utils';
-import AvailabilityToggle from '../../../../components/admin/AvailabilityToggle';
+import AdminProductsClient from './AdminProductsClient';
 
 export const revalidate = 0;
 
 export default async function AdminProductsPage({ searchParams }) {
-  const { page = '1' } = await searchParams;
+  const params = await searchParams;
+  const page = params.page || '1';
+  const supplier = params.supplier || 'all';
+  const search = params.search || '';
+
   const pageNum = parseInt(page, 10) || 1;
   const limit = 50;
   const offset = (pageNum - 1) * limit;
 
-  const [products, overrides] = await Promise.all([
-    getAdminProducts({ limit, offset }),
+  const [{ products, totalCount }, overrides] = await Promise.all([
+    getAdminProducts({ limit, offset, supplierCode: supplier, search }),
     getAvailabilityOverrides(),
   ]);
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>إدارة المنتجات والأسعار</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>جدول المنتجات شامل سعر الجملة (سري) وسعر البيع للجمهور</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>جدول المنتجات شامل سعر الجملة (سري) وسعر البيع للجمهور ومقدار الربح</p>
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.875rem' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}>
-              <th style={{ padding: '1rem' }}>صورة</th>
-              <th style={{ padding: '1rem' }}>اسم المنتج</th>
-              <th style={{ padding: '1rem' }}>سعر الجملة (المورد)</th>
-              <th style={{ padding: '1rem' }}>الكمية</th>
-              <th style={{ padding: '1rem' }}>الحالة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <td style={{ padding: '0.75rem' }}>
-                  <img src={p.image_url || '/placeholder.webp'} alt={p.name} style={{ width: '45px', height: '45px', objectFit: 'contain', borderRadius: '4px', backgroundColor: 'var(--color-bg-secondary)' }} />
-                </td>
-                <td style={{ padding: '0.75rem', fontWeight: 700, maxWidth: '300px' }}>{p.name}</td>
-                <td style={{ padding: '0.75rem', color: 'var(--color-warning)', fontWeight: 800 }}>{formatPrice(p.wholesale_price)}</td>
-                <td style={{ padding: '0.75rem' }}>{p.quantity ?? 'غير محدد'}</td>
-                <td style={{ padding: '0.75rem' }}>
-                  <AvailabilityToggle
-                    productSupplierId={p.supplier_id}
-                    supplierAvailable={p.is_available}
-                    initialOverride={overrides[p.supplier_id] || null}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminProductsClient
+        products={products}
+        totalCount={totalCount}
+        pageNum={pageNum}
+        limit={limit}
+        initialSupplier={supplier}
+        initialSearch={search}
+        overrides={overrides}
+      />
     </div>
   );
 }
