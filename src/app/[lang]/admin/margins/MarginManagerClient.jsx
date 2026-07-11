@@ -93,7 +93,7 @@ export default function MarginManagerClient({ categories }) {
           <select
             value={globalType}
             onChange={(e) => setGlobalType(e.target.value)}
-            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)', color: '#fff', border: '1px solid var(--color-border)' }}
+            style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-primary)', border: '2px solid var(--color-accent)', fontWeight: 700 }}
           >
             <option value="percentage">نسبة مئوية (%)</option>
             <option value="fixed">مبلغ ثابت (₪)</option>
@@ -102,7 +102,7 @@ export default function MarginManagerClient({ categories }) {
             type="number"
             value={globalValue}
             onChange={(e) => setGlobalValue(e.target.value)}
-            style={{ width: '80px', padding: '0.5rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)', color: '#fff', border: '1px solid var(--color-border)', textAlign: 'center', fontWeight: 800 }}
+            style={{ width: '90px', padding: '0.5rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-primary)', border: '2px solid var(--color-accent)', textAlign: 'center', fontWeight: 800 }}
           />
           <button
             onClick={handleApplyAll}
@@ -141,7 +141,7 @@ export default function MarginManagerClient({ categories }) {
                     <select
                       value={item.marginType}
                       onChange={(e) => setMargins({ ...margins, [cat.id]: { ...item, marginType: e.target.value } })}
-                      style={{ padding: '0.4rem', borderRadius: '4px', backgroundColor: 'var(--color-bg-secondary)', color: '#fff', border: '1px solid var(--color-border)' }}
+                      style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-accent)', fontWeight: 700 }}
                     >
                       <option value="percentage">نسبة مئوية (%)</option>
                       <option value="fixed">مبلغ ثابت (₪)</option>
@@ -152,7 +152,7 @@ export default function MarginManagerClient({ categories }) {
                       type="number"
                       value={item.marginValue}
                       onChange={(e) => setMargins({ ...margins, [cat.id]: { ...item, marginValue: Number(e.target.value) } })}
-                      style={{ width: '80px', padding: '0.4rem', borderRadius: '4px', backgroundColor: 'var(--color-bg-secondary)', color: '#fff', border: '1px solid var(--color-border)', textAlign: 'center', fontWeight: 800 }}
+                      style={{ width: '85px', padding: '0.4rem', borderRadius: '6px', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-primary)', border: '1.5px solid var(--color-accent)', textAlign: 'center', fontWeight: 800 }}
                     />
                   </td>
                   <td style={{ padding: '0.75rem', color: 'var(--color-accent)', fontWeight: 800 }}>
