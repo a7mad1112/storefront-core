@@ -534,7 +534,7 @@ def extract_product_details(session, config, supplier_id, product=None):
     quantity = _extract_quantity(soup)
 
     # Extract color variants from swatches on the detail page
-    color_variants = _extract_color_variants(soup, base_url)
+    color_variants = _extract_color_variants(soup, base_url, supplier_id)
 
     # Extract brand link from the detail page breadcrumb or product info
     brand_supplier_id = _extract_brand_from_detail(soup)
@@ -550,43 +550,37 @@ def extract_product_details(session, config, supplier_id, product=None):
 
 def _extract_quantity(soup):
     """
-    Try to extract product quantity from the detail page.
-    The CMS may show quantity in various ways.
+    Extract available quantity from the product page.
     """
-    # Check for quantity input field
-    qty_input = soup.select_one(".quantity-selector")
-    if qty_input:
-        max_val = qty_input.get("max")
-        if max_val:
-            try:
-                return int(max_val)
-            except ValueError:
-                pass
+    # Look for stock quantity indicators
+    stock_el = soup.select_one(".product-stock, .stock-quantity, [data-stock], .availability")
+    if stock_el:
+        text = stock_el.get_text(strip=True)
+        num_match = re.search(r"(\d+)", text)
+        if num_match:
+            return int(num_match.group(1))
+        if any(kw in text.lower() for kw in ["in stock", "متوفر", "موجود"]):
+            return 10  # Default positive stock
+        if any(kw in text.lower() for kw in ["out of stock", "غير متوفر", "نفد"]):
+            return 0
 
-    # Check for out-of-stock indicator
-    out_of_stock = soup.select_one(".image-caption-out-of-stock")
-    if out_of_stock and out_of_stock.get_text(strip=True):
-        return 0
+    # Look for quantity input max attribute
+    qty_input = soup.select_one("input[name='quantity'], input#quantity, .qty-input input")
+    if qty_input and qty_input.get("max"):
+        try:
+            return int(qty_input["max"])
+        except ValueError:
+            pass
 
-    # Check for limited quantity alert
-    limited = soup.select_one(".limited-quantity-alert")
-    if limited:
-        text = limited.get_text(strip=True)
-        match = re.search(r"(\d+)", text)
-        if match:
-            return int(match.group(1))
-
-    # Default: assume in stock if no out-of-stock indicator
+    # Default to 1 if no specific quantity found (assume in stock since it's listed)
     return 1
 
 
-def _extract_color_variants(soup, base_url):
+def _extract_color_variants(soup, base_url, supplier_id=None):
     """
     Extract color variant swatches from the product detail page.
     Each variant has: color_name, supplier_image_url, is_available.
-
-    The supplier site may show color swatches as clickable thumbnails,
-    radio buttons, or image options. We try multiple selectors.
+    Ensures that only variants belonging to supplier_id (and not related/sidebar products) are extracted.
     """
     variants = []
     seen_urls = set()
@@ -603,6 +597,17 @@ def _extract_color_variants(soup, base_url):
     )
 
     for swatch in swatch_containers:
+        # Validate that this swatch belongs to supplier_id and not a related product
+        if supplier_id:
+            parent_color_image = swatch.find_parent(class_="color-image") or swatch
+            brief_id = parent_color_image.get("data-change-brief-image", "").strip() if hasattr(parent_color_image, "get") else ""
+            if not brief_id and swatch.get("data-target-color-link"):
+                m = re.search(r"product\.show\.(\d+)", swatch.get("data-target-color-link", ""))
+                if m:
+                    brief_id = m.group(1)
+            if brief_id and str(brief_id) != str(supplier_id):
+                continue
+
         variant = _parse_swatch_element(swatch, base_url)
         if variant and variant["supplier_image_url"] not in seen_urls:
             seen_urls.add(variant["supplier_image_url"])
@@ -611,7 +616,22 @@ def _extract_color_variants(soup, base_url):
     # Strategy 2: If no dedicated swatch container, look for explicit color images only (do NOT use gallery thumbnails or related items)
     if not variants:
         color_imgs = main_container.select(".color-image img, .color-swatch img")
-        for idx, img in enumerate(color_imgs[:10]):  # limit max variants
+        for img in color_imgs:
+            # CRITICAL check to avoid pulling color swatches from related products at the bottom of gbstore pages
+            if supplier_id:
+                parent_color_image = img.find_parent(class_="color-image")
+                if parent_color_image:
+                    first_img = parent_color_image.find("img", attrs={"data-change-brief-image": True}) or img
+                    brief_id = first_img.get("data-change-brief-image", "").strip() if hasattr(first_img, "get") else ""
+                    if not brief_id:
+                        link_el = img.find_parent("a") or img
+                        target_link = link_el.get("data-target-color-link", "") or link_el.get("href", "")
+                        m = re.search(r"product\.show\.(\d+)", target_link)
+                        if m:
+                            brief_id = m.group(1)
+                    if brief_id and str(brief_id) != str(supplier_id):
+                        continue
+
             src = img.get("src", "")
             if not src:
                 continue
@@ -628,7 +648,7 @@ def _extract_color_variants(soup, base_url):
                 if parent:
                     color_name = parent.get("title", "").strip() or parent.get("data-color", "").strip()
             if not color_name:
-                color_name = f"لون {idx + 1}"  # Fallback: "Color 1", "Color 2", etc.
+                color_name = f"لون {len(variants) + 1}"  # Fallback: "Color 1", "Color 2", etc.
 
             # Check if this color is marked as unavailable
             is_available = True
@@ -645,7 +665,7 @@ def _extract_color_variants(soup, base_url):
             })
 
     if variants:
-        logger.debug("Found %d color variants", len(variants))
+        logger.debug("Found %d color variants for supplier_id %s", len(variants), supplier_id)
 
     return variants
 
