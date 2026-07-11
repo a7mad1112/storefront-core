@@ -714,15 +714,25 @@ export async function upsertMargin(categoryId, marginType, marginValue) {
 // ─────────────────────────────────────────────
 
 export async function getDashboardCounts() {
-  const [products, categories, brands] = await Promise.all([
+  const [products, categories, brands, productsData] = await Promise.all([
     supabaseAdmin.from('products').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    supabaseAdmin.from('products').select('supplier_code').eq('is_available', true),
   ]);
+
+  const supplierCounts = {};
+  if (productsData.data) {
+    productsData.data.forEach((r) => {
+      const s = r.supplier_code || 'other';
+      supplierCounts[s] = (supplierCounts[s] || 0) + 1;
+    });
+  }
 
   return {
     products: products.count ?? 0,
     categories: categories.count ?? 0,
     brands: brands.count ?? 0,
+    supplierCounts,
   };
 }
