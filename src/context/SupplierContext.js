@@ -48,7 +48,16 @@ export function SupplierProvider({ children }) {
   };
 
   const getSupplierName = (code, lang = 'ar') => {
-    if (supplierNames[code]) return supplierNames[code];
+    if (lang && lang !== 'ar') {
+      const configName = getSupplierConfig(code, lang).name;
+      if (configName) return configName;
+    }
+    if (supplierNames[code]) {
+      if (typeof supplierNames[code] === 'object') {
+        return supplierNames[code][lang] || supplierNames[code].ar || supplierNames[code].name;
+      }
+      if (lang === 'ar') return supplierNames[code];
+    }
     return getSupplierConfig(code, lang).name;
   };
 

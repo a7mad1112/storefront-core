@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
+import { getCategoryDisplayName } from '../../lib/utils';
 
 /**
  * Horizontal scrolling categories carousel for the homepage.
@@ -97,7 +98,7 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
               {getEmoji(cat.name)}
             </div>
             <span style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
-              {cat.name}
+              {getCategoryDisplayName(cat, lang)}
             </span>
           </Link>
         ))}
@@ -110,7 +111,7 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
           className="btn btn-secondary"
           style={{ fontSize: '0.875rem' }}
         >
-          {t.viewAllCategories || 'عرض جميع الأقسام ←'}
+          {t.viewAllCategories || (lang === 'en' ? 'View All Categories →' : lang === 'he' ? 'הצג את כל הקטגוריות ←' : 'عرض جميع الأقسام ←')}
         </Link>
       </div>
     </section>

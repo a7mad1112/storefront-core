@@ -32,10 +32,12 @@
   "product": {
     "addToCart": "+ Add to Cart",
     "colors": "Colors",
+    "quantity": "Quantity:",
     "outOfStock": "Out of Stock",
     "selectColor": "Select a color",
     "noProducts": "No matching products currently available",
     "showingAllIn": "Showing all available products in",
+    "productsCount": "products available right now",
     "notFound": "Product not found",
     "categoryNotFound": "Category not found",
     "bestPricesIn": "Shop the best products in",

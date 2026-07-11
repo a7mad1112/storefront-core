@@ -32,10 +32,12 @@
   "product": {
     "addToCart": "+ أضف للسلة",
     "colors": "الألوان",
+    "quantity": "الكمية:",
     "outOfStock": "غير متوفر",
     "selectColor": "اختر اللون المطلوب",
     "noProducts": "لا توجد منتجات مطابقة حالياً",
     "showingAllIn": "عرض جميع المنتجات المتوفرة في قسم",
+    "productsCount": "منتج متوفر حالياً",
     "notFound": "المنتج غير موجود",
     "categoryNotFound": "القسم غير موجود",
     "bestPricesIn": "تسوقي أفضل المنتجات في قسم",

@@ -84,7 +84,7 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
             {meta.icon} {meta.name}
           </span>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>{displayName}</h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>{dict.product?.showingAllIn || 'عرض جميع المنتجات المتوفرة في قسم'} {displayName} ({meta.name})</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>{dict.product?.showingAllIn || (lang === 'en' ? 'Showing all available products in ' : lang === 'he' ? 'מציג את כל המוצרים הזמינים בקטגוריית ' : 'عرض جميع المنتجات المتوفرة في قسم ')} {displayName} ({meta.name})</p>
         </div>
         <SortSelector />
       </div>
@@ -118,7 +118,7 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
       )}
 
       {/* Products Grid */}
-      <ProductGrid products={products} emptyMessage={dict.product?.noProducts || "لا توجد منتجات متوفرة في هذا القسم حالياً"} />
+      <ProductGrid products={products} emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : "لا توجد منتجات متوفرة في هذا القسم حالياً")} />
     </div>
   );
 }

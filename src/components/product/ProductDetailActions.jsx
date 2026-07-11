@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice, getCategoryDisplayName } from '../../lib/utils';
 import ColorSwatchSelector from './ColorSwatchSelector';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
@@ -24,7 +24,18 @@ function cleanDescription(text = '') {
 }
 
 export default function ProductDetailActions({ product, category, parentCategory, lang = 'ar', dict = {} }) {
-  // Normalize color_variants: separate mixed color words from sizes, sync names & availabilities across variants
+  const formatOptionLabel = (label) => {
+    if (!label) return '';
+    if (lang === 'en') {
+      if (typeof label === 'string' && label.includes('خيار')) return label.replace('خيار', 'Option');
+      if (typeof label === 'string' && label.includes('صورة')) return label.replace('صورة', 'Image');
+    } else if (lang === 'he') {
+      if (typeof label === 'string' && label.includes('خيار')) return label.replace('خيار', 'אפשרות');
+      if (typeof label === 'string' && label.includes('صورة')) return label.replace('صورة', 'תמונה');
+    }
+    return label;
+  };
+
   const rawColorVariants = (product.color_variants && product.color_variants.length > 0)
     ? product.color_variants
     : (product.additional_images && product.additional_images.length > 0)
@@ -39,7 +50,6 @@ export default function ProductDetailActions({ product, category, parentCategory
 
   const effectiveColorVariants = rawColorVariants.map((v, idx, arr) => {
     let sizesArr = v.sizes || [];
-    // Check if variant 0 holds the sizes/color words for the entire product
     if (sizesArr.length === 0 && arr[0]?.sizes?.length > 0) {
       sizesArr = arr[0].sizes;
     }
@@ -78,35 +88,34 @@ export default function ProductDetailActions({ product, category, parentCategory
   const [currentImage, setCurrentImage] = useState(defaultImage);
   const { addItem } = useCart();
 
-  const tProduct = dict.product || {};
   const tCart = dict.cart || {};
 
   const displayName = (lang === 'en' && product.name_en) ? product.name_en :
                       (lang === 'he' && product.name_he) ? product.name_he :
                       product.name;
 
-  const catName = category ? (
+  const rawCatName = category ? (
     (lang === 'en' && category.name_en) ? category.name_en :
     (lang === 'he' && category.name_he) ? category.name_he :
     category.name
   ) : (product.category_name || '');
+  const catName = getCategoryDisplayName(rawCatName, lang);
 
-  // Collect all gallery thumbnails cleanly without duplicates between main photo and options
   const thumbnails = [];
   if (effectiveColorVariants.length > 0) {
     effectiveColorVariants.forEach((v, idx) => {
       if (v.image_url && !thumbnails.some((t) => t.url === v.image_url)) {
-        thumbnails.push({ url: v.image_url, label: v.color_name || `خيار ${idx + 1}`, variant: v });
+        thumbnails.push({ url: v.image_url, label: formatOptionLabel(v.color_name || `خيار ${idx + 1}`), variant: v });
       }
     });
   } else {
     if (product.image_url) {
-      thumbnails.push({ url: product.image_url, label: dict.common?.home || 'الرئيسية' });
+      thumbnails.push({ url: product.image_url, label: dict.common?.home || (lang === 'en' ? 'Main' : lang === 'he' ? 'ראשי' : 'الرئيسية') });
     }
     if (product.additional_images && product.additional_images.length > 0) {
       product.additional_images.forEach((url, idx) => {
         if (url && !thumbnails.some((t) => t.url === url)) {
-          thumbnails.push({ url, label: `صورة ${idx + 1}` });
+          thumbnails.push({ url, label: formatOptionLabel(`صورة ${idx + 1}`) });
         }
       });
     }
@@ -297,24 +306,30 @@ export default function ProductDetailActions({ product, category, parentCategory
 
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', marginBottom: '1.5rem' }}>
           <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-accent)' }}>
-            {formatPrice(product.retail_price || 0)}
+            {formatPrice(product.retail_price || 0, lang)}
           </span>
           {isCurrentlyUnavailable ? (
             <span style={{ color: '#e53e3e', fontSize: '0.875rem', fontWeight: 700, backgroundColor: 'rgba(229, 62, 62, 0.15)', padding: '2px 8px', borderRadius: '4px' }}>
-              ❌ غير متوفر حالياً
+              {lang === 'en' ? '❌ Out of Stock' : lang === 'he' ? '❌ אזל מהמלאי' : '❌ غير متوفر حالياً'}
             </span>
           ) : (
             <span style={{ color: 'var(--color-success)', fontSize: '0.875rem', fontWeight: 700, backgroundColor: 'rgba(56, 161, 105, 0.15)', padding: '2px 8px', borderRadius: '4px' }}>
-              ✔ متوفر في المخزون
+              {lang === 'en' ? '✔ In Stock' : lang === 'he' ? '✔ במלאי' : '✔ متوفر في المخزون'}
             </span>
           )}
         </div>
 
         {/* Description */}
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.8, marginBottom: '0.5rem' }}>
-          <h3 style={{ color: 'var(--color-text-primary)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.5rem' }}>وصف المنتج والمواصفات:</h3>
+          <h3 style={{ color: 'var(--color-text-primary)', fontSize: '1rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+            {lang === 'en' ? 'Product Description & Specs:' : lang === 'he' ? 'תיאור המוצר ומפרטים:' : 'وصف المنتج والمواصفات:'}
+          </h3>
           <p style={{ whiteSpace: 'pre-line' }}>
-            {cleanDescription(product.description)}
+            {cleanDescription(
+              lang === 'en' && product.description_en ? product.description_en :
+              lang === 'he' && product.description_he ? product.description_he :
+              product.description || ''
+            )}
           </p>
         </div>
 
@@ -328,24 +343,26 @@ export default function ProductDetailActions({ product, category, parentCategory
             setSelectedSize(size ?? null);
           }}
           onImageChange={setCurrentImage}
+          lang={lang}
         />
 
-        {/* Actions Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-          {/* Quantity Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontWeight: 700 }}>الكمية المطلوبة:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: 'var(--color-bg-elevated)', padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+        {/* Quantity and Actions */}
+        <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            <span style={{ fontWeight: 700, minWidth: '80px' }}>{tProduct.quantity || (lang === 'en' ? 'Quantity:' : lang === 'he' ? 'כמות:' : 'الكمية:')}</span>
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                style={{ fontSize: '1.25rem', fontWeight: 800, padding: '0 0.5rem' }}
+                style={{ padding: '0.5rem 1rem', fontSize: '1.2rem' }}
+                disabled={quantity <= 1 || isCurrentlyUnavailable}
               >
                 -
               </button>
-              <span style={{ fontSize: '1.125rem', fontWeight: 800, minWidth: '24px', textAlign: 'center' }}>{quantity}</span>
+              <span style={{ padding: '0.5rem 1.5rem', fontWeight: 700 }}>{quantity}</span>
               <button
                 onClick={() => setQuantity((q) => q + 1)}
-                style={{ fontSize: '1.25rem', fontWeight: 800, padding: '0 0.5rem' }}
+                style={{ padding: '0.5rem 1rem', fontSize: '1.2rem' }}
+                disabled={isCurrentlyUnavailable}
               >
                 +
               </button>
@@ -368,7 +385,9 @@ export default function ProductDetailActions({ product, category, parentCategory
                 border: isCurrentlyUnavailable ? '1px solid var(--color-border)' : '',
               }}
             >
-              {isCurrentlyUnavailable ? '❌ غير متوفر في المخزون' : `🛒 ${tProduct.addToCart || 'أضف إلى السلة'}`}
+              {isCurrentlyUnavailable
+                ? (lang === 'en' ? '❌ Out of Stock' : lang === 'he' ? '❌ אזל מהמלאי' : '❌ غير متوفر في المخزون')
+                : `🛒 ${tProduct.addToCart || 'أضف إلى السلة'}`}
             </button>
 
             <button
@@ -385,7 +404,9 @@ export default function ProductDetailActions({ product, category, parentCategory
                 border: isCurrentlyUnavailable ? '1px solid var(--color-border)' : '',
               }}
             >
-              {isCurrentlyUnavailable ? '❌ غير متوفر للطلب' : (tCart.orderWhatsApp || '💬 اطلب الآن عبر واتساب')}
+              {isCurrentlyUnavailable
+                ? (lang === 'en' ? '❌ Unavailable to Order' : lang === 'he' ? '❌ לא זמין להזמנה' : '❌ غير متوفر للطلب')
+                : (tCart.orderWhatsApp || '💬 اطلب الآن عبر واتساب')}
             </button>
           </div>
         </div>
@@ -394,15 +415,15 @@ export default function ProductDetailActions({ product, category, parentCategory
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
           <div>
             <p style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>🚚</p>
-            <p>توصيل سريع لباب بيتك</p>
+            <p>{lang === 'en' ? 'Fast Home Delivery' : lang === 'he' ? 'משלוח מהיר עד הבית' : 'توصيل سريع لباب بيتك'}</p>
           </div>
           <div>
             <p style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>🎁</p>
-            <p>شامل علبة وكيس الشركة</p>
+            <p>{lang === 'en' ? 'Includes Branded Box & Bag' : lang === 'he' ? 'כולל קופסה ושקית ממותגת' : 'شامل علبة وكيس الشركة'}</p>
           </div>
           <div>
             <p style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>⭐</p>
-            <p>جودة ماستر كوالتي مضمونة</p>
+            <p>{lang === 'en' ? 'Guaranteed Master Quality' : lang === 'he' ? 'איכות מאסטר מובטחת' : 'جودة ماستر كوالتي مضمونة'}</p>
           </div>
         </div>
       </div>

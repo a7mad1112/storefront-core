@@ -32,10 +32,12 @@
   "product": {
     "addToCart": "+ הוסף לעגלה",
     "colors": "צבעים",
+    "quantity": "כמות:",
     "outOfStock": "אזל מהמלאי",
     "selectColor": "בחר צבע",
     "noProducts": "אין מוצרים תואמים כרגע",
     "showingAllIn": "מציג את כל המוצרים הזמינים בקטגוריית",
+    "productsCount": "מוצרים זמינים כעת",
     "notFound": "המוצר לא נמצא",
     "categoryNotFound": "הקטגוריה לא נמצאה",
     "bestPricesIn": "קנו את המוצרים הטובים ביותר ב",

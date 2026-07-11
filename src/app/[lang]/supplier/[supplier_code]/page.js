@@ -111,12 +111,12 @@ export default async function SupplierPortalPage({ params }) {
               ✨ {dict.product?.showingAllIn || 'جميع منتجات'} {meta.name}
             </h2>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              {products.length} {dict.product?.productsCount || 'منتج متوفر حالياً'}
+              {products.length} {dict.product?.productsCount || (lang === 'en' ? 'products available right now' : lang === 'he' ? 'מוצרים זמינים כעת' : 'منتج متوفر حالياً')}
             </p>
           </div>
         </div>
 
-        <ProductGrid products={products} emptyMessage={dict.product?.noProducts || 'لا توجد منتجات متوفرة في هذا القسم حالياً'} />
+        <ProductGrid products={products} emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : 'لا توجد منتجات متوفرة في هذا القسم حالياً')} />
       </section>
     </div>
   );

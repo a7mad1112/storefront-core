@@ -75,14 +75,14 @@ export default async function SupplierBrandPage({ params, searchParams }) {
             )}
             <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>{displayName}</h1>
           </div>
-          <p style={{ color: 'var(--color-text-muted)' }}>{dict.sections?.latestFrom || 'عرض جميع المنتجات المتوفرة من ماركة'} {displayName} ({meta.name})</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>{dict.sections?.latestFrom || (lang === 'en' ? 'Latest curated selection from brand ' : lang === 'he' ? 'מבחר חדש מהמותג ' : 'عرض جميع المنتجات المتوفرة من ماركة ')} {displayName} ({meta.name})</p>
         </div>
 
         <SortSelector />
       </div>
 
       {/* Products Grid */}
-      <ProductGrid products={products} emptyMessage={dict.brands?.noProducts || "لا توجد منتجات متوفرة من هذه الماركة في هذا القسم حالياً"} />
+      <ProductGrid products={products} emptyMessage={dict.brands?.noProducts || (lang === 'en' ? 'No products available for this brand right now' : lang === 'he' ? 'אין מוצרים זמינים למותג זה כרגע' : "لا توجد منتجات متوفرة من هذه الماركة في هذا القسم حالياً")} />
     </div>
   );
 }

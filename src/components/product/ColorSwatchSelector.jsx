@@ -9,20 +9,32 @@ import React, { useState } from 'react';
  * - If a color has a `sizes` array, a size selector appears after picking a color
  * - Emits selected color AND selected size via onColorSelect(variant, size) callback
  */
-export default function ColorSwatchSelector({ colorVariants = [], selectedColor = null, mainImage, onColorSelect, onImageChange }) {
+export default function ColorSwatchSelector({ colorVariants = [], selectedColor = null, mainImage, onColorSelect, onImageChange, lang = 'ar' }) {
   const [selectedColorIndex, setSelectedColorIndex] = useState(-1);
   const [selectedSize, setSelectedSize] = useState(null);
 
   if (!colorVariants || colorVariants.length === 0) return null;
 
-  // Sync with controlled selectedColor prop if provided
+  const formatOptionLabel = (label) => {
+    if (!label) return '';
+    if (lang === 'en') {
+      if (typeof label === 'string' && label.includes('خيار')) {
+        return label.replace('خيار', 'Option');
+      }
+    } else if (lang === 'he') {
+      if (typeof label === 'string' && label.includes('خيار')) {
+        return label.replace('خيار', 'אפשרות');
+      }
+    }
+    return label;
+  };
+
   const propIndex = selectedColor ? colorVariants.findIndex(v => v.image_url === selectedColor.image_url || v.color_name === selectedColor.color_name) : -1;
   const activeColorIndex = propIndex >= 0 ? propIndex : (selectedColorIndex >= 0 ? selectedColorIndex : -1);
   const selectedVariant = activeColorIndex >= 0 ? colorVariants[activeColorIndex] : null;
   const hasSizes = selectedVariant?.sizes && selectedVariant.sizes.length > 0;
 
   const handleColorSelect = (variant, index) => {
-    // Reset size when switching colors
     const sizeReset = null;
     setSelectedColorIndex(index);
     setSelectedSize(sizeReset);
@@ -49,7 +61,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
       {/* ── COLOR ROW ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
-          اختر اللون:
+          {lang === 'en' ? 'Choose Option:' : lang === 'he' ? 'בחר אפשרות:' : 'اختر اللون:'}
         </span>
         {activeColorIndex >= 0 && (
           <span style={{
@@ -60,7 +72,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
             padding: '2px 10px',
             borderRadius: 'var(--radius-full)',
           }}>
-            ✓ {colorVariants[activeColorIndex]?.color_name}
+            ✓ {formatOptionLabel(colorVariants[activeColorIndex]?.color_name)}
           </span>
         )}
       </div>
@@ -70,12 +82,13 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
         {colorVariants.map((variant, idx) => {
           const isSelected = idx === activeColorIndex;
           const isUnavailable = !variant.is_available;
+          const displayLabel = formatOptionLabel(variant.color_name);
 
           return (
             <button
               key={`${variant.color_name}-${idx}`}
               onClick={() => handleColorSelect(variant, idx)}
-              title={isUnavailable ? `${variant.color_name} — غير متوفر` : variant.color_name}
+              title={isUnavailable ? `${displayLabel} — ${lang === 'en' ? 'Unavailable' : lang === 'he' ? 'לא זמין' : 'غير متوفر'}` : displayLabel}
               className={`color-swatch-card ${isSelected ? 'selected' : ''} ${isUnavailable ? 'unavailable' : ''}`}
             >
               {/* Thumbnail */}
@@ -83,7 +96,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
                 {variant.image_url ? (
                   <img
                     src={variant.image_url}
-                    alt={variant.color_name}
+                    alt={displayLabel}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
                     loading="lazy"
                   />
@@ -110,7 +123,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
 
               {/* Color name label */}
               <span className="color-swatch-label">
-                {variant.color_name || '—'}
+                {displayLabel || '—'}
               </span>
             </button>
           );
@@ -122,7 +135,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
         <div style={{ marginTop: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
-              اختر القياس:
+              {lang === 'en' ? 'Choose Size:' : lang === 'he' ? 'בחר מידה:' : 'اختر القياس:'}
             </span>
             {selectedSize && (
               <span style={{

@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
+import { getCategoryDisplayName } from '../../lib/utils';
 
 export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierCode = null }) {
   const scrollRef = useRef(null);
@@ -31,27 +32,27 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierC
     <section className="container" style={{ padding: '2rem var(--space-4)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{tSections.shopByBrand || '🏷️ تسوق حسب الماركة'}</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{tSections.shopByBrand || (lang === 'en' ? '🏷️ Shop by Brand' : lang === 'he' ? '🏷️ קנו לפי מותג' : '🏷️ تسوق حسب الماركة')}</h2>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {tSections.shopByBrandDesc || 'أشهر الماركات العالمية في متجرنا'}
+            {tSections.shopByBrandDesc || (lang === 'en' ? 'Top international brands in our store' : lang === 'he' ? 'המותגים המובילים בחנות שלנו' : 'أشهر الماركات العالمية في متجرنا')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => scroll('right')}
-            className="slider-arrow"
-            aria-label="Next"
-            title="تمرير لليمين"
-          >
-            →
-          </button>
-          <button
             onClick={() => scroll('left')}
-            className="slider-arrow"
-            aria-label="Previous"
-            title="تمرير لليسار"
+            className="btn btn-secondary"
+            style={{ width: '40px', height: '40px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            aria-label="Previous brands"
           >
             ←
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            className="btn btn-secondary"
+            style={{ width: '40px', height: '40px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            aria-label="Next brands"
+          >
+            →
           </button>
         </div>
       </div>
@@ -69,13 +70,12 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierC
             {brand.image_url ? (
               <img
                 src={brand.image_url}
-                alt={brand.name}
+                alt={getCategoryDisplayName(brand, lang)}
                 style={{
                   width: '48px',
                   height: '48px',
                   borderRadius: '50%',
-                  objectFit: 'contain',
-                  backgroundColor: 'var(--color-bg-secondary)',
+                  objectFit: 'cover',
                   border: '1px solid var(--color-border)',
                 }}
                 loading="lazy"
@@ -98,7 +98,7 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierC
               </div>
             )}
             <span style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
-              {brand.name}
+              {getCategoryDisplayName(brand, lang)}
             </span>
           </Link>
         ))}
@@ -110,7 +110,7 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierC
           className="btn btn-secondary"
           style={{ fontSize: '0.875rem' }}
         >
-          {tSections.viewAllBrands || 'عرض جميع الماركات ←'}
+          {tSections.viewAllBrands || (lang === 'en' ? 'View All Brands →' : lang === 'he' ? 'הצג את כל המותגים ←' : 'عرض جميع الماركات ←')}
         </Link>
       </div>
     </section>
