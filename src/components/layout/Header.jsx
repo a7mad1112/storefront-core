@@ -9,6 +9,7 @@ import { useSupplier } from '../../context/SupplierContext';
 import { isDepartmentSupported } from '../../lib/supplierConfig';
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
+const STORE_LOGO = process.env.NEXT_PUBLIC_STORE_LOGO || '/logo.png';
 const LOCALES = [
   { code: 'ar', label: 'AR' },
   { code: 'en', label: 'EN' },
@@ -109,7 +110,7 @@ export default function Header({ lang = 'ar' }) {
         {/* Brand Logo */}
         <Link href={`/${lang}`} className="logo header-logo">
           <img
-            src="/logo.png"
+            src={STORE_LOGO}
             alt={STORE_NAME}
             className="header-logo-img"
           />

@@ -13,15 +13,16 @@ export async function generateMetadata({ params }) {
   const { lang, slug } = await params;
   const brand = await getBrandBySlug(slug);
 
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
   if (!brand) {
-    return { title: 'الماركة غير موجودة — Eloria FASHION' };
+    return { title: `الماركة غير موجودة — ${storeName}` };
   }
 
   const displayName = getCategoryDisplayName(brand, lang);
 
   return {
-    title: `${displayName} — Eloria FASHION`,
-    description: `تسوقي أحدث وأفضل المنتجات من ماركة ${displayName} بأسعار مميزة وجودة عالية من متجر Eloria FASHION.`,
+    title: `${displayName} — ${storeName}`,
+    description: `تسوقي أحدث وأفضل المنتجات من ماركة ${displayName} بأسعار مميزة وجودة عالية من متجر ${storeName}.`,
   };
 }
 

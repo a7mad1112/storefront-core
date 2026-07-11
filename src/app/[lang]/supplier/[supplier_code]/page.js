@@ -15,9 +15,10 @@ export async function generateMetadata({ params }) {
   if (!hasLocale(lang)) notFound();
 
   const meta = getSupplierConfig(supplier_code, lang);
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
 
   return {
-    title: `${meta.name} — Eloria FASHION`,
+    title: `${meta.name} — ${storeName}`,
     description: meta.description,
   };
 }

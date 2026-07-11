@@ -136,6 +136,7 @@ export function getSupplierConfig(code, lang = 'ar') {
 
   return {
     ...config,
+    logo: process.env.NEXT_PUBLIC_STORE_LOGO || config.logo || '/logo.png',
     name: lang === 'en' ? config.name_en : lang === 'he' ? config.name_he : config.name_ar,
     badge: lang === 'en' ? config.badge_en : lang === 'he' ? config.badge_he : config.badge_ar,
     description: lang === 'en' ? config.description_en : lang === 'he' ? config.description_he : config.description_ar,

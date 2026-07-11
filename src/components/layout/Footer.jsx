@@ -4,6 +4,7 @@ import React from 'react';
 import { useDictionary } from '../../context/DictionaryContext';
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
+const STORE_LOGO = process.env.NEXT_PUBLIC_STORE_LOGO || '/logo.png';
 const STORE_DESC_DEFAULT = 'متجر الموضة والأناقة الفاخرة. شنط ماستر كوالتي، عطور وساعات وماركات عالمية بأسعار مميزة مع خدمة التوصيل السريع لجميع مناطق فلسطين.';
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
 
@@ -20,8 +21,8 @@ export default function Footer({ lang, dict: propDict }) {
   const tCommon = dict.common || {};
   const tFooter = dict.footer || {};
 
-  const storeName = tCommon.storeName || STORE_NAME;
-  const storeDesc = tFooter.storeDesc || process.env.NEXT_PUBLIC_STORE_DESC || STORE_DESC_DEFAULT;
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || tCommon.storeName || STORE_NAME;
+  const storeDesc = process.env.NEXT_PUBLIC_STORE_DESC || tFooter.storeDesc || STORE_DESC_DEFAULT;
   const contactWhatsApp = tCommon.contactWhatsApp || 'تواصل عبر واتساب';
   const allRightsReserved = tCommon.allRightsReserved || 'جميع الحقوق محفوظة';
 
@@ -33,7 +34,7 @@ export default function Footer({ lang, dict: propDict }) {
     <footer style={{ backgroundColor: 'var(--color-bg-secondary)', borderTop: '1px solid var(--color-border)', marginTop: 'auto', padding: '3.5rem 0 2.5rem 0' }}>
       <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-          <img src="/logo.png" alt={storeName} style={{ maxHeight: '42px', width: 'auto', objectFit: 'contain' }} />
+          <img src={STORE_LOGO} alt={storeName} style={{ maxHeight: '42px', width: 'auto', objectFit: 'contain' }} />
           <h3 style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '0.5px' }}>
             {storeName}
           </h3>

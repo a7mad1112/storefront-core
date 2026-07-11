@@ -12,8 +12,9 @@ export async function generateMetadata({ params }) {
   const { lang, id } = await params;
   const product = await getProductById(id);
 
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
   if (!product) {
-    return { title: 'المنتج غير موجود — Eloria FASHION' };
+    return { title: `المنتج غير موجود — ${storeName}` };
   }
 
   const displayName = (lang === 'en' && product.name_en) ? product.name_en :
@@ -21,8 +22,8 @@ export async function generateMetadata({ params }) {
                       product.name;
 
   return {
-    title: `${displayName} — Eloria FASHION`,
-    description: product.description ? product.description.slice(0, 160) : `تسوقي ${displayName} بأفضل سعر وجودة في متجر Eloria FASHION.`,
+    title: `${displayName} — ${storeName}`,
+    description: product.description ? product.description.slice(0, 160) : `تسوقي ${displayName} بأفضل سعر وجودة في متجر ${storeName}.`,
     openGraph: {
       images: product.image_url ? [product.image_url] : [],
     },

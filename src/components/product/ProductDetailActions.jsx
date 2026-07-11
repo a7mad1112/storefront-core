@@ -108,7 +108,9 @@ export default function ProductDetailActions({ product, category, parentCategory
     const sizeText = selectedSize ? `📐 ${tCart.sizeLabel || 'القياس'}: ${selectedSize}\n` : '';
     const imgUrl = selectedColor?.image_url || product.image_url || '';
 
-    const text = `${tCart.orderIntro || 'مرحباً، أريد طلب هذا المنتج من متجر Eloria FASHION:'}\n\n` +
+    const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
+    const introText = tCart.orderIntro ? tCart.orderIntro.replace('Eloria FASHION', storeName) : `مرحباً، أريد طلب هذا المنتج من متجر ${storeName}:`;
+    const text = `${introText}\n\n` +
       `📦 الاسم: ${displayName}\n` +
       colorText +
       sizeText +

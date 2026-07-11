@@ -10,9 +10,10 @@ export const revalidate = 3600; // Revalidate every hour
 export async function generateMetadata({ params }) {
   const { lang } = await params;
   const dict = await getDictionary(lang);
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
   return {
-    title: `${dict.common?.categories || 'جميع الأقسام'} — Eloria FASHION`,
-    description: dict.sections?.shopByCategoryDesc || 'تصفح جميع أقسام وفئات متجر Eloria FASHION للموضة والأناقة.',
+    title: `${dict.common?.categories || 'جميع الأقسام'} — ${storeName}`,
+    description: dict.sections?.shopByCategoryDesc || `تصفح جميع أقسام وفئات متجر ${storeName} للموضة والأناقة.`,
   };
 }
 
