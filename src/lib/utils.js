@@ -611,3 +611,58 @@ export function getImageUrl(imagePath) {
   const r2Base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
   return `${r2Base}/${imagePath}`;
 }
+
+export function getFallbackDescription(lang = 'ar') {
+  if (lang === 'en') {
+    return 'A premium, high-quality product from our store, carefully selected to meet your expectations and provide you with the best performance and user experience, or as a wonderful gift for someone you love.';
+  } else if (lang === 'he') {
+    return 'מוצר פרימיום איכותי מהחנות שלנו, שנבחר בקפידה כדי לענות על הציפיות שלך ולהעניק לך את הביצועים וחווית השימוש הטובים ביותר, או במתנה נפלאה למישהו שאתה אוהב.';
+  }
+  return 'منتج عالي الجودة ومميز من متجرنا، تم اختياره بعناية ليلبي تطلعاتك ويضمن لك أفضل أداء وتجربة استخدام رائعة، أو ليكون خياراً مميزاً للإهداء لمن تحب.';
+}
+
+export function cleanDescription(text = '', lang = 'ar') {
+  if (!text) return getFallbackDescription(lang);
+  let cleaned = text;
+
+  const deliveryPhrases = [
+    'التوصيل متاح',
+    'التوصيل متوفر',
+    'Delivery is available',
+    'Delivery available',
+    'Shipping is available',
+    'Shipping available',
+    'ניתן לבצע משלוחים',
+    'משלוחים לאזורים הבאים',
+    'משלוח זמין',
+  ];
+  for (const phrase of deliveryPhrases) {
+    const idx = cleaned.indexOf(phrase);
+    if (idx !== -1) {
+      cleaned = cleaned.substring(0, idx);
+    }
+  }
+
+  cleaned = cleaned.replace(/where_to_vote/gi, '');
+  cleaned = cleaned.replace(/לאן_להצביע/gi, '');
+  cleaned = cleaned.replace(/إلى أين تصوت/gi, '');
+
+  cleaned = cleaned.replace(/تفاصيل المنتج\s*/gi, '');
+  cleaned = cleaned.replace(/رقم المنتج\s*[\d-]+\s*/gi, '');
+  cleaned = cleaned.replace(/الباركود\s*(?:\(\d+\)\s*)+/gi, '');
+
+  cleaned = cleaned.replace(/Product details\s*/gi, '');
+  cleaned = cleaned.replace(/Product number\s*[\d-]+\s*/gi, '');
+  cleaned = cleaned.replace(/Barcode\s*(?:\(\d+\)\s*)+/gi, '');
+
+  cleaned = cleaned.replace(/פרטי המוצר\s*/gi, '');
+  cleaned = cleaned.replace(/מספר מוצר\s*[\d-]+\s*/gi, '');
+  cleaned = cleaned.replace(/ברקוד\s*(?:\(\d+\)\s*)+/gi, '');
+
+  cleaned = cleaned.trim();
+
+  if (!cleaned || cleaned.length < 3) {
+    return getFallbackDescription(lang);
+  }
+  return cleaned;
+}

@@ -67,7 +67,17 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
       </div>
 
       {/* Color cards grid */}
-      <div className="color-swatch-row">
+      <div
+        className="color-swatch-row"
+        style={{
+          maxHeight: colorVariants.length > 12 ? '220px' : 'none',
+          overflowY: colorVariants.length > 12 ? 'auto' : 'visible',
+          padding: colorVariants.length > 12 ? '0.5rem' : '0',
+          border: colorVariants.length > 12 ? '1px solid var(--color-border)' : 'none',
+          borderRadius: colorVariants.length > 12 ? 'var(--radius-lg)' : '0',
+          backgroundColor: colorVariants.length > 12 ? 'var(--color-bg-secondary)' : 'transparent',
+        }}
+      >
         {colorVariants.map((variant, idx) => {
           const isSelected = idx === activeColorIndex;
           const isUnavailable = !variant.is_available;
@@ -140,7 +150,17 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
             )}
           </div>
 
-          <div className="size-selector-row">
+          <div
+            className="size-selector-row"
+            style={{
+              maxHeight: selectedVariant.sizes.length > 16 ? '160px' : 'none',
+              overflowY: selectedVariant.sizes.length > 16 ? 'auto' : 'visible',
+              padding: selectedVariant.sizes.length > 16 ? '0.5rem' : '0',
+              border: selectedVariant.sizes.length > 16 ? '1px solid var(--color-border)' : 'none',
+              borderRadius: selectedVariant.sizes.length > 16 ? 'var(--radius-lg)' : '0',
+              backgroundColor: selectedVariant.sizes.length > 16 ? 'var(--color-bg-secondary)' : 'transparent',
+            }}
+          >
             {selectedVariant.sizes.map((sizeObj, sIdx) => {
               const isSelected = selectedSize === sizeObj.size;
               const isUnavailable = !sizeObj.is_available;

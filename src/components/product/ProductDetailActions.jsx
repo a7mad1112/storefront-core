@@ -3,25 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
-import { formatPrice, getCategoryDisplayName, formatOptionLabel as formatOpt } from '../../lib/utils';
+import { formatPrice, getCategoryDisplayName, formatOptionLabel as formatOpt, cleanDescription } from '../../lib/utils';
 import ColorSwatchSelector from './ColorSwatchSelector';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
-
-function cleanDescription(text = '') {
-  if (!text) return '';
-  let cleaned = text;
-  const deliveryIndex = cleaned.indexOf('التوصيل متاح');
-  if (deliveryIndex !== -1) {
-    cleaned = cleaned.substring(0, deliveryIndex);
-  }
-  cleaned = cleaned.replace(/where_to_vote/g, '');
-  cleaned = cleaned.replace(/تفاصيل المنتج\s*/g, '');
-  cleaned = cleaned.replace(/رقم المنتج\s*[\d-]+\s*/g, '');
-  cleaned = cleaned.replace(/الباركود\s*(?:\(\d+\)\s*)+/g, '');
-  cleaned = cleaned.trim();
-  return cleaned || 'منتج عالي الجودة ومميز من متجرنا، تم اختياره بعناية ليلبي تطلعاتك ويضمن لك أفضل أداء وتجربة استخدام رائعة، أو ليكون خياراً مميزاً للإهداء لمن تحب.';
-}
 
 export default function ProductDetailActions({ product, category, parentCategory, lang = 'ar', dict = {} }) {
   const tProduct = dict?.product || {};
@@ -155,7 +140,7 @@ export default function ProductDetailActions({ product, category, parentCategory
   return (
     <div className="product-detail-grid">
       {/* Left / Top Image Showcase & Gallery */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
         <div
           style={{
             backgroundColor: 'var(--color-bg-secondary)',
@@ -181,7 +166,7 @@ export default function ProductDetailActions({ product, category, parentCategory
 
         {/* Thumbnail Gallery */}
         {thumbnails.length > 1 && (
-          <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem', minWidth: 0, width: '100%', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
             {thumbnails.map((thumb, idx) => {
               const isActive = currentImage === thumb.url;
               const matchedVarForThumb = thumb.variant || effectiveColorVariants.find((v) => v.image_url === thumb.url || v.color_name === thumb.label);
@@ -252,7 +237,7 @@ export default function ProductDetailActions({ product, category, parentCategory
       </div>
 
       {/* Right / Bottom Details */}
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0, width: '100%', maxWidth: '100%' }}>
         {/* Badges: Category & Brand */}
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           {catName && (
@@ -319,7 +304,8 @@ export default function ProductDetailActions({ product, category, parentCategory
             {cleanDescription(
               lang === 'en' && product.description_en ? product.description_en :
               lang === 'he' && product.description_he ? product.description_he :
-              product.description || ''
+              product.description || '',
+              lang
             )}
           </p>
         </div>
