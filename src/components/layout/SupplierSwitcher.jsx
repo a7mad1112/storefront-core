@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSupplier } from '../../context/SupplierContext';
+import { isDepartmentSupported } from '../../lib/supplierConfig';
 
 export default function SupplierSwitcher({ lang = 'ar' }) {
   const { supportedSuppliers, getSupplierName, changeSupplier, hasMultipleSuppliers } = useSupplier();
@@ -66,7 +67,7 @@ export default function SupplierSwitcher({ lang = 'ar' }) {
       icon: '🏃',
       name: lang === 'en' ? 'Apparel, Suits & Sportswear' : lang === 'he' ? 'אופנה, חליפות ובגדי ספורט' : 'قسم الأزياء، الأطقم والملابس الرياضية',
     },
-  ];
+  ].filter((item) => isDepartmentSupported(item.key));
 
   // Repeat 4 times to ensure seamless 50% translation loop across all screen widths
   const repeatedItems = [...baseItems, ...baseItems, ...baseItems, ...baseItems];

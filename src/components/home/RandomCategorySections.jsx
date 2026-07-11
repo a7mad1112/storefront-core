@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import ProductGrid from '../product/ProductGrid';
 import { getCategoryDisplayName } from '../../lib/utils';
 
 export default function RandomCategorySections({ candidateSections = [], lang = 'ar', dict }) {
-  const [selectedSections] = useState(() => {
+  const selectedSections = useMemo(() => {
     if (!candidateSections || candidateSections.length === 0) return [];
-    return [...candidateSections].sort(() => Math.random() - 0.5).slice(0, 3);
-  });
+    return [...candidateSections].slice(0, 3);
+  }, [candidateSections]);
 
   if (selectedSections.length === 0) return null;
 

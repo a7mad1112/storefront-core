@@ -159,3 +159,52 @@ export function getFriendlySupplierCode(code, cat = null) {
   }
   return code;
 }
+
+/**
+ * Centralized configuration list of currently supported supplier codes
+ * parsed directly from NEXT_PUBLIC_SUPPORTED_SUPPLIERS in .env.local
+ */
+export function getSupportedSuppliers() {
+  const envVal = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS : '';
+  if (!envVal || typeof envVal !== 'string') return [];
+  return envVal
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Checks if a database supplier code (gbstore, balagan, sakher) is active/supported
+ */
+export function isSupplierSupported(code) {
+  if (!code || code === 'all') return true;
+  const list = getSupportedSuppliers();
+  if (list.length === 0) return true; // if env var not set, allow all
+  const clean = String(code).trim().toLowerCase();
+  if (list.includes(clean)) return true;
+  if (clean === 'shoes' && list.includes('balagan')) return true;
+  if (clean === 'apparel-sports' && list.includes('sakher')) return true;
+  if ((clean === 'bags-gifts' || clean === 'perfumes-watches') && list.includes('gbstore')) return true;
+  return false;
+}
+
+/**
+ * Checks if a showcase/department ID (bags-gifts, shoes, apparel-sports, perfumes-watches) is active/supported
+ */
+export function isDepartmentSupported(deptId) {
+  if (!deptId || deptId === 'all') return true;
+  const list = getSupportedSuppliers();
+  if (list.length === 0) return true;
+  const clean = String(deptId).trim().toLowerCase();
+  if (clean === 'bags-gifts' || clean === 'perfumes-watches' || clean === 'gbstore') {
+    return list.includes('gbstore') || list.includes('bags-gifts') || list.includes('perfumes-watches');
+  }
+  if (clean === 'shoes' || clean === 'balagan') {
+    return list.includes('balagan') || list.includes('shoes');
+  }
+  if (clean === 'apparel-sports' || clean === 'sakher') {
+    return list.includes('sakher') || list.includes('apparel-sports');
+  }
+  return list.includes(clean);
+}
+

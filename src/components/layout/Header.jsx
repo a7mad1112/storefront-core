@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
 import { useDictionary } from '../../context/DictionaryContext';
 import { useSupplier } from '../../context/SupplierContext';
+import { isDepartmentSupported } from '../../lib/supplierConfig';
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
 const LOCALES = [
@@ -13,6 +14,12 @@ const LOCALES = [
   { code: 'en', label: 'EN' },
   { code: 'he', label: 'HE' },
 ];
+
+function saveLocaleCookie(locale) {
+  if (typeof document !== 'undefined') {
+    document.cookie = `preferred_locale=${locale};path=/;max-age=${365 * 24 * 60 * 60}`;
+  }
+}
 
 export default function Header({ lang = 'ar' }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,7 +80,7 @@ export default function Header({ lang = 'ar' }) {
       icon: '🏃',
       name: lang === 'en' ? 'Apparel, Suits & Sportswear' : lang === 'he' ? 'אופנה, חליפות ובגדי ספורט' : 'قسم الأزياء، الأطقم والملابس الرياضية',
     },
-  ];
+  ].filter((item) => isDepartmentSupported(item.key));
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -91,7 +98,7 @@ export default function Header({ lang = 'ar' }) {
     const newPath = segments.join('/') || `/${newLang}`;
 
     // Set cookie to remember preference
-    document.cookie = `preferred_locale=${newLang};path=/;max-age=${365 * 24 * 60 * 60}`;
+    saveLocaleCookie(newLang);
 
     router.push(newPath);
   };

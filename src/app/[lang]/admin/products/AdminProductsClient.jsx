@@ -4,13 +4,14 @@ import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatPrice } from '../../../../lib/utils';
 import AvailabilityToggle from '../../../../components/admin/AvailabilityToggle';
+import { isSupplierSupported } from '../../../../lib/supplierConfig';
 
 const SUPPLIER_OPTIONS = [
   { code: 'all', label: '🏬 جميع الموردين والأقسام' },
   { code: 'gbstore', label: '🎁 الشنط، الهدايا والعطور (GBSTORE)' },
   { code: 'balagan', label: '👟 الأحذية والسليبر (BALAGAN)' },
   { code: 'sakher', label: '🏃 الملابس والأحذية الرياضية (SAKHER)' },
-];
+].filter((opt) => isSupplierSupported(opt.code));
 
 export default function AdminProductsClient({ products, totalCount, pageNum, limit, initialSupplier, initialSearch, overrides }) {
   const router = useRouter();

@@ -12,25 +12,90 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      if (!session && pathname !== '/ar/admin/login' && !pathname.includes('/login')) {
-        router.push('/ar/admin/login');
+    let isMounted = true;
+
+    const checkAuth = async () => {
+      const isLoginRoute = pathname === '/ar/admin/login' || pathname.includes('/login');
+
+      // 1. Check local session storage first
+      const localSessionStr = typeof window !== 'undefined' ? localStorage.getItem('gb_admin_session') : null;
+      if (localSessionStr) {
+        try {
+          const localSession = JSON.parse(localSessionStr);
+          const currentStoreId = process.env.NEXT_PUBLIC_STORE_ID || 'eloria';
+          if (localSession && localSession.storeId === currentStoreId) {
+            if (isMounted) {
+              setSession(localSession);
+              setLoading(false);
+            }
+            return;
+          } else {
+            // Store ID mismatch! Remove local session
+            if (typeof window !== 'undefined') localStorage.removeItem('gb_admin_session');
+          }
+        } catch (e) {
+          if (typeof window !== 'undefined') localStorage.removeItem('gb_admin_session');
+        }
       }
+
+      // 2. Check server-side verification / cookie
+      try {
+        const res = await fetch('/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        const data = await res.json();
+        if (res.ok && data.success && data.user) {
+          if (typeof window !== 'undefined') localStorage.setItem('gb_admin_session', JSON.stringify(data.user));
+          if (isMounted) {
+            setSession(data.user);
+            setLoading(false);
+          }
+          return;
+        }
+      } catch (err) {}
+
+      // 3. Check Supabase Auth session
+      const { data: authData } = await supabase.auth.getSession();
+      const supaSession = authData?.session;
+      if (supaSession?.user) {
+        try {
+          const verifyRes = await fetch('/api/admin/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: supaSession.user.email }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.success) {
+            if (typeof window !== 'undefined') localStorage.setItem('gb_admin_session', JSON.stringify(verifyData.user));
+            if (isMounted) {
+              setSession(verifyData.user);
+              setLoading(false);
+            }
+            return;
+          } else {
+            await supabase.auth.signOut();
+          }
+        } catch (e) {}
+      }
+
+      // If no valid session for this store
+      if (isMounted) {
+        setSession(null);
+        setLoading(false);
+        if (!isLoginRoute) {
+          router.push('/ar/admin/login');
+        }
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkAuth();
     });
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-      if (!session && pathname !== '/ar/admin/login' && !pathname.includes('/login')) {
-        router.push('/ar/admin/login');
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [pathname, router]);
 
   if (loading) {
@@ -47,7 +112,10 @@ export default function AdminLayout({ children }) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (typeof window !== 'undefined') localStorage.removeItem('gb_admin_session');
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {});
+    await supabase.auth.signOut().catch(() => {});
+    setSession(null);
     router.push('/ar/admin/login');
   };
 

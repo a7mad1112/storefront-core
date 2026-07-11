@@ -18,7 +18,8 @@ export function CartProvider({ children, lang = 'ar', dict }) {
     try {
       const stored = localStorage.getItem(CART_STORAGE_KEY);
       if (stored) {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setTimeout(() => setItems(parsed), 0);
       }
     } catch (e) {
       console.error('Failed to load cart from localStorage', e);

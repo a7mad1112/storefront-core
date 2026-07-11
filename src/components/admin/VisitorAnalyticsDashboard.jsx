@@ -8,17 +8,25 @@ export default function VisitorAnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let active = true;
+    const timer = setTimeout(() => { if (active) setLoading(true); }, 0);
     fetch(`/api/admin/analytics?period=${period}`)
       .then((res) => res.json())
       .then((res) => {
-        setData(res);
-        setLoading(false);
+        if (active) {
+          clearTimeout(timer);
+          setData(res);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        console.error('Failed to load analytics', err);
-        setLoading(false);
+        if (active) {
+          clearTimeout(timer);
+          console.error('Failed to load analytics', err);
+          setLoading(false);
+        }
       });
+    return () => { active = false; clearTimeout(timer); };
   }, [period]);
 
   const maxCount = data?.chartData?.reduce((max, d) => Math.max(max, d.count), 0) || 1;

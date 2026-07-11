@@ -16,16 +16,26 @@ export default function AdminLoginPage() {
     setErrorMsg('');
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
 
-    if (error) {
-      setErrorMsg('خطأ في تسجيل الدخول: تأكد من البريد الإلكتروني وكلمة المرور');
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || 'خطأ في تسجيل الدخول: تأكد من البريد الإلكتروني وكلمة المرور');
+        setLoading(false);
+      } else {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('gb_admin_session', JSON.stringify(data.user));
+        }
+        router.push('/ar/admin');
+      }
+    } catch (err) {
+      setErrorMsg('حدث خطأ بالاتصال، يرجى المحاولة مرة أخرى');
       setLoading(false);
-    } else {
-      router.push('/ar/admin');
     }
   };
 

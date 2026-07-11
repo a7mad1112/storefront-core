@@ -1,42 +1,40 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getSupplierConfig } from '../lib/supplierConfig';
+import { getSupplierConfig, getSupportedSuppliers } from '../lib/supplierConfig';
 
 const SupplierContext = createContext(null);
 
 export function SupplierProvider({ children }) {
-  const [supportedSuppliers, setSupportedSuppliers] = useState(['gbstore', 'balagan', 'sakher']);
-  const [supplierNames, setSupplierNames] = useState({});
-  const [activeSupplier, setActiveSupplier] = useState('all'); // 'all' or specific supplier code
-
-  useEffect(() => {
-    // Parse supported suppliers from environment
-    const suppliersEnv = process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS || 'gbstore,balagan,sakher';
-    const list = suppliersEnv.split(',').map((s) => s.trim()).filter(Boolean);
-    setSupportedSuppliers(list.length > 0 ? list : ['gbstore']);
-
-    // Parse supplier display names
-    const namesEnv = process.env.NEXT_PUBLIC_SUPPLIER_NAMES;
+  const [supportedSuppliers, setSupportedSuppliers] = useState(() => {
+    const list = getSupportedSuppliers();
+    return list.length > 0 ? list : ['gbstore', 'balagan', 'sakher'];
+  });
+  const [supplierNames] = useState(() => {
+    const namesEnv = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPPLIER_NAMES : '';
     if (namesEnv) {
       try {
-        const parsed = JSON.parse(namesEnv);
-        setSupplierNames(parsed);
+        return JSON.parse(namesEnv);
       } catch (e) {
         console.error('[SupplierContext] Failed to parse NEXT_PUBLIC_SUPPLIER_NAMES:', e);
       }
     }
-
-    // Try reading saved preference from localStorage
+    return {};
+  });
+  const [activeSupplier, setActiveSupplier] = useState(() => {
     try {
-      const saved = localStorage.getItem('gb_active_supplier');
-      if (saved && (saved === 'all' || list.includes(saved))) {
-        setActiveSupplier(saved);
+      if (typeof window !== 'undefined') {
+        const saved = window.localStorage.getItem('gb_active_supplier');
+        const list = getSupportedSuppliers();
+        if (saved && (saved === 'all' || list.includes(saved))) {
+          return saved;
+        }
       }
     } catch (e) {
       // ignore localStorage errors
     }
-  }, []);
+    return 'all';
+  });
 
   const changeSupplier = (code) => {
     setActiveSupplier(code);

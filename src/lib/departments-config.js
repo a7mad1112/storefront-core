@@ -8,6 +8,7 @@
 
 import { supabase } from './supabase.js';
 import { getCategories, PUBLIC_PRODUCT_FIELDS } from './queries.js';
+import { isDepartmentSupported } from './supplierConfig.js';
 
 export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
   const t = dict?.departments || {};
@@ -210,5 +211,5 @@ export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
     },
   ];
 
-  return departments;
+  return departments.filter((dept) => isDepartmentSupported(dept.id));
 }

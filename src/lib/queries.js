@@ -8,6 +8,7 @@
 
 import { supabase } from './supabase.js';
 import { supabaseAdmin } from './supabase-server.js';
+import { getSupportedSuppliers, isSupplierSupported } from './supplierConfig.js';
 
 export const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID || 'eloria';
 export const SUPPORTED_SUPPLIERS = (process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS || '')
@@ -26,16 +27,25 @@ export function normalizeSupplierCode(code) {
   return code;
 }
 
+export function getActiveSupportedSuppliers() {
+  const list = getSupportedSuppliers();
+  return list.length > 0 ? list : SUPPORTED_SUPPLIERS;
+}
+
 function applySupplierFilter(query, supplierCode = null) {
+  const activeList = getActiveSupportedSuppliers();
   const norm = normalizeSupplierCode(supplierCode);
   if (norm && norm !== 'all') {
+    if (activeList.length > 0 && !activeList.includes(norm)) {
+      return query.eq('supplier_code', '__unsupported__');
+    }
     return query.eq('supplier_code', norm);
   }
-  if (SUPPORTED_SUPPLIERS.length === 1) {
-    return query.eq('supplier_code', SUPPORTED_SUPPLIERS[0]);
+  if (activeList.length === 1) {
+    return query.eq('supplier_code', activeList[0]);
   }
-  if (SUPPORTED_SUPPLIERS.length > 1) {
-    return query.in('supplier_code', SUPPORTED_SUPPLIERS);
+  if (activeList.length > 1) {
+    return query.in('supplier_code', activeList);
   }
   return query;
 }
@@ -681,9 +691,8 @@ export async function getAdminProducts({ limit = 50, offset = 0, supplierCode = 
     .from('products')
     .select('id, supplier_id, supplier_code, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at', { count: 'exact' });
 
-  if (norm && norm !== 'all') {
-    query = query.eq('supplier_code', norm);
-  }
+  query = applySupplierFilter(query, supplierCode);
+
   if (search && search.trim()) {
     query = query.or(`name.ilike.%${search.trim()}%,supplier_id.ilike.%${search.trim()}%`);
   }
@@ -818,7 +827,7 @@ export async function getSyncLogs({ limit = 10 } = {}) {
 export async function getMarginsWithCategories() {
   const { data, error } = await supabaseAdmin
     .from('categories')
-    .select('id, name, slug, margins(id, margin_type, margin_value, store_id)')
+    .select('id, name, slug, parent_id, margins(id, margin_type, margin_value, store_id)')
     .eq('is_active', true)
     .order('name');
 
@@ -826,10 +835,24 @@ export async function getMarginsWithCategories() {
     console.error('[getMarginsWithCategories]', error.message);
     return [];
   }
-  return (data ?? []).map((cat) => ({
+  let cats = (data ?? []).map((cat) => ({
     ...cat,
     margins: (cat.margins || []).filter((m) => !m.store_id || m.store_id === STORE_ID),
   }));
+
+  if (cats.length > 0) {
+    let prodQuery = supabaseAdmin.from('products').select('category_id');
+    prodQuery = applySupplierFilter(prodQuery, null);
+    const { data: prodCats } = await prodQuery;
+    if (prodCats && prodCats.length > 0) {
+      const activeCatIds = new Set(prodCats.map((p) => p.category_id).filter(Boolean));
+      cats = cats.filter((c) => activeCatIds.has(c.id) || cats.some((child) => child.parent_id === c.id && activeCatIds.has(child.id)));
+    } else {
+      cats = [];
+    }
+  }
+
+  return cats;
 }
 
 export async function upsertMargin(categoryId, marginType, marginValue) {
@@ -851,31 +874,41 @@ export async function upsertMargin(categoryId, marginType, marginValue) {
 // ─────────────────────────────────────────────
 
 export async function getDashboardCounts() {
-  const [products, categories, brands, gbstore, balagan, sakher] = await Promise.all([
-    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }),
-    supabaseAdmin.from('categories').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('is_active', true),
+  const activeList = getActiveSupportedSuppliers();
+  const isAllOrMulti = activeList.length === 0;
+
+  let productsQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
+  let prodSelectQuery = supabaseAdmin.from('products').select('category_id, brand_id');
+  if (activeList.length === 1) {
+    productsQuery = productsQuery.eq('supplier_code', activeList[0]);
+    prodSelectQuery = prodSelectQuery.eq('supplier_code', activeList[0]);
+  } else if (activeList.length > 1) {
+    productsQuery = productsQuery.in('supplier_code', activeList);
+    prodSelectQuery = prodSelectQuery.in('supplier_code', activeList);
+  }
+
+  const [products, prodDataRes, gbstore, balagan, sakher] = await Promise.all([
+    productsQuery,
+    prodSelectQuery,
     supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'gbstore'),
     supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'balagan'),
     supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'sakher'),
   ]);
 
-  const supplierCounts = {
-    gbstore: gbstore.count ?? 0,
-    balagan: balagan.count ?? 0,
-    sakher: sakher.count ?? 0,
-  };
+  const activeCategoryIds = new Set((prodDataRes.data || []).map((p) => p.category_id).filter(Boolean));
+  const activeBrandIds = new Set((prodDataRes.data || []).map((p) => p.brand_id).filter(Boolean));
 
-  const knownSum = supplierCounts.gbstore + supplierCounts.balagan + supplierCounts.sakher;
+  const supplierCounts = {};
+  if (isAllOrMulti || activeList.includes('gbstore')) supplierCounts.gbstore = gbstore.count ?? 0;
+  if (isAllOrMulti || activeList.includes('balagan')) supplierCounts.balagan = balagan.count ?? 0;
+  if (isAllOrMulti || activeList.includes('sakher')) supplierCounts.sakher = sakher.count ?? 0;
+
   const totalProducts = products.count ?? 0;
-  if (totalProducts > knownSum) {
-    supplierCounts.other = totalProducts - knownSum;
-  }
 
   return {
     products: totalProducts,
-    categories: categories.count ?? 0,
-    brands: brands.count ?? 0,
+    categories: activeCategoryIds.size,
+    brands: activeBrandIds.size,
     supplierCounts,
   };
 }

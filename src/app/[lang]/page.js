@@ -28,9 +28,7 @@ export default async function HomePage({ params }) {
 
   const topCategories = categories.filter((c) => !c.parent_id);
 
-  // Shuffle categories to pick extra random sections for discovery at the bottom
-  const shuffled = [...categories].sort(() => Math.random() - 0.5);
-  const candidates = shuffled.slice(0, 6);
+  const candidates = [...categories].slice(0, 6);
 
   const productBatches = await Promise.all(
     candidates.map((cat) => getProductsForCategory(cat.id, { limit: 4 }))
