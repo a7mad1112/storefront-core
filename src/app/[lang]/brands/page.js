@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getBrands } from '../../../lib/queries';
+import { getCategoryDisplayName } from '../../../lib/utils';
 import { getDictionary } from '../dictionaries';
 
 export const revalidate = 3600; // Revalidate every hour
@@ -86,7 +87,7 @@ export default async function BrandsPage({ params, searchParams }) {
                 {brand.image_url ? (
                   <img
                     src={brand.image_url}
-                    alt={brand.name}
+                    alt={getCategoryDisplayName(brand, lang)}
                     style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.5rem' }}
                   />
                 ) : (
@@ -94,7 +95,7 @@ export default async function BrandsPage({ params, searchParams }) {
                 )}
               </div>
               <div>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>{brand.name}</h2>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>{getCategoryDisplayName(brand, lang)}</h2>
                 <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.25rem', display: 'block' }}>
                   {dict.sections?.viewAllBrands || 'تصفح منتجات الماركة ←'}
                 </span>

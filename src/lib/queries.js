@@ -6,8 +6,8 @@
  * Admin queries use supabaseAdmin (service role) → full access.
  */
 
-import { supabase } from './supabase';
-import { supabaseAdmin } from './supabase-server';
+import { supabase } from './supabase.js';
+import { supabaseAdmin } from './supabase-server.js';
 
 export const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID || 'eloria';
 export const SUPPORTED_SUPPLIERS = (process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS || '')
@@ -241,8 +241,38 @@ export async function getSubcategories(parentId, { supplierCode = null } = {}) {
 }
 
 // ─────────────────────────────────────────────
-// BRANDS
+// BRANDS (Brand Normalizer Engine)
 // ─────────────────────────────────────────────
+
+const KNOWN_BRANDS = [
+  { id: 'nike', slug: 'nike', name: 'Nike / نايك', name_en: 'Nike', name_he: 'נייק', syns: ['nike', 'نايك', 'نيكي'], regex: /\bnike\b|نايك|نيكي/i },
+  { id: 'adidas', slug: 'adidas', name: 'Adidas / أديداس', name_en: 'Adidas', name_he: 'אדידס', syns: ['adidas', 'اديداس', 'أديداس'], regex: /\badidas\b|اديداس|أديداس/i },
+  { id: 'gucci', slug: 'gucci', name: 'Gucci / جوتشي', name_en: 'Gucci', name_he: 'גוצ׳י', syns: ['gucci', 'جوتشي', 'غوتشي', 'قوتشي'], regex: /\bgucci\b|جوتشي|غوتشي|قوتشي/i },
+  { id: 'chanel', slug: 'chanel', name: 'Chanel / شانيل', name_en: 'Chanel', name_he: 'שאנל', syns: ['chanel', 'شانيل'], regex: /\bchanel\b|شانيل/i },
+  { id: 'dior', slug: 'dior', name: 'Dior / ديور', name_en: 'Dior', name_he: 'דיור', syns: ['dior', 'ديور'], regex: /\bdior\b|ديور/i },
+  { id: 'hermes', slug: 'hermes', name: 'Hermes / ايرمس', name_en: 'Hermes', name_he: 'הרמס', syns: ['hermes', 'ايرمس', 'هيرمس', 'أيرمس'], regex: /\bhermes\b|ايرمس|هيرمس|أيرمس/i },
+  { id: 'prada', slug: 'prada', name: 'Prada / برادا', name_en: 'Prada', name_he: 'פראדה', syns: ['prada', 'برادا'], regex: /\bprada\b|برادا/i },
+  { id: 'cartier', slug: 'cartier', name: 'Cartier / كارتييه', name_en: 'Cartier', name_he: 'קרטייה', syns: ['cartier', 'كارتييه', 'كارتيه'], regex: /\bcartier\b|كارتييه|كارتيه/i },
+  { id: 'rolex', slug: 'rolex', name: 'Rolex / رولكس', name_en: 'Rolex', name_he: 'רולקס', syns: ['rolex', 'رولكس'], regex: /\brolex\b|رولكس/i },
+  { id: 'louis-vuitton', slug: 'louis-vuitton', name: 'Louis Vuitton / لويس فيتون', name_en: 'Louis Vuitton', name_he: 'לואי ויטון', syns: ['louis vuitton', 'لويس فيتون', 'فيتون'], regex: /\blouis vuitton\b|لويس فيتون|فيتون/i },
+  { id: 'versace', slug: 'versace', name: 'Versace / فرساتشي', name_en: 'Versace', name_he: 'ורסאצ׳י', syns: ['versace', 'فرساتشي', 'فيرساتشي'], regex: /\bversace\b|فرساتشي|فيرساتشي/i },
+  { id: 'new-balance', slug: 'new-balance', name: 'New Balance / نيو بالانس', name_en: 'New Balance', name_he: 'ניו באלנס', syns: ['new balance', 'نيو بالانس'], regex: /\bnew balance\b|نيو بالانس/i },
+  { id: 'jordan', slug: 'jordan', name: 'Jordan / جوردن', name_en: 'Jordan', name_he: 'ג׳ורדן', syns: ['jordan', 'جوردن', 'جوردان'], regex: /\bjordan\b|جوردن|جوردان/i },
+  { id: 'puma', slug: 'puma', name: 'Puma / بوما', name_en: 'Puma', name_he: 'פומה', syns: ['puma', 'بوما'], regex: /\bpuma\b|بوما/i },
+  { id: 'diesel', slug: 'diesel', name: 'Diesel / ديزل', name_en: 'Diesel', name_he: 'דיזל', syns: ['diesel', 'ديزل'], regex: /\bdiesel\b|ديزل/i },
+  { id: 'zara', slug: 'zara', name: 'Zara / زارا', name_en: 'Zara', name_he: 'זארה', syns: ['zara', 'زارا'], regex: /\bzara\b|زارا/i },
+  { id: 'lacoste', slug: 'lacoste', name: 'Lacoste / لاكوست', name_en: 'Lacoste', name_he: 'לקוסט', syns: ['lacoste', 'لاكوست', 'لاكاوست'], regex: /\blacoste\b|لاكوست|لاكاوست/i },
+  { id: 'calvin-klein', slug: 'calvin-klein', name: 'Calvin Klein / كالفن كلاين', name_en: 'Calvin Klein', name_he: 'קלבין קליין', syns: ['calvin klein', 'كالفن كلاين'], regex: /\bcalvin klein\b|كالفن كلاين/i },
+  { id: 'michael-kors', slug: 'michael-kors', name: 'Michael Kors / مايكل كورس', name_en: 'Michael Kors', name_he: 'מייקל קורס', syns: ['michael kors', 'مايكل كورس'], regex: /\bmichael kors\b|مايكل كورس/i },
+  { id: 'lattafa', slug: 'lattafa', name: 'Lattafa / لطافة', name_en: 'Lattafa', name_he: 'לטאפה', syns: ['lattafa', 'لطافة'], regex: /\blattafa\b|لطافة/i },
+  { id: 'fragrance-deluxe', slug: 'fragrance-deluxe', name: 'Fragrance Deluxe / فرغرانس ديلوكس', name_en: 'Fragrance Deluxe', name_he: 'פרגרנס דה לוקס', syns: ['fragrance deluxe', 'فرغرانس ديلوكس', 'كوبي ماستر'], regex: /fragrance deluxe|فرغرانس ديلوكس|كوبي ماستر/i },
+  { id: 'fendi', slug: 'fendi', name: 'Fendi / فيندي', name_en: 'Fendi', name_he: 'פנדי', syns: ['fendi', 'فيندي'], regex: /\bfendi\b|فيندي/i },
+  { id: 'burberry', slug: 'burberry', name: 'Burberry / بربري', name_en: 'Burberry', name_he: 'ברברי', syns: ['burberry', 'بربري'], regex: /\bburberry\b|بربري/i },
+  { id: 'yves-saint-laurent', slug: 'yves-saint-laurent', name: 'YSL / سان لوران', name_en: 'YSL', name_he: 'איב סאן לורן', syns: ['ysl', 'yves saint laurent', 'سان لوران', 'واي اس ال'], regex: /\bysl\b|yves saint laurent|سان لوران/i },
+  { id: 'balenciaga', slug: 'balenciaga', name: 'Balenciaga / بلنسياغا', name_en: 'Balenciaga', name_he: 'בלנסיאגה', syns: ['balenciaga', 'بلنسياغا'], regex: /\bbalenciaga\b|بلنسياغا/i },
+  { id: 'vans', slug: 'vans', name: 'Vans / فانز', name_en: 'Vans', name_he: 'וואנס', syns: ['vans', 'فانز'], regex: /\bvans\b|فانز/i },
+  { id: 'skechers', slug: 'skechers', name: 'Skechers / سكيتشرز', name_en: 'Skechers', name_he: 'סקיצ׳רס', syns: ['skechers', 'سكيتشرز'], regex: /\bskechers\b|سكيتشرز/i }
+];
 
 /**
  * Fetch all active brands ordered by name.
@@ -257,28 +287,72 @@ export async function getBrands({ supplierCode = null } = {}) {
   query = applySupplierFilter(query, supplierCode);
 
   const { data, error } = await query;
-
   if (error) {
     console.error('[getBrands]', error.message);
-    return [];
   }
-  let brands = data ?? [];
+  let brandsMap = new Map();
+  if (data && data.length > 0) {
+    data.forEach(b => brandsMap.set(b.slug || b.id, b));
+  }
 
-  if (brands.length > 0) {
-    const prodTableQuery = getCatalogTable(supplierCode, 'brand_id, brand_slug, brand_name');
-    const { data: prodBrands } = await prodTableQuery.limit(2000);
-    if (prodBrands && prodBrands.length > 0) {
-      const activeBrandIds = new Set(prodBrands.map(p => p.brand_id).filter(Boolean));
-      const activeBrandSlugs = new Set(prodBrands.map(p => p.brand_slug).filter(Boolean));
-      const activeBrandNames = new Set(prodBrands.map(p => p.brand_name).filter(Boolean));
+  const prodTableQuery = getCatalogTable(supplierCode, 'id, name, brand_id, brand_slug, brand_name');
+  const { data: prodBrands } = await prodTableQuery.limit(2000);
+  if (prodBrands && prodBrands.length > 0) {
+    prodBrands.forEach(p => {
+      if (p.brand_name) {
+        const bSlug = p.brand_slug || p.brand_name.toLowerCase().trim().replace(/\s+/g, '-');
+        if (!brandsMap.has(bSlug)) {
+          brandsMap.set(bSlug, {
+            id: p.brand_id || bSlug,
+            name: p.brand_name,
+            slug: bSlug,
+            image_url: null,
+            is_active: true
+          });
+        }
+      }
+      for (const kb of KNOWN_BRANDS) {
+        if (kb.regex.test(p.name || '') || kb.regex.test(p.brand_name || '')) {
+          if (!brandsMap.has(kb.slug)) {
+            brandsMap.set(kb.slug, {
+              id: kb.slug,
+              name: kb.name,
+              name_en: kb.name_en,
+              name_he: kb.name_he,
+              slug: kb.slug,
+              image_url: null,
+              is_active: true
+            });
+          }
+        }
+      }
+    });
 
-      brands = brands.filter(b =>
-        activeBrandIds.has(b.id) || activeBrandSlugs.has(b.slug) || activeBrandNames.has(b.name)
-      );
+    const activeBrands = [];
+    for (const b of brandsMap.values()) {
+      const kb = KNOWN_BRANDS.find(k => k.slug === b.slug || k.id === b.id);
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(b.id));
+      const syns = kb ? kb.syns : [b.name, b.slug].filter(Boolean);
+
+      const hasProd = prodBrands.some(p => {
+        if (isUUID && p.brand_id === b.id) return true;
+        if (p.brand_slug && p.brand_slug === b.slug) return true;
+        const pName = p.name || '';
+        const pBrand = p.brand_name || '';
+        return syns.some(s => {
+          const regex = new RegExp(`(^|[^a-zA-Z0-9\u0600-\u06FF])${s}($|[^a-zA-Z0-9\u0600-\u06FF])`, 'i');
+          return regex.test(pName) || regex.test(pBrand) || pName.toLowerCase().includes(String(s).toLowerCase()) || pBrand.toLowerCase().includes(String(s).toLowerCase());
+        });
+      });
+
+      if (hasProd) {
+        activeBrands.push(b);
+      }
     }
+    return activeBrands.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
-  return brands;
+  return Array.from(brandsMap.values()).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 }
 
 /**
@@ -288,7 +362,6 @@ export async function getBrandBySlug(slugOrId) {
   if (!slugOrId) return null;
   const decoded = decodeURIComponent(slugOrId);
 
-  // 1. Try match by slug
   let { data } = await supabase
     .from('brands')
     .select('id, name, slug, image_url')
@@ -296,7 +369,6 @@ export async function getBrandBySlug(slugOrId) {
     .eq('is_active', true)
     .maybeSingle();
 
-  // 2. Try match by supplier_id
   if (!data) {
     const res = await supabase
       .from('brands')
@@ -307,7 +379,6 @@ export async function getBrandBySlug(slugOrId) {
     data = res.data;
   }
 
-  // 3. Try match by UUID
   if (!data && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded)) {
     const res = await supabase
       .from('brands')
@@ -318,6 +389,36 @@ export async function getBrandBySlug(slugOrId) {
     data = res.data;
   }
 
+  if (!data) {
+    const kb = KNOWN_BRANDS.find(b => b.slug === decoded.toLowerCase() || b.id === decoded.toLowerCase() || b.name.toLowerCase() === decoded.toLowerCase() || b.syns.some(s => s.toLowerCase() === decoded.toLowerCase()));
+    if (kb) {
+      data = {
+        id: kb.slug,
+        name: kb.name,
+        name_en: kb.name_en,
+        name_he: kb.name_he,
+        slug: kb.slug,
+        image_url: null
+      };
+    }
+  }
+
+  if (!data) {
+    const tableQuery = getCatalogTable(null, 'brand_id, brand_name, brand_slug');
+    const { data: prodData } = await tableQuery
+      .or(`brand_slug.eq.${decoded},brand_name.ilike.%${decoded}%`)
+      .limit(1)
+      .maybeSingle();
+    if (prodData) {
+      data = {
+        id: prodData.brand_id || decoded,
+        name: prodData.brand_name || decoded,
+        slug: prodData.brand_slug || decoded,
+        image_url: null
+      };
+    }
+  }
+
   return data || null;
 }
 
@@ -325,14 +426,34 @@ export async function getBrandBySlug(slugOrId) {
  * Fetch products belonging to a brand (from public_products view).
  */
 export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sort = 'default', supplierCode = null } = {}) {
+  const decoded = decodeURIComponent(brandId);
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded);
+
+  const kb = KNOWN_BRANDS.find(b => b.slug === decoded.toLowerCase() || b.id === decoded.toLowerCase() || b.name.toLowerCase() === decoded.toLowerCase());
+  
+  let orClauses = [];
+  if (isUUID) {
+    orClauses.push(`brand_id.eq.${decoded}`);
+  }
+  orClauses.push(`brand_slug.eq.${decoded}`);
+  orClauses.push(`brand_name.ilike.%${decoded}%`);
+
+  if (kb) {
+    kb.syns.forEach(syn => {
+      orClauses.push(`name.ilike.%${syn}%`);
+      orClauses.push(`brand_name.ilike.%${syn}%`);
+    });
+  } else if (!isUUID) {
+    orClauses.push(`name.ilike.%${decoded}%`);
+  }
+
   let query = getCatalogTable(supplierCode)
-    .eq('brand_id', brandId)
+    .or(orClauses.join(','))
     .range(offset, offset + limit - 1);
 
   query = applySortOrder(query, sort);
 
   const { data, error } = await query;
-
   if (error) {
     console.error('[getProductsForBrand]', error.message);
     return [];
