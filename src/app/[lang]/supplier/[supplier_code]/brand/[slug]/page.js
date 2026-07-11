@@ -6,6 +6,7 @@ import { getSupplierConfig } from '../../../../../../lib/supplierConfig';
 import ProductGrid from '../../../../../../components/product/ProductGrid';
 import SortSelector from '../../../../../../components/product/SortSelector';
 import { getDictionary } from '../../../../dictionaries';
+import { getCategoryDisplayName } from '../../../../../../lib/utils';
 
 export const revalidate = 60;
 
@@ -18,9 +19,7 @@ export async function generateMetadata({ params }) {
     return { title: 'الماركة غير موجودة — Eloria FASHION' };
   }
 
-  const displayName = (lang === 'en' && brand.name_en) ? brand.name_en :
-                      (lang === 'he' && brand.name_he) ? brand.name_he :
-                      brand.name;
+  const displayName = getCategoryDisplayName(brand, lang);
 
   return {
     title: `${displayName} (${meta.name}) — Eloria FASHION`,
@@ -40,9 +39,7 @@ export default async function SupplierBrandPage({ params, searchParams }) {
     notFound();
   }
 
-  const displayName = (lang === 'en' && brand.name_en) ? brand.name_en :
-                      (lang === 'he' && brand.name_he) ? brand.name_he :
-                      brand.name;
+  const displayName = getCategoryDisplayName(brand, lang);
 
   const products = await getProductsForBrand(brand.id, { limit: 48, sort, supplierCode: supplier_code });
 

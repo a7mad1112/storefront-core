@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getProductById, getCategoryBySlug } from '../../../../lib/queries';
 import ProductDetailActions from '../../../../components/product/ProductDetailActions';
 import { getDictionary } from '../../dictionaries';
+import { getCategoryDisplayName } from '../../../../lib/utils';
 
 export const revalidate = 60;
 
@@ -19,16 +20,11 @@ export async function generateMetadata({ params }) {
                       (lang === 'he' && product.name_he) ? product.name_he :
                       product.name;
 
-  const desc = product.description || `تسوقي ${displayName} بأفضل الأسعار وأعلى معايير الجودة من متجر Eloria FASHION.`;
-
   return {
     title: `${displayName} — Eloria FASHION`,
-    description: desc,
+    description: product.description ? product.description.slice(0, 160) : `تسوقي ${displayName} بأفضل سعر وجودة في متجر Eloria FASHION.`,
     openGraph: {
-      title: `${displayName} — Eloria FASHION`,
-      description: desc,
-      images: [product.image_url || '/placeholder.webp'],
-      type: 'website',
+      images: product.image_url ? [product.image_url] : [],
     },
   };
 }
@@ -43,24 +39,17 @@ export default async function ProductDetailPage({ params }) {
     notFound();
   }
 
-  const category = product.category_id ? await getCategoryBySlug(product.category_id) : null;
-  const parentCategory = category?.parent_id ? await getCategoryBySlug(category.parent_id) : null;
+  const [category, parentCategory] = await Promise.all([
+    product.category_slug ? getCategoryBySlug(product.category_slug) : Promise.resolve(null),
+    product.category_slug ? getCategoryBySlug(product.category_slug).then(c => c && c.parent_id ? getCategoryBySlug(c.parent_id) : null) : Promise.resolve(null)
+  ]);
 
   const displayName = (lang === 'en' && product.name_en) ? product.name_en :
                       (lang === 'he' && product.name_he) ? product.name_he :
                       product.name;
 
-  const catName = category ? (
-    (lang === 'en' && category.name_en) ? category.name_en :
-    (lang === 'he' && category.name_he) ? category.name_he :
-    category.name
-  ) : (product.category_name || '');
-
-  const parentCatName = parentCategory ? (
-    (lang === 'en' && parentCategory.name_en) ? parentCategory.name_en :
-    (lang === 'he' && parentCategory.name_he) ? parentCategory.name_he :
-    parentCategory.name
-  ) : '';
+  const catName = getCategoryDisplayName(category || product.category_name, lang);
+  const parentCatName = parentCategory ? getCategoryDisplayName(parentCategory, lang) : '';
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '6rem' }}>

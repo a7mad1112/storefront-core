@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
-import { formatPrice, getCategoryDisplayName } from '../../lib/utils';
+import { formatPrice, getCategoryDisplayName, formatOptionLabel as formatOpt } from '../../lib/utils';
 import ColorSwatchSelector from './ColorSwatchSelector';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
@@ -24,17 +24,8 @@ function cleanDescription(text = '') {
 }
 
 export default function ProductDetailActions({ product, category, parentCategory, lang = 'ar', dict = {} }) {
-  const formatOptionLabel = (label) => {
-    if (!label) return '';
-    if (lang === 'en') {
-      if (typeof label === 'string' && label.includes('خيار')) return label.replace('خيار', 'Option');
-      if (typeof label === 'string' && label.includes('صورة')) return label.replace('صورة', 'Image');
-    } else if (lang === 'he') {
-      if (typeof label === 'string' && label.includes('خيار')) return label.replace('خيار', 'אפשרות');
-      if (typeof label === 'string' && label.includes('صورة')) return label.replace('صورة', 'תמונה');
-    }
-    return label;
-  };
+  const tProduct = dict?.product || {};
+  const formatOptionLabel = (label) => formatOpt(label, lang);
 
   const rawColorVariants = (product.color_variants && product.color_variants.length > 0)
     ? product.color_variants
@@ -224,7 +215,7 @@ export default function ProductDetailActions({ product, category, parentCategory
                     opacity: isThumbUnavailable ? 0.5 : (isActive ? 1 : 0.75),
                     cursor: 'pointer',
                   }}
-                  title={isThumbUnavailable ? `${thumb.label} — غير متوفر` : thumb.label}
+                  title={isThumbUnavailable ? `${thumb.label} — ${lang === 'en' ? 'Unavailable' : lang === 'he' ? 'לא זמין' : 'غير متوفر'}` : thumb.label}
                 >
                   <div style={{ width: '60px', height: '60px', overflow: 'hidden', borderRadius: '4px', position: 'relative' }}>
                     <img

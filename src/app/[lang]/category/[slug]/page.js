@@ -5,8 +5,9 @@ import { getCategoryBySlug, getSubcategories, getProductsForCategory } from '../
 import ProductGrid from '../../../../components/product/ProductGrid';
 import SortSelector from '../../../../components/product/SortSelector';
 import { getDictionary } from '../../dictionaries';
+import { getCategoryDisplayName } from '../../../../lib/utils';
 
-export const revalidate = 60;
+export const revalidate = 60; // Revalidate every minute
 
 export async function generateMetadata({ params }) {
   const { lang, slug } = await params;
@@ -16,9 +17,7 @@ export async function generateMetadata({ params }) {
     return { title: 'القسم غير موجود — Eloria FASHION' };
   }
 
-  const displayName = (lang === 'en' && category.name_en) ? category.name_en :
-                      (lang === 'he' && category.name_he) ? category.name_he :
-                      category.name;
+  const displayName = getCategoryDisplayName(category, lang);
 
   return {
     title: `${displayName} — Eloria FASHION`,
@@ -37,9 +36,7 @@ export default async function CategoryPage({ params, searchParams }) {
     notFound();
   }
 
-  const displayName = (lang === 'en' && category.name_en) ? category.name_en :
-                      (lang === 'he' && category.name_he) ? category.name_he :
-                      category.name;
+  const displayName = getCategoryDisplayName(category, lang);
 
   const [subcategories, products, parentCategory] = await Promise.all([
     getSubcategories(category.id),
@@ -47,11 +44,7 @@ export default async function CategoryPage({ params, searchParams }) {
     category.parent_id ? getCategoryBySlug(category.parent_id) : Promise.resolve(null),
   ]);
 
-  const parentDisplayName = parentCategory ? (
-    (lang === 'en' && parentCategory.name_en) ? parentCategory.name_en :
-    (lang === 'he' && parentCategory.name_he) ? parentCategory.name_he :
-    parentCategory.name
-  ) : '';
+  const parentDisplayName = parentCategory ? getCategoryDisplayName(parentCategory, lang) : '';
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '5rem' }}>
@@ -83,9 +76,7 @@ export default async function CategoryPage({ params, searchParams }) {
       {subcategories.length > 0 && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
           {subcategories.map((sub) => {
-            const subName = (lang === 'en' && sub.name_en) ? sub.name_en :
-                            (lang === 'he' && sub.name_he) ? sub.name_he :
-                            sub.name;
+            const subName = getCategoryDisplayName(sub, lang);
             return (
               <Link
                 key={sub.id}

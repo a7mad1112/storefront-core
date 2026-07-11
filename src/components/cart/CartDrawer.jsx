@@ -3,7 +3,7 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useDictionary } from '../../context/DictionaryContext';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice, formatOptionLabel } from '../../lib/utils';
 
 export default function CartDrawer() {
   const {
@@ -88,12 +88,12 @@ export default function CartDrawer() {
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
                             {item.selectedColor && (
                               <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 700, backgroundColor: 'rgba(197, 152, 80, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
-                                🎨 {item.selectedColor.color_name}
+                                🎨 {formatOptionLabel(item.selectedColor.color_name, lang)}
                               </span>
                             )}
                             {item.selectedSize && (
                               <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', fontWeight: 700, backgroundColor: 'rgba(197, 152, 80, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
-                                📐 {item.selectedSize}
+                                📐 {formatOptionLabel(item.selectedSize, lang)}
                               </span>
                             )}
                           </div>
@@ -108,7 +108,7 @@ export default function CartDrawer() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
                       <span style={{ color: 'var(--color-accent)', fontWeight: 800 }}>
-                        {formatPrice((item.retail_price || 0) * item.quantity)}
+                        {formatPrice((item.retail_price || 0) * item.quantity, lang)}
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--color-bg-elevated)', padding: '2px 8px', borderRadius: '4px' }}>
                         <button onClick={() => updateQuantity(idKey, -1)} style={{ fontWeight: 800 }}>-</button>
@@ -128,7 +128,7 @@ export default function CartDrawer() {
           <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-primary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.125rem', fontWeight: 800 }}>
               <span>{tCart.total || 'المجموع الكلي:'}</span>
-              <span style={{ color: 'var(--color-accent)' }}>{formatPrice(totalPrice)}</span>
+              <span style={{ color: 'var(--color-accent)' }}>{formatPrice(totalPrice, lang)}</span>
             </div>
             <a
               href={getWhatsAppOrderUrl()}

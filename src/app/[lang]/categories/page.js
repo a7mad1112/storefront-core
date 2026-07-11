@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { getCategories } from '../../../lib/queries';
 import { getDictionary } from '../dictionaries';
+import { getCategoryDisplayName } from '../../../lib/utils';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -14,22 +15,31 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CategoriesPage({ params }) {
+export default async function CategoriesPage({ params, searchParams }) {
   const { lang } = await params;
+  const { supplier } = (await searchParams) || {};
   const dict = await getDictionary(lang);
   const tCommon = dict.common || {};
   const tSections = dict.sections || {};
-  const categories = await getCategories();
+  const categories = await getCategories({ supplierCode: supplier || null });
 
   // Separate parent and sub categories
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubs = (parentId) => categories.filter((c) => c.parent_id === parentId);
+
+  const getCatHref = (slugOrId) => supplier ? `/${lang}/supplier/${supplier}/category/${slugOrId}` : `/${lang}/category/${slugOrId}`;
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '6rem' }}>
       {/* Breadcrumb */}
       <nav style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <Link href={`/${lang}`} style={{ color: 'var(--color-text-secondary)' }}>{tCommon.home || 'الرئيسية'}</Link>
+        {supplier && (
+          <>
+            <span>/</span>
+            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{supplier.toUpperCase()}</Link>
+          </>
+        )}
         <span>/</span>
         <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>{tCommon.categories || 'جميع الأقسام'}</span>
       </nav>
@@ -42,9 +52,7 @@ export default async function CategoriesPage({ params }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
         {parentCategories.map((parent) => {
           const subs = getSubs(parent.id);
-          const displayName = (lang === 'en' && parent.name_en) ? parent.name_en :
-                              (lang === 'he' && parent.name_he) ? parent.name_he :
-                              parent.name;
+          const displayName = getCategoryDisplayName(parent, lang);
           return (
             <div
               key={parent.id}
@@ -58,7 +66,7 @@ export default async function CategoriesPage({ params }) {
                 gap: '1rem',
               }}
             >
-              <Link href={`/${lang}/category/${parent.slug || parent.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Link href={getCatHref(parent.slug || parent.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div
                   style={{
                     width: '48px',
@@ -80,13 +88,11 @@ export default async function CategoriesPage({ params }) {
               {subs.length > 0 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                   {subs.map((sub) => {
-                    const subName = (lang === 'en' && sub.name_en) ? sub.name_en :
-                                    (lang === 'he' && sub.name_he) ? sub.name_he :
-                                    sub.name;
+                    const subName = getCategoryDisplayName(sub, lang);
                     return (
                       <Link
                         key={sub.id}
-                        href={`/${lang}/category/${sub.slug || sub.id}`}
+                        href={getCatHref(sub.slug || sub.id)}
                         style={{
                           backgroundColor: 'var(--color-bg-secondary)',
                           border: '1px solid var(--color-border)',

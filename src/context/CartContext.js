@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { formatPrice } from '../lib/utils';
+import { formatPrice, formatOptionLabel } from '../lib/utils';
 
 const CartContext = createContext(null);
 
@@ -118,11 +118,11 @@ export function CartProvider({ children, lang = 'ar', dict }) {
       const displayName = (lang === 'en' && item.name_en) ? item.name_en :
                           (lang === 'he' && item.name_he) ? item.name_he :
                           item.name;
-      const colorText = item.selectedColor ? ` (اللون: ${item.selectedColor.color_name})` : '';
-      const sizeText = item.selectedSize ? ` (القياس: ${item.selectedSize})` : '';
-      text += `${index + 1}. ${displayName}${colorText}${sizeText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity)}\n`;
+      const colorText = item.selectedColor ? ` (${colorLabel}: ${formatOptionLabel(item.selectedColor.color_name, lang)})` : '';
+      const sizeText = item.selectedSize ? ` (${lang === 'en' ? 'Size' : lang === 'he' ? 'מידה' : 'القياس'}: ${formatOptionLabel(item.selectedSize, lang)})` : '';
+      text += `${index + 1}. ${displayName}${colorText}${sizeText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity, lang)}\n`;
     });
-    text += `\n${totalLabel}: ${formatPrice(totalPrice)}\n\n${thanks}`;
+    text += `\n${totalLabel}: ${formatPrice(totalPrice, lang)}\n\n${thanks}`;
 
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
   };

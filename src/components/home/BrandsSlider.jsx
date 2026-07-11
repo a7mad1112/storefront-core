@@ -25,7 +25,7 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierC
   };
 
   const getAllBrandsHref = () => {
-    return supplierCode ? `/${lang}/supplier/${supplierCode}` : `/${lang}/brands`;
+    return supplierCode ? `/${lang}/brands?supplier=${supplierCode}` : `/${lang}/brands`;
   };
 
   return (

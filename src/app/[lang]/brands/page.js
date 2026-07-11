@@ -14,18 +14,27 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function BrandsPage({ params }) {
+export default async function BrandsPage({ params, searchParams }) {
   const { lang } = await params;
+  const { supplier } = (await searchParams) || {};
   const dict = await getDictionary(lang);
   const tBrands = dict.brands || {};
   const tCommon = dict.common || {};
-  const brands = await getBrands();
+  const brands = await getBrands({ supplierCode: supplier || null });
+
+  const getBrandHref = (slugOrId) => supplier ? `/${lang}/supplier/${supplier}/brand/${slugOrId}` : `/${lang}/brand/${slugOrId}`;
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '6rem' }}>
       {/* Breadcrumb */}
       <nav style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <Link href={`/${lang}`} style={{ color: 'var(--color-text-secondary)' }}>{tCommon.home || 'الرئيسية'}</Link>
+        {supplier && (
+          <>
+            <span>/</span>
+            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{supplier.toUpperCase()}</Link>
+          </>
+        )}
         <span>/</span>
         <span style={{ color: 'var(--color-accent)', fontWeight: 700 }}>{tBrands.title || 'جميع الماركات'}</span>
       </nav>
@@ -45,7 +54,7 @@ export default async function BrandsPage({ params }) {
           {brands.map((brand) => (
             <Link
               key={brand.id}
-              href={`/${lang}/brand/${brand.slug || brand.id}`}
+              href={getBrandHref(brand.slug || brand.id)}
               style={{
                 backgroundColor: 'var(--color-bg-card)',
                 border: '1px solid var(--color-border)',

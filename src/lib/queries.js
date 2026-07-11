@@ -66,7 +66,7 @@ function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIEL
 export async function getCategories({ supplierCode = null } = {}) {
   let query = supabase
     .from('categories')
-    .select('id, name, slug, parent_id, image_url, is_active')
+    .select('id, name, slug, parent_id, image_url, is_active, name_en, name_he')
     .eq('is_active', true)
     .order('name');
 
@@ -131,7 +131,7 @@ export async function getCategoryBySlug(slugOrId) {
   // 1. Try match by slug
   let { data, error } = await supabase
     .from('categories')
-    .select('id, name, slug, parent_id, image_url')
+    .select('id, name, slug, parent_id, image_url, name_en, name_he')
     .eq('slug', decoded)
     .eq('is_active', true)
     .maybeSingle();
@@ -140,7 +140,7 @@ export async function getCategoryBySlug(slugOrId) {
   if (!data) {
     const res = await supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url')
+      .select('id, name, slug, parent_id, image_url, name_en, name_he')
       .eq('supplier_id', decoded)
       .eq('is_active', true)
       .maybeSingle();
@@ -151,7 +151,7 @@ export async function getCategoryBySlug(slugOrId) {
   if (!data && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded)) {
     const res = await supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url')
+      .select('id, name, slug, parent_id, image_url, name_en, name_he')
       .eq('id', decoded)
       .eq('is_active', true)
       .maybeSingle();
@@ -162,7 +162,7 @@ export async function getCategoryBySlug(slugOrId) {
   if (!data) {
     const res = await supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url')
+      .select('id, name, slug, parent_id, image_url, name_en, name_he')
       .eq('name', decoded)
       .eq('is_active', true)
       .maybeSingle();
@@ -173,7 +173,7 @@ export async function getCategoryBySlug(slugOrId) {
   if (!data) {
     const res = await supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url')
+      .select('id, name, slug, parent_id, image_url, name_en, name_he')
       .or(`slug.ilike.%${decoded}%,name.ilike.%${decoded}%`)
       .eq('is_active', true)
       .limit(1)

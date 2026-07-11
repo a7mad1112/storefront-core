@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
 import { useDictionary } from '../../context/DictionaryContext';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice, getCategoryDisplayName, formatOptionLabel } from '../../lib/utils';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
@@ -42,7 +42,7 @@ export default function ProductCard({ product }) {
         <div>
           {product.category_name && (
             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-              {product.category_name}
+              {getCategoryDisplayName(product.category_name, lang)}
             </span>
           )}
           <Link href={`/${lang}/product/${product.id}`}>
@@ -61,7 +61,7 @@ export default function ProductCard({ product }) {
                   {effectiveColors.slice(0, 4).map((v, i) => (
                     <span
                       key={i}
-                      title={v.color_name}
+                      title={formatOptionLabel(v.color_name, lang)}
                       style={{
                         width: '14px',
                         height: '14px',

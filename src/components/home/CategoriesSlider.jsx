@@ -37,7 +37,7 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
   };
 
   const getAllCategoriesHref = () => {
-    return supplierCode ? `/${lang}/supplier/${supplierCode}` : `/${lang}/categories`;
+    return supplierCode ? `/${lang}/categories?supplier=${supplierCode}` : `/${lang}/categories`;
   };
 
   return (

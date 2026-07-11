@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { formatOptionLabel as formatOpt } from '../../lib/utils';
 
 /**
  * Interactive color swatch selector for the product detail page.
@@ -15,19 +16,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
 
   if (!colorVariants || colorVariants.length === 0) return null;
 
-  const formatOptionLabel = (label) => {
-    if (!label) return '';
-    if (lang === 'en') {
-      if (typeof label === 'string' && label.includes('خيار')) {
-        return label.replace('خيار', 'Option');
-      }
-    } else if (lang === 'he') {
-      if (typeof label === 'string' && label.includes('خيار')) {
-        return label.replace('خيار', 'אפשרות');
-      }
-    }
-    return label;
-  };
+  const formatOptionLabel = (label) => formatOpt(label, lang);
 
   const propIndex = selectedColor ? colorVariants.findIndex(v => v.image_url === selectedColor.image_url || v.color_name === selectedColor.color_name) : -1;
   const activeColorIndex = propIndex >= 0 ? propIndex : (selectedColorIndex >= 0 ? selectedColorIndex : -1);
@@ -160,7 +149,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
                 <button
                   key={`${sizeObj.size}-${sIdx}`}
                   onClick={() => handleSizeSelect(sizeObj)}
-                  title={isUnavailable ? `${sizeObj.size} — غير متوفر` : sizeObj.size}
+                  title={isUnavailable ? `${sizeObj.size} — ${lang === 'en' ? 'Unavailable' : lang === 'he' ? 'לא זמין' : 'غير متوفر'}` : sizeObj.size}
                   className={`size-btn ${isSelected ? 'selected' : ''} ${isUnavailable ? 'unavailable' : ''}`}
                 >
                   {sizeObj.size}
@@ -182,7 +171,7 @@ export default function ColorSwatchSelector({ colorVariants = [], selectedColor 
             textDecoration: 'underline',
           }}
         >
-          إلغاء اختيار اللون
+          {lang === 'en' ? 'Deselect Option' : lang === 'he' ? 'ביטול בחירת אפשרות' : 'إلغاء اختيار اللون'}
         </button>
       )}
     </div>
