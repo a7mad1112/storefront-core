@@ -19,6 +19,7 @@
   --color-text-muted: #7A7A7A;
 
   --color-accent: #C59850;           /* Metallic Gold — Eloria FASHION */
+  --color-primary: var(--color-accent);
   --color-accent-hover: #AD823E;
   --color-accent-soft: rgba(197, 152, 80, 0.15);
 
