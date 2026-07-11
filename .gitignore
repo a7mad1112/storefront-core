@@ -40,7 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# python / scraper separation
+# python / scraper / scratch separation
 /scraper/
+/scratch/
 __pycache__/
 *.py[cod]
