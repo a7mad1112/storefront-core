@@ -12,7 +12,7 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }) {
   const { lang, supplier_code, slug } = await params;
-  const brand = await getBrandBySlug(slug);
+  const brand = await getBrandBySlug(slug, { supplierCode: supplier_code });
   const meta = getSupplierConfig(supplier_code, lang);
 
   if (!brand) {
@@ -34,7 +34,7 @@ export default async function SupplierBrandPage({ params, searchParams }) {
   const tCommon = dict.common || {};
   const meta = getSupplierConfig(supplier_code, lang);
 
-  const brand = await getBrandBySlug(slug);
+  const brand = await getBrandBySlug(slug, { supplierCode: supplier_code });
   if (!brand) {
     notFound();
   }

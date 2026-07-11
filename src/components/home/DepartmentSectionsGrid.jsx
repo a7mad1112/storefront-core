@@ -1,9 +1,161 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProductGrid from '../product/ProductGrid';
 import { getCategoryDisplayName } from '../../lib/utils';
+
+function DepartmentCategoriesStrip({ dept, lang, isRtl }) {
+  const scrollRef = useRef(null);
+  const [showPrev, setShowPrev] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    if (scrollWidth <= clientWidth + 5) {
+      setShowPrev(false);
+      setShowNext(false);
+      return;
+    }
+    const absLeft = Math.abs(scrollLeft);
+    setShowPrev(absLeft > 10);
+    setShowNext(absLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const timer = setTimeout(checkScroll, 150);
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [dept.categories]);
+
+  const scrollByAmount = (dir) => {
+    if (!scrollRef.current) return;
+    const amount = 300;
+    if (isRtl) {
+      scrollRef.current.scrollBy({ left: dir === 'next' ? -amount : amount, behavior: 'smooth' });
+    } else {
+      scrollRef.current.scrollBy({ left: dir === 'next' ? amount : -amount, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+      {/* Scroll Prev Button */}
+      <button
+        type="button"
+        onClick={() => scrollByAmount('prev')}
+        aria-label="Previous categories"
+        style={{
+          position: 'absolute',
+          [isRtl ? 'right' : 'left']: '-10px',
+          zIndex: 10,
+          width: '38px',
+          height: '38px',
+          borderRadius: '50%',
+          backgroundColor: 'var(--color-bg-primary, #fff)',
+          border: '1px solid var(--color-border)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: showPrev ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: 'var(--color-text-primary)',
+          fontSize: '1.1rem',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        {isRtl ? '❯' : '❮'}
+      </button>
+
+      {/* Categories Strip */}
+      <div
+        ref={scrollRef}
+        onScroll={checkScroll}
+        style={{
+          display: 'flex',
+          gap: '0.6rem',
+          overflowX: 'auto',
+          paddingBottom: '0.5rem',
+          scrollbarWidth: 'none',
+          width: '100%',
+          scrollBehavior: 'smooth',
+        }}
+      >
+        <Link
+          href={dept.viewAllHref}
+          style={{
+            padding: '0.45rem 1rem',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: dept.accentColor || 'var(--color-accent)',
+            color: '#ffffff',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            whiteSpace: 'nowrap',
+            textDecoration: 'none',
+            boxShadow: `0 4px 10px ${dept.accentColor}30`,
+            flexShrink: 0,
+          }}
+        >
+          ✨ {lang === 'en' ? 'All Department' : lang === 'he' ? 'הכל במחלקה' : 'الكل في القسم'}
+        </Link>
+        {dept.categories.map((cat) => (
+          <Link
+            key={cat.id || cat.slug}
+            href={`/${lang}/category/${cat.slug || cat.id}`}
+            style={{
+              padding: '0.45rem 1rem',
+              borderRadius: 'var(--radius-full)',
+              backgroundColor: 'var(--color-bg-secondary)',
+              color: 'var(--color-text-primary)',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              border: '1px solid var(--color-border)',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease',
+              flexShrink: 0,
+            }}
+            className="dept-section-pill"
+          >
+            {getCategoryDisplayName(cat, lang)}
+          </Link>
+        ))}
+      </div>
+
+      {/* Scroll Next Button */}
+      <button
+        type="button"
+        onClick={() => scrollByAmount('next')}
+        aria-label="Next categories"
+        style={{
+          position: 'absolute',
+          [isRtl ? 'left' : 'right']: '-10px',
+          zIndex: 10,
+          width: '38px',
+          height: '38px',
+          borderRadius: '50%',
+          backgroundColor: 'var(--color-bg-primary, #fff)',
+          border: '1px solid var(--color-border)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: showNext ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: 'var(--color-text-primary)',
+          fontSize: '1.1rem',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        {isRtl ? '❮' : '❯'}
+      </button>
+    </div>
+  );
+}
 
 /**
  * Department Sections Grid — Curated Mall Showcases
@@ -74,56 +226,9 @@ export default function DepartmentSectionsGrid({ departments = [], lang = 'ar', 
               </Link>
             </div>
 
-            {/* Department Subcategories Quick Filter Pills */}
+            {/* Department Subcategories Quick Filter Pills with Navigation Arrows */}
             {dept.categories && dept.categories.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.6rem',
-                  overflowX: 'auto',
-                  paddingBottom: '1.25rem',
-                  marginBottom: '1.5rem',
-                  scrollbarWidth: 'none',
-                }}
-              >
-                <Link
-                  href={dept.viewAllHref}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-full)',
-                    backgroundColor: dept.accentColor || 'var(--color-accent)',
-                    color: '#ffffff',
-                    fontSize: '0.85rem',
-                    fontWeight: 800,
-                    whiteSpace: 'nowrap',
-                    textDecoration: 'none',
-                    boxShadow: `0 4px 10px ${dept.accentColor}30`,
-                  }}
-                >
-                  ✨ {lang === 'en' ? 'All Department' : lang === 'he' ? 'הכל במחלקה' : 'الكل في القسم'}
-                </Link>
-                {dept.categories.map((cat) => (
-                  <Link
-                    key={cat.id || cat.slug}
-                    href={`/${lang}/category/${cat.slug || cat.id}`}
-                    style={{
-                      padding: '0.45rem 1rem',
-                      borderRadius: 'var(--radius-full)',
-                      backgroundColor: 'var(--color-bg-secondary)',
-                      color: 'var(--color-text-primary)',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                      border: '1px solid var(--color-border)',
-                      textDecoration: 'none',
-                      transition: 'all 0.2s ease',
-                    }}
-                    className="dept-section-pill"
-                  >
-                    {getCategoryDisplayName(cat, lang)}
-                  </Link>
-                ))}
-              </div>
+              <DepartmentCategoriesStrip dept={dept} lang={lang} isRtl={isRtl} />
             )}
 
             {/* Product Grid (8 products per department) */}

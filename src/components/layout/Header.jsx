@@ -19,12 +19,61 @@ export default function Header({ lang = 'ar' }) {
   const [isSuppliersOpen, setIsSuppliersOpen] = useState(false);
   const { totalCount, setIsDrawerOpen } = useCart();
   const { dict } = useDictionary();
-  const { supportedSuppliers, getSupplierMeta } = useSupplier();
+  const { supportedSuppliers, getSupplierMeta, changeSupplier } = useSupplier();
   const router = useRouter();
   const pathname = usePathname();
 
   const t = dict?.common || {};
   const tSearch = dict?.search || {};
+
+  const handleDropdownClick = (supplierCode, anchorId) => {
+    setIsSuppliersOpen(false);
+    if (changeSupplier) changeSupplier(supplierCode);
+    if (typeof window !== 'undefined' && (pathname === `/${lang}` || pathname === '/')) {
+      const el = document.getElementById(anchorId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const departmentsList = [
+    {
+      key: 'all',
+      href: `/${lang}`,
+      onClick: () => { setIsSuppliersOpen(false); if (changeSupplier) changeSupplier('all'); },
+      icon: '🏠',
+      name: lang === 'en' ? 'All Sections' : lang === 'he' ? 'כל המדורים' : 'كل الأقسام',
+    },
+    {
+      key: 'bags-gifts',
+      href: pathname === `/${lang}` || pathname === '/' ? `#dept-bags-gifts` : `/${lang}/supplier/bags-gifts`,
+      onClick: () => handleDropdownClick('bags-gifts', 'dept-bags-gifts'),
+      icon: '👜',
+      name: lang === 'en' ? 'Luxury Bags, Wallets & Gifts' : lang === 'he' ? 'תיקי יוקרה, ארנקים ומתנות' : 'قسم الشنط الفاخرة، الهدايا والمحافظ',
+    },
+    {
+      key: 'perfumes-watches',
+      href: pathname === `/${lang}` || pathname === '/' ? `#dept-perfumes-watches` : `/${lang}/supplier/perfumes-watches`,
+      onClick: () => handleDropdownClick('perfumes-watches', 'dept-perfumes-watches'),
+      icon: '🌸',
+      name: lang === 'en' ? 'Luxury Perfumes, Watches & Jewelry' : lang === 'he' ? 'בשמי יוקרה, שעונים ותכשיטים' : 'قسم العطور الفاخرة، الساعات والاكسسوارات',
+    },
+    {
+      key: 'shoes',
+      href: pathname === `/${lang}` || pathname === '/' ? `#dept-shoes` : `/${lang}/supplier/shoes`,
+      onClick: () => handleDropdownClick('shoes', 'dept-shoes'),
+      icon: '👟',
+      name: lang === 'en' ? 'Footwear, Heels & Sandals' : lang === 'he' ? 'נעליים, עקבים וסנדלים' : 'قسم الأحذية، الكعب، الصنادل والسليبر',
+    },
+    {
+      key: 'apparel-sports',
+      href: pathname === `/${lang}` || pathname === '/' ? `#dept-apparel-sports` : `/${lang}/supplier/apparel-sports`,
+      onClick: () => handleDropdownClick('apparel-sports', 'dept-apparel-sports'),
+      icon: '🏃',
+      name: lang === 'en' ? 'Apparel, Suits & Sportswear' : lang === 'he' ? 'אופנה, חליפות ובגדי ספורט' : 'قسم الأزياء، الأطقم والملابس الرياضية',
+    },
+  ];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -51,38 +100,29 @@ export default function Header({ lang = 'ar' }) {
     <header className="site-header">
       <div className="container header-content">
         {/* Brand Logo */}
-        <Link href={`/${lang}`} className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Link href={`/${lang}`} className="logo header-logo">
           <img
             src="/logo.png"
             alt={STORE_NAME}
-            style={{ maxHeight: '48px', width: 'auto', objectFit: 'contain' }}
+            className="header-logo-img"
           />
         </Link>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} style={{ flexGrow: 1, maxWidth: '450px', display: 'flex' }}>
+        {/* Search Bar (Full width on mobile, sleek pill on desktop) */}
+        <form onSubmit={handleSearch} className="header-search-form">
           <input
             type="text"
-            placeholder={tSearch.searchPlaceholder || 'Search...'}
+            placeholder={tSearch.searchPlaceholder || (lang === 'en' ? 'Search for bags, perfumes, watches...' : lang === 'he' ? 'חפש תיקים, בשמים, שעונים...' : 'ابحث عن الشنط، العطور، الساعات...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.5rem 1rem',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid var(--color-border)',
-              backgroundColor: 'var(--color-bg-secondary)',
-              color: 'var(--color-text-primary)',
-              outline: 'none',
-              fontSize: '0.875rem',
-            }}
+            className="header-search-input"
           />
         </form>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {/* Actions Row */}
+        <div className="header-actions">
           {/* Language Switcher */}
-          <div className="lang-switcher" style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--color-bg-elevated)', borderRadius: 'var(--radius-full)', padding: '2px', border: '1px solid var(--color-border)' }}>
+          <div className="lang-switcher">
             {LOCALES.map((loc) => (
               <button
                 key={loc.code}
@@ -105,28 +145,16 @@ export default function Header({ lang = 'ar' }) {
             ))}
           </div>
 
-          {/* Suppliers Dropdown */}
+          {/* Suppliers Dropdown (Hidden on mobile since SupplierSwitcher bar is below) */}
           {supportedSuppliers && supportedSuppliers.length > 1 && (
-            <div style={{ position: 'relative' }}>
+            <div className="desktop-only-supplier-dropdown">
               <button
                 type="button"
                 onClick={() => setIsSuppliersOpen(!isSuppliersOpen)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  padding: '0.4rem 0.75rem',
-                  borderRadius: 'var(--radius-full)',
-                  backgroundColor: isSuppliersOpen ? 'var(--color-accent)' : 'var(--color-bg-secondary)',
-                  color: isSuppliersOpen ? '#fff' : 'inherit',
-                  border: '1px solid var(--color-border)',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                }}
+                className="header-action-btn"
               >
-                🏬 {lang === 'en' ? 'Departments' : lang === 'he' ? 'קטגוריות' : 'الأقسام'} ▾
+                <span>🏬</span>
+                <span className="btn-label">{lang === 'en' ? 'Departments' : lang === 'he' ? 'קטגוריות' : 'الأقسام'} ▾</span>
               </button>
               {isSuppliersOpen && (
                 <div
@@ -148,98 +176,45 @@ export default function Header({ lang = 'ar' }) {
                     gap: '4px',
                   }}
                 >
-                  <Link
-                    href={`/${lang}`}
-                    onClick={() => setIsSuppliersOpen(false)}
-                    style={{
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '6px',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      color: 'var(--color-text-primary)',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    🏠 {lang === 'en' ? 'All Sections' : lang === 'he' ? 'כל המדורים' : 'كل الأقسام'}
-                  </Link>
-                  {supportedSuppliers.map((code) => {
-                    const meta = getSupplierMeta(code, lang);
-                    return (
-                      <Link
-                        key={code}
-                        href={`/${lang}/supplier/${code}`}
-                        onClick={() => setIsSuppliersOpen(false)}
-                        style={{
-                          padding: '0.5rem 0.75rem',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          color: 'var(--color-text-primary)',
-                          textDecoration: 'none',
-                        }}
-                      >
-                        <span>{meta.icon || '🏪'}</span>
-                        <span>{meta.name}</span>
-                      </Link>
-                    );
-                  })}
+                  {departmentsList.map((item) => (
+                    <Link
+                      key={item.key}
+                      href={item.href}
+                      onClick={item.onClick}
+                      style={{
+                        padding: '0.55rem 0.8rem',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        color: 'var(--color-text-primary)',
+                        textDecoration: 'none',
+                        transition: 'background 0.15s ease',
+                      }}
+                      className="dropdown-dept-item"
+                    >
+                      <span>{item.icon}</span>
+                      <span>{item.name}</span>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
           )}
 
-          <Link
-            href={`/${lang}/brands`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              padding: '0.4rem 0.75rem',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-bg-secondary)',
-              border: '1px solid var(--color-border)',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            🏷️ {t.brands || 'الماركات'}
+          {/* Brands Link */}
+          <Link href={`/${lang}/brands`} className="header-action-btn header-brand-btn">
+            <span>🏷️</span>
+            <span className="btn-label">{t.brands || 'الماركات'}</span>
           </Link>
 
-          <button
-            onClick={() => setIsDrawerOpen(true)}
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              backgroundColor: 'var(--color-bg-elevated)',
-              padding: '0.5rem 0.875rem',
-              borderRadius: 'var(--radius-full)',
-            }}
-          >
+          {/* Cart Button */}
+          <button onClick={() => setIsDrawerOpen(true)} className="header-cart-btn">
             <span>🛒</span>
-            <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>{t.cart || 'السلة'}</span>
-            {totalCount > 0 && (
-              <span
-                style={{
-                  backgroundColor: 'var(--color-accent)',
-                  color: '#fff',
-                  borderRadius: '999px',
-                  padding: '1px 6px',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                }}
-              >
-                {totalCount}
-              </span>
-            )}
+            <span className="btn-label">{t.cart || 'السلة'}</span>
+            {totalCount > 0 && <span className="cart-badge">{totalCount}</span>}
           </button>
         </div>
       </div>

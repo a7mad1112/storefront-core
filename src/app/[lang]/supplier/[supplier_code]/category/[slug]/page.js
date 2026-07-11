@@ -12,7 +12,7 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }) {
   const { lang, supplier_code, slug } = await params;
-  const category = await getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug, { supplierCode: supplier_code });
   const meta = getSupplierConfig(supplier_code, lang);
 
   if (!category) {
@@ -34,7 +34,7 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
   const tCommon = dict.common || {};
   const meta = getSupplierConfig(supplier_code, lang);
 
-  const category = await getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug, { supplierCode: supplier_code });
   if (!category) {
     notFound();
   }
@@ -44,7 +44,7 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
   const [subcategories, products, parentCategory] = await Promise.all([
     getSubcategories(category.id, { supplierCode: supplier_code }),
     getProductsForCategory(category.id, { limit: 48, sort, supplierCode: supplier_code }),
-    category.parent_id ? getCategoryBySlug(category.parent_id) : Promise.resolve(null),
+    category.parent_id ? getCategoryBySlug(category.parent_id, { supplierCode: supplier_code }) : Promise.resolve(null),
   ]);
 
   const parentDisplayName = parentCategory ? getCategoryDisplayName(parentCategory, lang) : '';

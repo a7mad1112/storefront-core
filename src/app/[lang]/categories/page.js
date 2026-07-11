@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getCategories } from '../../../lib/queries';
 import { getDictionary } from '../dictionaries';
 import { getCategoryDisplayName } from '../../../lib/utils';
-import { getSupplierConfig } from '../../../lib/supplierConfig';
+import { getSupplierConfig, getFriendlySupplierCode } from '../../../lib/supplierConfig';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -29,7 +29,7 @@ export default async function CategoriesPage({ params, searchParams }) {
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubs = (parentId) => categories.filter((c) => c.parent_id === parentId);
 
-  const getCatHref = (slugOrId) => supplier ? `/${lang}/supplier/${supplier}/category/${slugOrId}` : `/${lang}/category/${slugOrId}`;
+  const getCatHref = (slugOrId, cat) => supplier ? `/${lang}/supplier/${getFriendlySupplierCode(supplier, cat)}/category/${slugOrId}` : `/${lang}/category/${slugOrId}`;
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '6rem' }}>
@@ -39,7 +39,7 @@ export default async function CategoriesPage({ params, searchParams }) {
         {supplier && meta && (
           <>
             <span>/</span>
-            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{meta.badge || meta.name}</Link>
+            <Link href={`/${lang}/supplier/${getFriendlySupplierCode(supplier)}`} style={{ color: 'var(--color-text-secondary)' }}>{meta.badge || meta.name}</Link>
           </>
         )}
         <span>/</span>
@@ -72,7 +72,7 @@ export default async function CategoriesPage({ params, searchParams }) {
                 gap: '1rem',
               }}
             >
-              <Link href={getCatHref(parent.slug || parent.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Link href={getCatHref(parent.slug || parent.id, parent)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div
                   style={{
                     width: '48px',
@@ -98,7 +98,7 @@ export default async function CategoriesPage({ params, searchParams }) {
                     return (
                       <Link
                         key={sub.id}
-                        href={getCatHref(sub.slug || sub.id)}
+                        href={getCatHref(sub.slug || sub.id, sub)}
                         style={{
                           backgroundColor: 'var(--color-bg-secondary)',
                           border: '1px solid var(--color-border)',

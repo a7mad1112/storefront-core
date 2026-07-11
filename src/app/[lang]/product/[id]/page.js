@@ -40,8 +40,8 @@ export default async function ProductDetailPage({ params }) {
   }
 
   const [category, parentCategory] = await Promise.all([
-    product.category_slug ? getCategoryBySlug(product.category_slug) : Promise.resolve(null),
-    product.category_slug ? getCategoryBySlug(product.category_slug).then(c => c && c.parent_id ? getCategoryBySlug(c.parent_id) : null) : Promise.resolve(null)
+    product.category_slug ? getCategoryBySlug(product.category_slug, { supplierCode: product.supplier_code }) : Promise.resolve(null),
+    product.category_slug ? getCategoryBySlug(product.category_slug, { supplierCode: product.supplier_code }).then(c => c && c.parent_id ? getCategoryBySlug(c.parent_id, { supplierCode: product.supplier_code }) : null) : Promise.resolve(null)
   ]);
 
   const displayName = (lang === 'en' && product.name_en) ? product.name_en :

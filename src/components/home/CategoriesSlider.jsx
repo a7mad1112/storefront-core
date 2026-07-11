@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import Link from 'next/link';
 import { getCategoryDisplayName } from '../../lib/utils';
+import { getFriendlySupplierCode } from '../../lib/supplierConfig';
 
 /**
  * Horizontal scrolling categories carousel for the homepage.
@@ -32,12 +33,12 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
     return '🎁';
   };
 
-  const getCategoryHref = (catSlug) => {
-    return supplierCode ? `/${lang}/supplier/${supplierCode}/category/${catSlug}` : `/${lang}/category/${catSlug}`;
+  const getCategoryHref = (catSlug, catObj) => {
+    return supplierCode ? `/${lang}/supplier/${getFriendlySupplierCode(supplierCode, catObj)}/category/${catSlug}` : `/${lang}/category/${catSlug}`;
   };
 
   const getAllCategoriesHref = () => {
-    return supplierCode ? `/${lang}/categories?supplier=${supplierCode}` : `/${lang}/categories`;
+    return supplierCode ? `/${lang}/categories?supplier=${getFriendlySupplierCode(supplierCode)}` : `/${lang}/categories`;
   };
 
   return (
@@ -48,26 +49,18 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
             {t.shopByCategory || 'تسوق حسب القسم'}
           </h2>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            {t.shopByCategoryDesc || 'اختر من بين تشكيلتنا الواسعة من الفئات المميزة'}
+            {t.shopByCategoryDesc || 'تصفح تشكيلة منتجاتنا المتنوعة حسب الفئة الأنسب لك'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            onClick={() => scroll('right')}
-            className="slider-arrow"
-            aria-label="Next"
-            title="تمرير لليمين"
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Link
+            href={getAllCategoriesHref()}
+            style={{ fontSize: '0.875rem', color: 'var(--color-primary)', fontWeight: 700, marginInlineEnd: '0.5rem' }}
           >
-            →
-          </button>
-          <button
-            onClick={() => scroll('left')}
-            className="slider-arrow"
-            aria-label="Previous"
-            title="تمرير لليسار"
-          >
-            ←
-          </button>
+            {t.viewAll || 'عرض الكل'} &larr;
+          </Link>
+          <button onClick={() => scroll('right')} className="slider-arrow" aria-label="Previous">&rarr;</button>
+          <button onClick={() => scroll('left')} className="slider-arrow" aria-label="Next">&larr;</button>
         </div>
       </div>
 
@@ -78,7 +71,7 @@ export default function CategoriesSlider({ categories = [], lang = 'ar', dict, s
         {categories.map((cat) => (
           <Link
             key={cat.id}
-            href={getCategoryHref(cat.slug || cat.id)}
+            href={getCategoryHref(cat.slug || cat.id, cat)}
             className="brand-pill"
           >
             <div

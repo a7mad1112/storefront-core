@@ -39,20 +39,20 @@ export default function BrandsSlider({ brands = [], lang = 'ar', dict, supplierC
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => scroll('left')}
-            className="btn btn-secondary"
-            style={{ width: '40px', height: '40px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            aria-label="Previous brands"
-          >
-            ←
-          </button>
-          <button
             onClick={() => scroll('right')}
-            className="btn btn-secondary"
-            style={{ width: '40px', height: '40px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="slider-arrow"
             aria-label="Next brands"
+            title="تمرير لليمين"
           >
             →
+          </button>
+          <button
+            onClick={() => scroll('left')}
+            className="slider-arrow"
+            aria-label="Previous brands"
+            title="تمرير لليسار"
+          >
+            ←
           </button>
         </div>
       </div>

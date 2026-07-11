@@ -18,9 +18,18 @@ export const SUPPORTED_SUPPLIERS = (process.env.NEXT_PUBLIC_SUPPORTED_SUPPLIERS 
 export const PUBLIC_PRODUCT_FIELDS =
   'id, name, slug, description, image_url, additional_images, quantity, is_available, tags, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, color_variants, retail_price, updated_at, name_en, name_he, description_en, description_he, supplier_code';
 
+export function normalizeSupplierCode(code) {
+  if (!code) return code;
+  if (code === 'bags-gifts' || code === 'perfumes-watches') return 'gbstore';
+  if (code === 'shoes') return 'balagan';
+  if (code === 'apparel-sports') return 'sakher';
+  return code;
+}
+
 function applySupplierFilter(query, supplierCode = null) {
-  if (supplierCode && supplierCode !== 'all') {
-    return query.eq('supplier_code', supplierCode);
+  const norm = normalizeSupplierCode(supplierCode);
+  if (norm && norm !== 'all') {
+    return query.eq('supplier_code', norm);
   }
   if (SUPPORTED_SUPPLIERS.length === 1) {
     return query.eq('supplier_code', SUPPORTED_SUPPLIERS[0]);
@@ -36,13 +45,14 @@ function applySupplierFilter(query, supplierCode = null) {
  * or dynamically calls get_store_products RPC for multi-tenant client isolation.
  */
 function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIELDS) {
+  const norm = normalizeSupplierCode(supplierCode);
   if (STORE_ID === 'eloria') {
     let query = supabase.from('public_products').select(selectFields);
-    return applySupplierFilter(query, supplierCode);
+    return applySupplierFilter(query, norm);
   }
   const effectiveSupplier =
-    supplierCode && supplierCode !== 'all'
-      ? supplierCode
+    norm && norm !== 'all'
+      ? norm
       : SUPPORTED_SUPPLIERS.length === 1
       ? SUPPORTED_SUPPLIERS[0]
       : null;
@@ -52,7 +62,7 @@ function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIEL
       p_supplier_code: effectiveSupplier,
     })
     .select(selectFields);
-  return applySupplierFilter(query, supplierCode);
+  return applySupplierFilter(query, norm);
 }
 
 // ─────────────────────────────────────────────
@@ -63,6 +73,46 @@ function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIEL
  * Fetch all active categories ordered by name.
  * Returns flat list; caller groups by parent_id if needed.
  */
+function filterCategoriesByDepartment(categories, supplierCode) {
+  if (!categories || !Array.isArray(categories) || !supplierCode) return categories;
+  if (supplierCode === 'bags-gifts') {
+    return categories.filter((c) => {
+      const n = c.name || '';
+      if (/عطر|ساع|نظار|طاقية|حلق|سنسال|خاتم|سبلاش|مريم|بخور|perfume|watch|sunglasses|glasses|hat|cap|necklace|earring|ring|splash/i.test(n)) {
+        return false;
+      }
+      return true;
+    });
+  }
+  if (supplierCode === 'perfumes-watches') {
+    return categories.filter((c) => {
+      const n = c.name || '';
+      if (/شنط|جزدان|محافظ|كلاتش|باوتش|سفر|bag|wallet|backpack|clutch|luggage/i.test(n)) {
+        return false;
+      }
+      return true;
+    });
+  }
+  return categories;
+}
+
+function filterProductsByDepartment(products, supplierCode) {
+  if (!products || !Array.isArray(products) || !supplierCode) return products;
+  if (supplierCode === 'bags-gifts') {
+    return products.filter((p) => {
+      const n = (p.name || '') + ' ' + (p.category_name || '');
+      return !/عطر|ساع|نظار|طاقية|حلق|سنسال|خاتم|سبلاش|بخور|perfume|watch|sunglasses|glasses|hat|cap|necklace|earring|ring|splash/i.test(n);
+    });
+  }
+  if (supplierCode === 'perfumes-watches') {
+    return products.filter((p) => {
+      const n = (p.name || '') + ' ' + (p.category_name || '');
+      return !/شنط|جزدان|محافظ|كلاتش|باوتش|سفرية|bag|wallet|backpack|clutch|luggage/i.test(n);
+    });
+  }
+  return products;
+}
+
 export async function getCategories({ supplierCode = null } = {}) {
   let query = supabase
     .from('categories')
@@ -95,6 +145,8 @@ export async function getCategories({ supplierCode = null } = {}) {
     }
   }
 
+  cats = filterCategoriesByDepartment(cats, supplierCode);
+
   return cats;
 }
 
@@ -124,66 +176,91 @@ export function buildCategoryTree(categories) {
 /**
  * Fetch a single category by slug.
  */
-export async function getCategoryBySlug(slugOrId) {
+export async function getCategoryBySlug(slugOrId, { supplierCode = null } = {}) {
   if (!slugOrId) return null;
   const decoded = decodeURIComponent(slugOrId);
+  const norm = normalizeSupplierCode(supplierCode);
+
+  const applyCatSupplier = (q) => {
+    if (norm && norm !== 'all') {
+      return q.eq('supplier_code', norm);
+    }
+    return q;
+  };
 
   // 1. Try match by slug
-  let { data, error } = await supabase
+  let query1 = supabase
     .from('categories')
-    .select('id, name, slug, parent_id, image_url, name_en, name_he')
+    .select('id, name, slug, parent_id, image_url, supplier_code, name_en, name_he')
     .eq('slug', decoded)
-    .eq('is_active', true)
-    .maybeSingle();
+    .eq('is_active', true);
+  query1 = applyCatSupplier(query1);
+  let { data: matches } = await query1;
 
-  // 2. Try match by supplier_id
+  let data = null;
+  if (matches && matches.length > 0) {
+    if (matches.length === 1) {
+      data = matches[0];
+    } else {
+      // If multiple categories share the same slug (e.g. across suppliers), pick the one that actually has products
+      const prodQuery = getCatalogTable(norm, 'category_id');
+      const { data: prods } = await prodQuery.in('category_id', matches.map(m => m.id)).limit(500);
+      const activeIds = new Set((prods || []).map(p => p.category_id));
+      data = matches.find(m => activeIds.has(m.id)) || matches[0];
+    }
+  }
+
+  // 2. Try match by supplier_id / custom code
   if (!data) {
-    const res = await supabase
+    let query2 = supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url, name_en, name_he')
+      .select('id, name, slug, parent_id, image_url, supplier_code, name_en, name_he')
       .eq('supplier_id', decoded)
-      .eq('is_active', true)
-      .maybeSingle();
+      .eq('is_active', true);
+    query2 = applyCatSupplier(query2);
+    const res = await query2.maybeSingle();
     data = res.data;
   }
 
   // 3. Try match by UUID (id)
   if (!data && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded)) {
-    const res = await supabase
+    let query3 = supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url, name_en, name_he')
+      .select('id, name, slug, parent_id, image_url, supplier_code, name_en, name_he')
       .eq('id', decoded)
-      .eq('is_active', true)
-      .maybeSingle();
+      .eq('is_active', true);
+    query3 = applyCatSupplier(query3);
+    const res = await query3.maybeSingle();
     data = res.data;
   }
 
   // 4. Try match by exact name
   if (!data) {
-    const res = await supabase
+    let query4 = supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url, name_en, name_he')
+      .select('id, name, slug, parent_id, image_url, supplier_code, name_en, name_he')
       .eq('name', decoded)
-      .eq('is_active', true)
-      .maybeSingle();
+      .eq('is_active', true);
+    query4 = applyCatSupplier(query4);
+    const res = await query4.maybeSingle();
     data = res.data;
   }
 
   // 5. Try match by partial slug or name
   if (!data) {
-    const res = await supabase
+    let query5 = supabase
       .from('categories')
-      .select('id, name, slug, parent_id, image_url, name_en, name_he')
+      .select('id, name, slug, parent_id, image_url, supplier_code, name_en, name_he')
       .or(`slug.ilike.%${decoded}%,name.ilike.%${decoded}%`)
-      .eq('is_active', true)
-      .limit(1)
-      .maybeSingle();
+      .eq('is_active', true);
+    query5 = applyCatSupplier(query5);
+    const res = await query5.limit(1).maybeSingle();
     data = res.data;
   }
 
   // 6. Fallback: find dynamically from active products if category row is missing
   if (!data) {
-    const tableQuery = getCatalogTable(null, 'category_id, category_name, category_slug');
+    const tableQuery = getCatalogTable(norm, 'category_id, category_name, category_slug');
     const { data: prodData } = await tableQuery
       .or(`category_slug.eq.${decoded},category_name.ilike.%${decoded}%,category_id.eq.${decoded}`)
       .limit(1)
@@ -358,34 +435,57 @@ export async function getBrands({ supplierCode = null } = {}) {
 /**
  * Fetch a single brand by slug, supplier_id, or UUID.
  */
-export async function getBrandBySlug(slugOrId) {
+export async function getBrandBySlug(slugOrId, { supplierCode = null } = {}) {
   if (!slugOrId) return null;
   const decoded = decodeURIComponent(slugOrId);
+  const norm = normalizeSupplierCode(supplierCode);
 
-  let { data } = await supabase
+  const applyBrandSupplier = (q) => {
+    if (norm && norm !== 'all') {
+      return q.eq('supplier_code', norm);
+    }
+    return q;
+  };
+
+  let query1 = supabase
     .from('brands')
-    .select('id, name, slug, image_url')
+    .select('id, name, slug, image_url, supplier_code')
     .eq('slug', decoded)
-    .eq('is_active', true)
-    .maybeSingle();
+    .eq('is_active', true);
+  query1 = applyBrandSupplier(query1);
+  let { data: matches } = await query1;
+
+  let data = null;
+  if (matches && matches.length > 0) {
+    if (matches.length === 1) {
+      data = matches[0];
+    } else {
+      const prodQuery = getCatalogTable(norm, 'brand_id');
+      const { data: prods } = await prodQuery.in('brand_id', matches.map(m => m.id)).limit(500);
+      const activeIds = new Set((prods || []).map(p => p.brand_id));
+      data = matches.find(m => activeIds.has(m.id)) || matches[0];
+    }
+  }
 
   if (!data) {
-    const res = await supabase
+    let query2 = supabase
       .from('brands')
-      .select('id, name, slug, image_url')
+      .select('id, name, slug, image_url, supplier_code')
       .eq('supplier_id', decoded)
-      .eq('is_active', true)
-      .maybeSingle();
+      .eq('is_active', true);
+    query2 = applyBrandSupplier(query2);
+    const res = await query2.maybeSingle();
     data = res.data;
   }
 
   if (!data && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded)) {
-    const res = await supabase
+    let query3 = supabase
       .from('brands')
-      .select('id, name, slug, image_url')
+      .select('id, name, slug, image_url, supplier_code')
       .eq('id', decoded)
-      .eq('is_active', true)
-      .maybeSingle();
+      .eq('is_active', true);
+    query3 = applyBrandSupplier(query3);
+    const res = await query3.maybeSingle();
     data = res.data;
   }
 
@@ -404,7 +504,7 @@ export async function getBrandBySlug(slugOrId) {
   }
 
   if (!data) {
-    const tableQuery = getCatalogTable(null, 'brand_id, brand_name, brand_slug');
+    const tableQuery = getCatalogTable(norm, 'brand_id, brand_name, brand_slug');
     const { data: prodData } = await tableQuery
       .or(`brand_slug.eq.${decoded},brand_name.ilike.%${decoded}%`)
       .limit(1)
@@ -458,7 +558,7 @@ export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sor
     console.error('[getProductsForBrand]', error.message);
     return [];
   }
-  return data ?? [];
+  return filterProductsByDepartment(data ?? [], supplierCode);
 }
 
 // ─────────────────────────────────────────────
@@ -499,7 +599,7 @@ export async function getProducts({ categoryId, limit = 24, offset = 0, sort = '
     console.error('[getProducts]', error.message);
     return [];
   }
-  return data ?? [];
+  return filterProductsByDepartment(data ?? [], supplierCode);
 }
 
 /**
@@ -527,7 +627,7 @@ export async function getProductsForCategory(categoryId, { limit = 24, offset = 
     console.error('[getProductsForCategory]', error.message);
     return [];
   }
-  return data ?? [];
+  return filterProductsByDepartment(data ?? [], supplierCode);
 }
 
 /**
@@ -576,12 +676,13 @@ export async function searchProducts(query, { limit = 30, supplierCode = null } 
 // ─────────────────────────────────────────────
 
 export async function getAdminProducts({ limit = 50, offset = 0, supplierCode = null, search = null } = {}) {
+  const norm = normalizeSupplierCode(supplierCode);
   let query = supabaseAdmin
     .from('products')
     .select('id, supplier_id, supplier_code, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at', { count: 'exact' });
 
-  if (supplierCode && supplierCode !== 'all') {
-    query = query.eq('supplier_code', supplierCode);
+  if (norm && norm !== 'all') {
+    query = query.eq('supplier_code', norm);
   }
   if (search && search.trim()) {
     query = query.or(`name.ilike.%${search.trim()}%,supplier_id.ilike.%${search.trim()}%`);
