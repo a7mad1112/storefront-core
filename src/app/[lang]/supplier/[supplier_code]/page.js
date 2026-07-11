@@ -78,7 +78,7 @@ export default async function SupplierPortalPage({ params }) {
               border: '1px solid rgba(255, 255, 255, 0.3)',
             }}
           >
-            {meta.badge || 'مورد حصري'}
+            {meta.badge || 'قسم مميز'}
           </span>
 
           <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, lineHeight: 1.2, marginBottom: '1rem' }}>

@@ -23,7 +23,7 @@ export async function generateMetadata({ params }) {
 
   return {
     title: `${displayName} (${meta.name}) — Eloria FASHION`,
-    description: `تسوقي أفضل المنتجات في قسم ${displayName} من مورد ${meta.name} بأسعار مميزة وجودة عالية.`,
+    description: `تسوقي أفضل المنتجات في قسم ${displayName} ضمن ${meta.name} بأسعار مميزة وجودة عالية.`,
   };
 }
 

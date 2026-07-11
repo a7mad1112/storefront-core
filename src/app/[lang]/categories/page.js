@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getCategories } from '../../../lib/queries';
 import { getDictionary } from '../dictionaries';
 import { getCategoryDisplayName } from '../../../lib/utils';
+import { getSupplierConfig } from '../../../lib/supplierConfig';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -22,6 +23,7 @@ export default async function CategoriesPage({ params, searchParams }) {
   const tCommon = dict.common || {};
   const tSections = dict.sections || {};
   const categories = await getCategories({ supplierCode: supplier || null });
+  const meta = supplier ? getSupplierConfig(supplier, lang) : null;
 
   // Separate parent and sub categories
   const parentCategories = categories.filter((c) => !c.parent_id);
@@ -34,10 +36,10 @@ export default async function CategoriesPage({ params, searchParams }) {
       {/* Breadcrumb */}
       <nav style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <Link href={`/${lang}`} style={{ color: 'var(--color-text-secondary)' }}>{tCommon.home || 'الرئيسية'}</Link>
-        {supplier && (
+        {supplier && meta && (
           <>
             <span>/</span>
-            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{supplier.toUpperCase()}</Link>
+            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{meta.badge || meta.name}</Link>
           </>
         )}
         <span>/</span>
@@ -45,8 +47,12 @@ export default async function CategoriesPage({ params, searchParams }) {
       </nav>
 
       <div style={{ marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>🛍️ {tCommon.categories || 'تصفح جميع الأقسام'}</h1>
-        <p style={{ color: 'var(--color-text-muted)' }}>{tSections.shopByCategoryDesc || 'اختر القسم لتصفح أحدث تشكيلة من الشنط، الهدايا، والاكسسوارات الفاخرة'}</p>
+        <h1 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+          {supplier && meta ? `${meta.icon || '🛍️'} ${meta.name}` : `🛍️ ${tCommon.categories || 'تصفح جميع الأقسام'}`}
+        </h1>
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          {supplier && meta ? meta.description : (tSections.shopByCategoryDesc || 'اختر القسم لتصفح أحدث تشكيلة من الشنط، الهدايا، والاكسسوارات الفاخرة')}
+        </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>

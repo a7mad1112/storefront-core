@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getBrands } from '../../../lib/queries';
 import { getCategoryDisplayName } from '../../../lib/utils';
 import { getDictionary } from '../dictionaries';
+import { getSupplierConfig } from '../../../lib/supplierConfig';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -22,6 +23,7 @@ export default async function BrandsPage({ params, searchParams }) {
   const tBrands = dict.brands || {};
   const tCommon = dict.common || {};
   const brands = await getBrands({ supplierCode: supplier || null });
+  const meta = supplier ? getSupplierConfig(supplier, lang) : null;
 
   const getBrandHref = (slugOrId) => supplier ? `/${lang}/supplier/${supplier}/brand/${slugOrId}` : `/${lang}/brand/${slugOrId}`;
 
@@ -30,10 +32,10 @@ export default async function BrandsPage({ params, searchParams }) {
       {/* Breadcrumb */}
       <nav style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <Link href={`/${lang}`} style={{ color: 'var(--color-text-secondary)' }}>{tCommon.home || 'الرئيسية'}</Link>
-        {supplier && (
+        {supplier && meta && (
           <>
             <span>/</span>
-            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{supplier.toUpperCase()}</Link>
+            <Link href={`/${lang}/supplier/${supplier}`} style={{ color: 'var(--color-text-secondary)' }}>{meta.badge || meta.name}</Link>
           </>
         )}
         <span>/</span>
@@ -41,8 +43,12 @@ export default async function BrandsPage({ params, searchParams }) {
       </nav>
 
       <div style={{ marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>🏷️ {tBrands.title || 'تصفح جميع الماركات'}</h1>
-        <p style={{ color: 'var(--color-text-muted)' }}>{tBrands.subtitle || 'اختر الماركة لتصفح أحدث تشكيلة من الشنط، العطور، والاكسسوارات الفاخرة'}</p>
+        <h1 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+          {supplier && meta ? `🏷️ ${dict.brands?.title || 'ماركات'} (${meta.name})` : `🏷️ ${tBrands.title || 'تصفح جميع الماركات'}`}
+        </h1>
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          {supplier && meta ? `تصفح جميع الماركات المتوفرة في ${meta.name}` : (tBrands.subtitle || 'اختر الماركة لتصفح أحدث تشكيلة من الشنط، العطور، والاكسسوارات الفاخرة')}
+        </p>
       </div>
 
       {brands.length === 0 ? (

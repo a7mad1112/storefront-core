@@ -84,6 +84,25 @@
     "noProducts": "No products for this brand currently",
     "productsIn": "products"
   },
+  "departments": {
+    "portalTitle": "Departments & Luxury Mall Showcase",
+    "portalSubtitle": "Explore our major departments and find what suits your refined taste with a single click",
+    "exploreBtn": "Explore Department ↓",
+    "viewAllProductsBtn": "View All Department Products →",
+    "subcategoriesTitle": "Featured Categories:",
+    "bagsGiftsTitle": "Luxury Bags, Wallets & Gifts",
+    "bagsGiftsDesc": "Premium collection of women's & youth bags, backpacks, pouches, gift packages and fine wallets",
+    "bagsGiftsBadge": "Most Popular 🎁",
+    "shoesTitle": "Footwear, Heels, Sandals & Sneakers",
+    "shoesDesc": "Latest sport sneakers, elegant high heels, comfortable slippers and seasonal boots",
+    "shoesBadge": "Season Hit 🔥",
+    "apparelTitle": "Apparel, Suits & Sportswear",
+    "apparelDesc": "Summer and winter sportswear, branded shirts, trousers, jackets and elegant suits",
+    "apparelBadge": "New Arrival ✨",
+    "perfumesTitle": "Luxury Perfumes, Watches & Accessories",
+    "perfumesDesc": "Master quality perfumes, luxury watch sets, fine jewelry and stylish sunglasses",
+    "perfumesBadge": "Luxury & Elegance 💎"
+  },
   "meta": {
     "homeTitle": "Fashion, Elegance & Luxury Bags Store",
     "homeDesc": "Shop the best luxury bags, perfumes, watches, and accessories at great prices and high quality. Fast delivery across Palestine."

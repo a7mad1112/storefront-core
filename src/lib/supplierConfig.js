@@ -25,8 +25,8 @@ export const SUPPLIERS_CONFIG = {
     badge_en: 'Shoes',
     badge_he: 'נעליים',
     description_ar: 'أحدث صيحات الأحذية الرياضية والكلاسيكية والحقائب بجودة عالية وراحة فائقة.',
-    description_en: 'The latest trends in sports and classic shoes and bags from Balagan with high quality and ultimate comfort.',
-    description_he: 'הטרנדים החמים ביותר בנעלי ספורט ונעליים קלאסיות ותיקים מבלאגן באיכות גבוהה.',
+    description_en: 'The latest trends in sports and classic shoes, heels and comfortable sandals with high quality and ultimate comfort.',
+    description_he: 'הטרנדים החמים ביותר בנעלי ספורט ונעליים קלאסיות, עקבים וסנדלים נוחים באיכות גבוהה.',
     themeColor: '#2563eb', // Blue
     bgGradient: 'linear-gradient(135deg, #1e293b 0%, #1e3a8a 100%)',
     logo: null,
@@ -41,8 +41,8 @@ export const SUPPLIERS_CONFIG = {
     badge_en: 'Sportswear',
     badge_he: 'בגדי ספורט',
     description_ar: 'أطقم وملابس رياضية أصلية وعصرية تناسب جميع الأنشطة الرياضية واليومية.',
-    description_en: 'Authentic and modern sportswear and outfits from Sakher suitable for all athletic and daily activities.',
-    description_he: 'בגדי ספורט וסטים מודרניים ואותנטיים מסאחר לכל הפעילויות.',
+    description_en: 'Authentic and modern sportswear and outfits suitable for all athletic and daily activities.',
+    description_he: 'בגדי ספורט וסטים מודרניים ואותנטיים לכל הפעילויות ויום יום.',
     themeColor: '#059669', // Green
     bgGradient: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
     logo: null,
@@ -55,9 +55,9 @@ export const SUPPLIERS_CONFIG = {
 export function getSupplierConfig(code, lang = 'ar') {
   const config = SUPPLIERS_CONFIG[code] || {
     code: code || 'all',
-    name_ar: code && code !== 'all' ? `قسم (${code})` : 'كل الأقسام',
-    name_en: code && code !== 'all' ? `Section (${code})` : 'All Sections',
-    name_he: code && code !== 'all' ? `מדור (${code})` : 'כל המדורים',
+    name_ar: 'قسم مميز',
+    name_en: 'Featured Section',
+    name_he: 'מדור מיוחד',
     icon: '🏬',
     badge_ar: 'قسم',
     badge_en: 'Section',
