@@ -64,8 +64,8 @@ function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIEL
     norm && norm !== 'all'
       ? norm
       : SUPPORTED_SUPPLIERS.length === 1
-      ? SUPPORTED_SUPPLIERS[0]
-      : null;
+        ? SUPPORTED_SUPPLIERS[0]
+        : null;
   let query = supabase
     .rpc('get_store_products', {
       p_store_id: STORE_ID,
@@ -540,7 +540,7 @@ export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sor
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded);
 
   const kb = KNOWN_BRANDS.find(b => b.slug === decoded.toLowerCase() || b.id === decoded.toLowerCase() || b.name.toLowerCase() === decoded.toLowerCase());
-  
+
   let orClauses = [];
   if (isUUID) {
     orClauses.push(`brand_id.eq.${decoded}`);

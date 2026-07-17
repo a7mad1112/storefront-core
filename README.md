@@ -112,3 +112,6 @@ You can also trigger a sync anytime manually by clicking **Actions** → **GB St
 ## 🛡️ Security Guarantees
 - **Wholesale Secrecy**: The public storefront never queries the `products` table directly. It reads exclusively from the `public_products` SQL view using the anonymous key. The `wholesale_price` column does not exist in this view.
 - **Admin Isolation**: All admin margin adjustments (`/api/admin/margins`) and dashboard queries execute on the server side using `SUPABASE_SERVICE_KEY`, protected by Supabase Auth sessions.
+
+
+py -m scraper.run_all --supplier all --parallel --no-details

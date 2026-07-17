@@ -117,8 +117,8 @@ export function CartProvider({ children, lang = 'ar', dict }) {
     let text = `${orderIntro}\n\n`;
     items.forEach((item, index) => {
       const displayName = (lang === 'en' && item.name_en) ? item.name_en :
-                          (lang === 'he' && item.name_he) ? item.name_he :
-                          item.name;
+        (lang === 'he' && item.name_he) ? item.name_he :
+          item.name;
       const colorText = item.selectedColor ? ` (${colorLabel}: ${formatOptionLabel(item.selectedColor.color_name, lang)})` : '';
       const sizeText = item.selectedSize ? ` (${lang === 'en' ? 'Size' : lang === 'he' ? 'מידה' : 'القياس'}: ${formatOptionLabel(item.selectedSize, lang)})` : '';
       text += `${index + 1}. ${displayName}${colorText}${sizeText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity, lang)}\n`;
