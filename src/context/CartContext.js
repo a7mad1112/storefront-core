@@ -108,6 +108,7 @@ export function CartProvider({ children, lang = 'ar', dict }) {
   const getWhatsAppOrderUrl = () => {
     if (items.length === 0) return '';
 
+    const tCart = dict?.cart || {};
     const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
     const orderIntro = tCart.orderIntro ? tCart.orderIntro.replace('Eloria FASHION', storeName) : `مرحباً، أريد طلب المنتجات التالية من متجر ${storeName}:`;
     const colorLabel = tCart.colorLabel || 'اللون';
