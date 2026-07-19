@@ -824,10 +824,11 @@ export async function getSyncLogs({ limit = 10 } = {}) {
 // ADMIN — Margins
 // ─────────────────────────────────────────────
 
-export async function getMarginsWithCategories() {
+export async function getMarginsWithCategories(supplierCode = null) {
+  // Include supplier_code so the UI can group/filter categories by supplier.
   const { data, error } = await supabaseAdmin
     .from('categories')
-    .select('id, name, slug, parent_id, margins(id, margin_type, margin_value, store_id)')
+    .select('id, name, slug, parent_id, supplier_code, margins(id, margin_type, margin_value, store_id)')
     .eq('is_active', true)
     .order('name');
 
@@ -841,8 +842,14 @@ export async function getMarginsWithCategories() {
   }));
 
   if (cats.length > 0) {
-    let prodQuery = supabaseAdmin.from('products').select('category_id');
-    prodQuery = applySupplierFilter(prodQuery, null);
+    let prodQuery = supabaseAdmin.from('products').select('category_id, supplier_code');
+    // When filtering by specific supplier, restrict to that supplier's products.
+    const norm = normalizeSupplierCode(supplierCode);
+    if (norm && norm !== 'all') {
+      prodQuery = prodQuery.eq('supplier_code', norm);
+    } else {
+      prodQuery = applySupplierFilter(prodQuery, null);
+    }
     const { data: prodCats } = await prodQuery;
     if (prodCats && prodCats.length > 0) {
       const activeCatIds = new Set(prodCats.map((p) => p.category_id).filter(Boolean));
@@ -850,6 +857,12 @@ export async function getMarginsWithCategories() {
     } else {
       cats = [];
     }
+  }
+
+  // If a specific supplier is requested, filter categories to that supplier only.
+  const norm = normalizeSupplierCode(supplierCode);
+  if (norm && norm !== 'all') {
+    cats = cats.filter((c) => c.supplier_code === norm);
   }
 
   return cats;

@@ -115,3 +115,7 @@ You can also trigger a sync anytime manually by clicking **Actions** → **GB St
 
 
 py -m scraper.run_all --supplier all --parallel --no-details
+
+py -m scraper.run_all --supplier all --parallel --details
+
+python scraper/reset_all_data.py
