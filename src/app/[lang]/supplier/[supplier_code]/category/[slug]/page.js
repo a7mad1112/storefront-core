@@ -5,10 +5,13 @@ import { getCategoryBySlug, getSubcategories, getProductsForCategory } from '../
 import { getSupplierConfig } from '../../../../../../lib/supplierConfig';
 import ProductGrid from '../../../../../../components/product/ProductGrid';
 import SortSelector from '../../../../../../components/product/SortSelector';
+import Pagination from '../../../../../../components/product/Pagination';
 import { getDictionary } from '../../../../dictionaries';
 import { getCategoryDisplayName } from '../../../../../../lib/utils';
 
 export const revalidate = 60;
+
+const PAGE_SIZE = 48;
 
 export async function generateMetadata({ params }) {
   const { lang, supplier_code, slug } = await params;
@@ -30,7 +33,10 @@ export async function generateMetadata({ params }) {
 
 export default async function SupplierCategoryPage({ params, searchParams }) {
   const { lang, supplier_code, slug } = await params;
-  const { sort = 'default' } = await searchParams;
+  const { sort = 'default', page = '1' } = await searchParams;
+  const currentPage = Math.max(1, parseInt(page) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+
   const dict = await getDictionary(lang);
   const tCommon = dict.common || {};
   const meta = getSupplierConfig(supplier_code, lang);
@@ -42,13 +48,17 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
 
   const displayName = getCategoryDisplayName(category, lang);
 
-  const [subcategories, products, parentCategory] = await Promise.all([
+  const [subcategories, { products, totalCount }, parentCategory] = await Promise.all([
     getSubcategories(category.id, { supplierCode: supplier_code }),
-    getProductsForCategory(category.id, { limit: 48, sort, supplierCode: supplier_code }),
+    getProductsForCategory(category.id, { limit: PAGE_SIZE, offset, sort, supplierCode: supplier_code }),
     category.parent_id ? getCategoryBySlug(category.parent_id, { supplierCode: supplier_code }) : Promise.resolve(null),
   ]);
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const parentDisplayName = parentCategory ? getCategoryDisplayName(parentCategory, lang) : '';
+
+  const basePath = `/${lang}/supplier/${supplier_code}/category/${slug}`;
+  const resolvedSearchParams = { sort, page };
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '5rem' }}>
@@ -78,7 +88,15 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
             {meta.icon} {meta.name}
           </span>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>{displayName}</h1>
-          <p style={{ color: 'var(--color-text-muted)' }}>{dict.product?.showingAllIn || (lang === 'en' ? 'Showing all available products in ' : lang === 'he' ? 'מציג את כל המוצרים הזמינים בקטגוריית ' : 'عرض جميع المنتجات المتوفرة في قسم ')} {displayName} ({meta.name})</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            {dict.product?.showingAllIn || (lang === 'en' ? 'Showing all available products in ' : lang === 'he' ? 'מציג את כל המוצרים הזמינים בקטגוריית ' : 'عرض جميع المنتجات المتوفرة في قسم ')}
+            {displayName} ({meta.name})
+            {totalCount > 0 && (
+              <span style={{ marginInlineStart: '0.5rem', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: 700 }}>
+                · {totalCount} {lang === 'en' ? 'products' : lang === 'he' ? 'מוצרים' : 'منتج'}
+              </span>
+            )}
+          </p>
         </div>
         <SortSelector />
       </div>
@@ -110,7 +128,19 @@ export default async function SupplierCategoryPage({ params, searchParams }) {
       )}
 
       {/* Products Grid */}
-      <ProductGrid products={products} emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : "لا توجد منتجات متوفرة في هذا القسم حالياً")} />
+      <ProductGrid
+        products={products}
+        emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : "لا توجد منتجات متوفرة في هذا القسم حالياً")}
+      />
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        basePath={basePath}
+        searchParams={resolvedSearchParams}
+        lang={lang}
+      />
     </div>
   );
 }

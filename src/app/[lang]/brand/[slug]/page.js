@@ -4,10 +4,13 @@ import { notFound } from 'next/navigation';
 import { getBrandBySlug, getProductsForBrand } from '../../../../lib/queries';
 import ProductGrid from '../../../../components/product/ProductGrid';
 import SortSelector from '../../../../components/product/SortSelector';
+import Pagination from '../../../../components/product/Pagination';
 import { getDictionary } from '../../dictionaries';
 import { getCategoryDisplayName } from '../../../../lib/utils';
 
 export const revalidate = 60;
+
+const PAGE_SIZE = 48;
 
 export async function generateMetadata({ params }) {
   const { lang, slug } = await params;
@@ -28,7 +31,10 @@ export async function generateMetadata({ params }) {
 
 export default async function BrandPage({ params, searchParams }) {
   const { lang, slug } = await params;
-  const { sort = 'default' } = await searchParams;
+  const { sort = 'default', page = '1' } = await searchParams;
+  const currentPage = Math.max(1, parseInt(page) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+
   const dict = await getDictionary(lang);
   const tCommon = dict.common || {};
 
@@ -39,7 +45,11 @@ export default async function BrandPage({ params, searchParams }) {
 
   const displayName = getCategoryDisplayName(brand, lang);
 
-  const products = await getProductsForBrand(brand.id, { limit: 48, sort });
+  const { products, totalCount } = await getProductsForBrand(brand.id, { limit: PAGE_SIZE, offset, sort });
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const basePath = `/${lang}/brand/${slug}`;
+  const resolvedSearchParams = { sort, page };
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '5rem' }}>
@@ -65,14 +75,34 @@ export default async function BrandPage({ params, searchParams }) {
             )}
             <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>{displayName}</h1>
           </div>
-          <p style={{ color: 'var(--color-text-muted)' }}>{dict.sections?.latestFrom || (lang === 'en' ? 'Latest curated selection from brand ' : lang === 'he' ? 'מבחר חדש מהמותג ' : 'عرض جميع المنتجات المتوفرة من ماركة ')} {displayName}</p>
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            {dict.sections?.latestFrom || (lang === 'en' ? 'Latest curated selection from brand ' : lang === 'he' ? 'מבחר חדש מהמותג ' : 'عرض جميع المنتجات المتوفرة من ماركة ')}
+            {displayName}
+            {totalCount > 0 && (
+              <span style={{ marginInlineStart: '0.5rem', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: 700 }}>
+                ({totalCount})
+              </span>
+            )}
+          </p>
         </div>
 
         <SortSelector />
       </div>
 
       {/* Products Grid */}
-      <ProductGrid products={products} emptyMessage={dict.brands?.noProducts || (lang === 'en' ? 'No products available for this brand currently' : lang === 'he' ? 'אין מוצרים זמינים למותג זה כרגע' : "لا توجد منتجات متوفرة من هذه الماركة حالياً")} />
+      <ProductGrid
+        products={products}
+        emptyMessage={dict.brands?.noProducts || (lang === 'en' ? 'No products available for this brand currently' : lang === 'he' ? 'אין מוצרים זמינים למותג זה כרגע' : "لا توجد منتجات متوفرة من هذه الماركة حالياً")}
+      />
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        basePath={basePath}
+        searchParams={resolvedSearchParams}
+        lang={lang}
+      />
     </div>
   );
 }

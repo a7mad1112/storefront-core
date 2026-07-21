@@ -7,6 +7,8 @@ const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
 const STORE_LOGO = process.env.NEXT_PUBLIC_STORE_LOGO || '/logo.png';
 const STORE_DESC_DEFAULT = 'متجر الموضة والأناقة الفاخرة. شنط ماستر كوالتي، عطور وساعات وماركات عالمية بأسعار مميزة مع خدمة التوصيل السريع لجميع مناطق فلسطين.';
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
+const INSTAGRAM_URL = process.env.NEXT_PUBLIC_INSTAGRAM_URL || '';
+const FACEBOOK_URL = process.env.NEXT_PUBLIC_FACEBOOK_URL || '';
 
 export default function Footer({ lang, dict: propDict }) {
   let contextDict = null;
@@ -42,10 +44,20 @@ export default function Footer({ lang, dict: propDict }) {
         <p style={{ color: 'var(--color-text-secondary)', maxWidth: '520px', fontSize: '0.9rem', lineHeight: 1.6 }}>
           {storeDesc}
         </p>
-        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem', fontSize: '0.9rem' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem', fontSize: '0.9rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span>💬</span> <span>{contactWhatsApp}</span>
           </a>
+          {INSTAGRAM_URL && (
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#E1306C', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span>📸</span> <span>{tCommon.instagram || 'انستجرام'}</span>
+            </a>
+          )}
+          {FACEBOOK_URL && (
+            <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#1877F2', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span>📘</span> <span>{tCommon.facebook || 'فيسبوك'}</span>
+            </a>
+          )}
         </div>
 
         <div style={{ width: '100%', maxWidth: '400px', height: '1px', backgroundColor: 'var(--color-border)', margin: '1rem 0 0.5rem 0', opacity: 0.7 }} />

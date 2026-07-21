@@ -534,6 +534,7 @@ export async function getBrandBySlug(slugOrId, { supplierCode = null } = {}) {
 
 /**
  * Fetch products belonging to a brand (from public_products view).
+ * Returns { products, totalCount } for pagination support.
  */
 export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sort = 'default', supplierCode = null } = {}) {
   const decoded = decodeURIComponent(brandId);
@@ -557,18 +558,25 @@ export async function getProductsForBrand(brandId, { limit = 48, offset = 0, sor
     orClauses.push(`name.ilike.%${decoded}%`);
   }
 
-  let query = getCatalogTable(supplierCode)
-    .or(orClauses.join(','))
-    .range(offset, offset + limit - 1);
+  const orStr = orClauses.join(',');
 
-  query = applySortOrder(query, sort);
+  // Fetch page + total count in parallel
+  const [pageRes, countRes] = await Promise.all([
+    applySortOrder(
+      getCatalogTable(supplierCode).or(orStr).range(offset, offset + limit - 1),
+      sort
+    ),
+    getCatalogTable(supplierCode, 'id').or(orStr),
+  ]);
 
-  const { data, error } = await query;
-  if (error) {
-    console.error('[getProductsForBrand]', error.message);
-    return [];
+  if (pageRes.error) {
+    console.error('[getProductsForBrand]', pageRes.error.message);
+    return { products: [], totalCount: 0 };
   }
-  return filterProductsByDepartment(data ?? [], supplierCode);
+
+  const products = filterProductsByDepartment(pageRes.data ?? [], supplierCode);
+  const allForCount = filterProductsByDepartment(countRes.data ?? [], supplierCode);
+  return { products, totalCount: allForCount.length };
 }
 
 // ─────────────────────────────────────────────
@@ -592,30 +600,38 @@ function applySortOrder(query, sort) {
 /**
  * Fetch products from the public_products view.
  * Supports pagination, category filtering, and sorting.
+ * Returns { products, totalCount } for pagination support.
  */
 export async function getProducts({ categoryId, limit = 24, offset = 0, sort = 'default', supplierCode = null } = {}) {
-  let query = getCatalogTable(supplierCode)
-    .range(offset, offset + limit - 1);
+  let pageQuery = getCatalogTable(supplierCode);
+  let countQuery = getCatalogTable(supplierCode, 'id');
 
   if (categoryId) {
-    query = query.eq('category_id', categoryId);
+    pageQuery = pageQuery.eq('category_id', categoryId);
+    countQuery = countQuery.eq('category_id', categoryId);
   }
 
-  query = applySortOrder(query, sort);
+  const [pageRes, countRes] = await Promise.all([
+    applySortOrder(pageQuery.range(offset, offset + limit - 1), sort),
+    countQuery,
+  ]);
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('[getProducts]', error.message);
-    return [];
+  if (pageRes.error) {
+    console.error('[getProducts]', pageRes.error.message);
+    return { products: [], totalCount: 0 };
   }
-  return filterProductsByDepartment(data ?? [], supplierCode);
+
+  const products = filterProductsByDepartment(pageRes.data ?? [], supplierCode);
+  const allForCount = filterProductsByDepartment(countRes.data ?? [], supplierCode);
+  return { products, totalCount: allForCount.length };
 }
+
 
 /**
  * Fetch all products in a category subtree (category + all its subcategories).
+ * Returns { products, totalCount } for pagination support.
  */
-export async function getProductsForCategory(categoryId, { limit = 24, offset = 0, sort = 'default', supplierCode = null } = {}) {
+export async function getProductsForCategory(categoryId, { limit = 48, offset = 0, sort = 'default', supplierCode = null } = {}) {
   // First get subcategory IDs
   const { data: subs } = await supabase
     .from('categories')
@@ -625,19 +641,22 @@ export async function getProductsForCategory(categoryId, { limit = 24, offset = 
 
   const ids = [categoryId, ...(subs ?? []).map((s) => s.id)];
 
-  let query = getCatalogTable(supplierCode)
-    .in('category_id', ids)
-    .range(offset, offset + limit - 1);
+  const [pageRes, countRes] = await Promise.all([
+    applySortOrder(
+      getCatalogTable(supplierCode).in('category_id', ids).range(offset, offset + limit - 1),
+      sort
+    ),
+    getCatalogTable(supplierCode, 'id').in('category_id', ids),
+  ]);
 
-  query = applySortOrder(query, sort);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('[getProductsForCategory]', error.message);
-    return [];
+  if (pageRes.error) {
+    console.error('[getProductsForCategory]', pageRes.error.message);
+    return { products: [], totalCount: 0 };
   }
-  return filterProductsByDepartment(data ?? [], supplierCode);
+
+  const products = filterProductsByDepartment(pageRes.data ?? [], supplierCode);
+  const allForCount = filterProductsByDepartment(countRes.data ?? [], supplierCode);
+  return { products, totalCount: allForCount.length };
 }
 
 /**

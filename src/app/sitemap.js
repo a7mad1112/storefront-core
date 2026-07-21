@@ -5,7 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://gbstore.ps';
 export const revalidate = 3600; // Revalidate sitemap once per hour
 
 export default async function sitemap() {
-  const [categories, products] = await Promise.all([
+  const [categories, { products }] = await Promise.all([
     getCategories(),
     getProducts({ limit: 5000 }), // Fetch up to 5000 products for sitemap
   ]);

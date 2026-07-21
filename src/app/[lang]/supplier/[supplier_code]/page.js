@@ -7,8 +7,12 @@ import { getSupplierConfig } from '../../../../lib/supplierConfig';
 import CategoriesSlider from '../../../../components/home/CategoriesSlider';
 import BrandsSlider from '../../../../components/home/BrandsSlider';
 import ProductGrid from '../../../../components/product/ProductGrid';
+import SortSelector from '../../../../components/product/SortSelector';
+import Pagination from '../../../../components/product/Pagination';
 
 export const revalidate = 60;
+
+const PAGE_SIZE = 48;
 
 export async function generateMetadata({ params }) {
   const { lang, supplier_code } = await params;
@@ -23,21 +27,29 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function SupplierPortalPage({ params }) {
+export default async function SupplierPortalPage({ params, searchParams }) {
   const { lang, supplier_code } = await params;
   if (!hasLocale(lang)) notFound();
+
+  const { sort = 'default', page = '1' } = await searchParams;
+  const currentPage = Math.max(1, parseInt(page) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
 
   const dict = await getDictionary(lang);
   const tCommon = dict.common || {};
   const meta = getSupplierConfig(supplier_code, lang);
 
-  const [categories, brands, products] = await Promise.all([
+  const [categories, brands, { products, totalCount }] = await Promise.all([
     getCategories({ supplierCode: supplier_code }),
     getBrands({ supplierCode: supplier_code }),
-    getProducts({ supplierCode: supplier_code, limit: 48 }),
+    getProducts({ supplierCode: supplier_code, limit: PAGE_SIZE, offset, sort }),
   ]);
 
   const topCategories = categories.filter((c) => !c.parent_id);
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const basePath = `/${lang}/supplier/${supplier_code}`;
+  const resolvedSearchParams = { sort, page };
 
   return (
     <div>
@@ -106,18 +118,30 @@ export default async function SupplierPortalPage({ params }) {
 
       {/* Products Grid Section */}
       <section id="supplier-products" className="container" style={{ padding: '2rem var(--space-4)', paddingBottom: '5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>
               ✨ {dict.product?.showingAllIn || 'جميع منتجات'} {meta.name}
             </h2>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              {products.length} {dict.product?.productsCount || (lang === 'en' ? 'products available right now' : lang === 'he' ? 'מוצרים זמינים כעת' : 'منتج متوفر حالياً')}
+              {totalCount} {dict.product?.productsCount || (lang === 'en' ? 'products available right now' : lang === 'he' ? 'מוצרים זמינים כעת' : 'منتج متوفر حالياً')}
             </p>
           </div>
+          <SortSelector />
         </div>
 
-        <ProductGrid products={products} emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : 'لا توجد منتجات متوفرة في هذا القسم حالياً')} />
+        <ProductGrid
+          products={products}
+          emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : 'لا توجد منتجات متوفرة في هذا القسم حالياً')}
+        />
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          basePath={basePath}
+          searchParams={resolvedSearchParams}
+          lang={lang}
+        />
       </section>
     </div>
   );

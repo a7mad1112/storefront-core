@@ -118,4 +118,5 @@ py -m scraper.run_all --supplier all --parallel --no-details
 
 py -m scraper.run_all --supplier all --parallel --details
 
-python scraper/reset_all_data.py
+py -m scraper.run_all --supplier all --parallel --details --limit 10
+py scraper/reset_all_data.py

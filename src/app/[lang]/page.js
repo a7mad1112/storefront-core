@@ -36,10 +36,13 @@ export default async function HomePage({ params }) {
 
   const candidateSections = [];
   for (let i = 0; i < candidates.length; i++) {
-    if (productBatches[i] && productBatches[i].length > 0) {
+    const batch = productBatches[i];
+    // getProductsForCategory now returns { products, totalCount }
+    const prods = batch?.products ?? batch ?? [];
+    if (prods.length > 0) {
       candidateSections.push({
         category: candidates[i],
-        products: productBatches[i],
+        products: prods,
       });
     }
   }
