@@ -84,7 +84,15 @@ function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIEL
  * Returns flat list; caller groups by parent_id if needed.
  */
 function filterCategoriesByDepartment(categories, supplierCode) {
-  if (!categories || !Array.isArray(categories) || !supplierCode) return categories;
+  if (!categories || !Array.isArray(categories)) return categories;
+
+  // Permanently hide "Recently Added" category
+  categories = categories.filter((c) => {
+    const n = c.name || '';
+    return !/(حديثا|حديثاً)/i.test(n);
+  });
+
+  if (!supplierCode) return categories;
   if (supplierCode === 'bags-gifts') {
     return categories.filter((c) => {
       const n = c.name || '';
@@ -883,6 +891,12 @@ export async function getMarginsWithCategories(supplierCode = null) {
   if (norm && norm !== 'all') {
     cats = cats.filter((c) => c.supplier_code === norm);
   }
+
+  // Permanently hide "Recently Added" category
+  cats = cats.filter((c) => {
+    const n = c.name || '';
+    return !/(حديثا|حديثاً)/i.test(n);
+  });
 
   return cats;
 }
