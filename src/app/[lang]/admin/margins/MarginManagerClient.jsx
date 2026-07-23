@@ -118,6 +118,9 @@ export default function MarginManagerClient({ categories, suppliers = [] }) {
             marginBottom: '1.5rem',
             borderBottom: '2px solid var(--color-border)',
             paddingBottom: '0',
+            overflowX: 'auto',
+            flexWrap: 'nowrap',
+            scrollbarWidth: 'none',
           }}
         >
           {suppliers.map((code) => {
@@ -148,6 +151,7 @@ export default function MarginManagerClient({ categories, suppliers = [] }) {
                   gap: '0.4rem',
                   transition: 'color 0.15s, border-color 0.15s',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 <span>{icon}</span>
