@@ -11,6 +11,7 @@ import BrandsSlider from '../../components/home/BrandsSlider';
 import CategoriesSlider from '../../components/home/CategoriesSlider';
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
 
 export const revalidate = 300;
 
@@ -85,7 +86,7 @@ export default async function HomePage({ params }) {
             <a href="#departments-gateway" className="btn btn-primary" style={{ padding: '0.8rem 2.25rem', fontSize: '1.05rem', fontWeight: 800 }}>
               {dict.hero.browseProducts}
             </a>
-            <a href="https://wa.me/972595809023" target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.8rem 2.25rem', fontSize: '1.05rem', fontWeight: 700, borderColor: '#25D366', color: '#25D366' }}>
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.8rem 2.25rem', fontSize: '1.05rem', fontWeight: 700, borderColor: '#25D366', color: '#25D366' }}>
               {dict.hero.askWhatsApp}
             </a>
           </div>
