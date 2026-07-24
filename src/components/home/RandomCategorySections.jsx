@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import ProductGrid from '../product/ProductGrid';
 import { getCategoryDisplayName } from '../../lib/utils';
+import { getFriendlySupplierCode } from '../../lib/supplierConfig';
 
 export default function RandomCategorySections({ candidateSections = [], lang = 'ar', dict }) {
   const selectedSections = useMemo(() => {
@@ -44,7 +45,7 @@ export default function RandomCategorySections({ candidateSections = [], lang = 
               </div>
               {hasMoreThanFour && (
                 <Link
-                  href={`/${lang}/category/${category.slug || category.id}`}
+                  href={category.supplier_code ? `/${lang}/supplier/${getFriendlySupplierCode(category.supplier_code, category)}/category/${category.slug || category.id}` : `/${lang}/category/${category.slug || category.id}`}
                   className="btn btn-secondary"
                   style={{ fontSize: '0.875rem' }}
                 >

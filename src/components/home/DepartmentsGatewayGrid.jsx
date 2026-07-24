@@ -139,7 +139,7 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
                     {dept.categories.slice(0, 5).map((cat) => (
                       <Link
                         key={cat.id || cat.slug}
-                        href={`/${lang}/category/${cat.slug || cat.id}`}
+                        href={`/${lang}/supplier/${dept.id}/category/${cat.slug || cat.id}`}
                         style={{
                           display: 'inline-block',
                           padding: '0.35rem 0.75rem',

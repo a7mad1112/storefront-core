@@ -134,7 +134,7 @@ function filterProductsByDepartment(products, supplierCode) {
 export async function getCategories({ supplierCode = null } = {}) {
   let query = supabase
     .from('categories')
-    .select('id, name, slug, parent_id, image_url, is_active, name_en, name_he')
+    .select('id, name, slug, parent_id, image_url, is_active, name_en, name_he, supplier_code')
     .eq('is_active', true)
     .order('name');
 
@@ -303,7 +303,7 @@ export async function getCategoryBySlug(slugOrId, { supplierCode = null } = {}) 
 export async function getSubcategories(parentId, { supplierCode = null } = {}) {
   let query = supabase
     .from('categories')
-    .select('id, name, slug, image_url')
+    .select('id, name, slug, image_url, supplier_code')
     .eq('parent_id', parentId)
     .eq('is_active', true)
     .order('name');

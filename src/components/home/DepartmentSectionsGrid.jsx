@@ -106,7 +106,7 @@ function DepartmentCategoriesStrip({ dept, lang, isRtl }) {
         {dept.categories.map((cat) => (
           <Link
             key={cat.id || cat.slug}
-            href={`/${lang}/category/${cat.slug || cat.id}`}
+            href={`/${lang}/supplier/${dept.id}/category/${cat.slug || cat.id}`}
             style={{
               padding: '0.45rem 1rem',
               borderRadius: 'var(--radius-full)',

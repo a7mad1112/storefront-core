@@ -50,8 +50,17 @@ export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
       .then((res) => res.data || []),
   ]);
 
+  const uniqueByName = (cats) => {
+    const map = new Map();
+    for (const c of cats) {
+      if (!map.has(c.name)) map.set(c.name, c);
+    }
+    return Array.from(map.values());
+  };
+
   // 2. Classify categories cleanly into each department
-  const bagsCategories = categories.filter((c) => {
+  const bagsCategories = uniqueByName(categories.filter((c) => {
+    if (c.supplier_code && c.supplier_code !== 'gbstore' && c.supplier_code !== 'bags-gifts') return false;
     const n = c.name || '';
     return (
       [
@@ -78,17 +87,19 @@ export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
       n.includes('كلاتش') ||
       n.includes('هدية')
     );
-  });
+  }));
 
-  const shoesCategories = categories.filter((c) => {
+  const shoesCategories = uniqueByName(categories.filter((c) => {
+    if (c.supplier_code && c.supplier_code !== 'balagan') return false;
     const n = c.name || '';
     return (
       ['Heels/ كعب', 'صندل', 'سبورت', 'جزمات', 'سليبر', 'رسمي', 'كلسات'].includes(n) ||
       (c.slug && c.slug.includes('heels'))
     );
-  });
+  }));
 
-  const apparelCategories = categories.filter((c) => {
+  const apparelCategories = uniqueByName(categories.filter((c) => {
+    if (c.supplier_code && c.supplier_code !== 'sakher') return false;
     const n = c.name || '';
     return (
       [
@@ -112,9 +123,10 @@ export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
       n.includes('طقم تنوره') ||
       n.includes('فساتين')
     );
-  });
+  }));
 
-  const perfumesCategories = categories.filter((c) => {
+  const perfumesCategories = uniqueByName(categories.filter((c) => {
+    if (c.supplier_code && c.supplier_code !== 'gbstore' && c.supplier_code !== 'perfumes-watches') return false;
     const n = c.name || '';
     return (
       [
@@ -149,7 +161,7 @@ export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
       n.includes('سنسال') ||
       n.includes('خاتم')
     );
-  });
+  }));
 
   // 3. Build structured departments array
   const departments = [
