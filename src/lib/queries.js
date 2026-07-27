@@ -54,7 +54,7 @@ function applySupplierFilter(query, supplierCode = null) {
  * Helper to query catalog: uses public_products view for default store ('eloria'),
  * or dynamically calls get_store_products RPC for multi-tenant client isolation.
  */
-function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIELDS) {
+export function getCatalogTable(supplierCode = null, selectFields = PUBLIC_PRODUCT_FIELDS) {
   const norm = normalizeSupplierCode(supplierCode);
   if (STORE_ID === 'eloria') {
     let query = supabase.from('public_products').select(selectFields);

@@ -133,6 +133,7 @@ export default function AdminLayout({ children }) {
           className="admin-nav-link"
           style={{
             backgroundColor: pathname === '/ar/admin' ? 'var(--color-accent)' : 'transparent',
+            color: pathname === '/ar/admin' ? '#ffffff' : 'inherit',
           }}
         >
           📊 الرئيسة والإحصائيات
@@ -143,6 +144,7 @@ export default function AdminLayout({ children }) {
           className="admin-nav-link"
           style={{
             backgroundColor: pathname === '/ar/admin/margins' ? 'var(--color-accent)' : 'transparent',
+            color: pathname === '/ar/admin/margins' ? '#ffffff' : 'inherit',
           }}
         >
           🏷️ هامش الأرباح والأسعار
@@ -153,6 +155,7 @@ export default function AdminLayout({ children }) {
           className="admin-nav-link"
           style={{
             backgroundColor: pathname === '/ar/admin/products' ? 'var(--color-accent)' : 'transparent',
+            color: pathname === '/ar/admin/products' ? '#ffffff' : 'inherit',
           }}
         >
           📦 المنتجات (سعر الجملة)

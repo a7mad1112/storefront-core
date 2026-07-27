@@ -7,7 +7,7 @@
  */
 
 import { supabase } from './supabase.js';
-import { getCategories, PUBLIC_PRODUCT_FIELDS } from './queries.js';
+import { getCategories, PUBLIC_PRODUCT_FIELDS, getCatalogTable } from './queries.js';
 import { isDepartmentSupported } from './supplierConfig.js';
 
 export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
@@ -16,33 +16,25 @@ export async function getDepartmentsShowcaseData({ lang = 'ar', dict } = {}) {
   // 1. Fetch active categories and 4 department product batches in parallel
   const [categories, bagsProducts, shoesProducts, apparelProducts, perfumesProducts] = await Promise.all([
     getCategories(),
-    supabase
-      .from('public_products')
-      .select(PUBLIC_PRODUCT_FIELDS)
+    getCatalogTable(null, PUBLIC_PRODUCT_FIELDS)
       .or('category_name.ilike.%شنط%,category_name.ilike.%جزدان%,category_name.ilike.%محافظ%,category_name.ilike.%كلاتش%,category_name.ilike.%سفر%')
       .eq('is_available', true)
       .order('updated_at', { ascending: false })
       .limit(8)
       .then((res) => res.data || []),
-    supabase
-      .from('public_products')
-      .select(PUBLIC_PRODUCT_FIELDS)
+    getCatalogTable(null, PUBLIC_PRODUCT_FIELDS)
       .eq('supplier_code', 'balagan')
       .eq('is_available', true)
       .order('updated_at', { ascending: false })
       .limit(8)
       .then((res) => res.data || []),
-    supabase
-      .from('public_products')
-      .select(PUBLIC_PRODUCT_FIELDS)
+    getCatalogTable(null, PUBLIC_PRODUCT_FIELDS)
       .eq('supplier_code', 'sakher')
       .eq('is_available', true)
       .order('updated_at', { ascending: false })
       .limit(8)
       .then((res) => res.data || []),
-    supabase
-      .from('public_products')
-      .select(PUBLIC_PRODUCT_FIELDS)
+    getCatalogTable(null, PUBLIC_PRODUCT_FIELDS)
       .or('category_name.ilike.%عطر%,category_name.ilike.%ساع%,category_name.ilike.%اكسسوار%,category_name.ilike.%نظار%,category_name.ilike.%حلق%,category_name.ilike.%سنسال%,category_name.ilike.%خاتم%')
       .eq('is_available', true)
       .order('updated_at', { ascending: false })
