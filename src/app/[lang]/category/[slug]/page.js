@@ -12,9 +12,10 @@ export const revalidate = 60;
 
 const PAGE_SIZE = 48;
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { lang, slug } = await params;
-  const category = await getCategoryBySlug(slug);
+  const { supplier } = await searchParams;
+  const category = await getCategoryBySlug(slug, { supplierCode: supplier || null });
 
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'Eloria FASHION';
   if (!category) {
@@ -31,32 +32,36 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryPage({ params, searchParams }) {
   const { lang, slug } = await params;
-  const { sort = 'default', page = '1' } = await searchParams;
+  const { sort = 'default', page = '1', supplier = '' } = await searchParams;
   const currentPage = Math.max(1, parseInt(page) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
+  const supplierCode = supplier || null;
 
   const dict = await getDictionary(lang);
   const tCommon = dict.common || {};
 
-  const category = await getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug, { supplierCode });
   if (!category) {
     notFound();
   }
 
+  // Use the category's own supplier_code if available, falling back to query param
+  const effectiveSupplier = category.supplier_code || supplierCode;
+
   const displayName = getCategoryDisplayName(category, lang);
 
   const [subcategories, { products, totalCount }, parentCategory] = await Promise.all([
-    getSubcategories(category.id),
-    getProductsForCategory(category.id, { limit: PAGE_SIZE, offset, sort }),
-    category.parent_id ? getCategoryBySlug(category.parent_id) : Promise.resolve(null),
+    getSubcategories(category.id, { supplierCode: effectiveSupplier }),
+    getProductsForCategory(category.id, { limit: PAGE_SIZE, offset, sort, supplierCode: effectiveSupplier }),
+    category.parent_id ? getCategoryBySlug(category.parent_id, { supplierCode: effectiveSupplier }) : Promise.resolve(null),
   ]);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const parentDisplayName = parentCategory ? getCategoryDisplayName(parentCategory, lang) : '';
 
-  // Build basePath for pagination links
+  // Build basePath for pagination links — preserve supplier param
   const basePath = `/${lang}/category/${slug}`;
-  const resolvedSearchParams = { sort, page };
+  const resolvedSearchParams = { sort, page, ...(effectiveSupplier ? { supplier: effectiveSupplier } : {}) };
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '5rem' }}>
@@ -66,7 +71,7 @@ export default async function CategoryPage({ params, searchParams }) {
         <span>/</span>
         {parentCategory && (
           <>
-            <Link href={`/${lang}/category/${parentCategory.slug || parentCategory.id}`} style={{ color: 'var(--color-text-secondary)' }}>
+            <Link href={`/${lang}/category/${parentCategory.slug || parentCategory.id}${effectiveSupplier ? `?supplier=${effectiveSupplier}` : ''}`} style={{ color: 'var(--color-text-secondary)' }}>
               {parentDisplayName}
             </Link>
             <span>/</span>
@@ -100,7 +105,7 @@ export default async function CategoryPage({ params, searchParams }) {
             return (
               <Link
                 key={sub.id}
-                href={`/${lang}/category/${sub.slug || sub.id}`}
+                href={`/${lang}/category/${sub.slug || sub.id}${effectiveSupplier ? `?supplier=${effectiveSupplier}` : ''}`}
                 style={{
                   backgroundColor: 'var(--color-bg-card)',
                   border: '1px solid var(--color-border)',

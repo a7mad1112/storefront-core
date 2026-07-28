@@ -45,7 +45,7 @@ export default function RandomCategorySections({ candidateSections = [], lang = 
               </div>
               {hasMoreThanFour && (
                 <Link
-                  href={category.supplier_code ? `/${lang}/supplier/${getFriendlySupplierCode(category.supplier_code, category)}/category/${category.slug || category.id}` : `/${lang}/category/${category.slug || category.id}`}
+                  href={category.supplier_code ? `/${lang}/supplier/${getFriendlySupplierCode(category.supplier_code, category)}/category/${category.slug || category.id}` : `/${lang}/category/${category.slug || category.id}${category.supplier_code ? `?supplier=${category.supplier_code}` : ''}`}
                   className="btn btn-secondary"
                   style={{ fontSize: '0.875rem' }}
                 >

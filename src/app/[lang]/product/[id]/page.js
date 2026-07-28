@@ -60,7 +60,7 @@ export default async function ProductDetailPage({ params }) {
         <span>/</span>
         {parentCategory && (
           <>
-            <Link href={`/${lang}/category/${parentCategory.slug || parentCategory.id}`} style={{ color: 'var(--color-text-secondary)' }}>
+            <Link href={`/${lang}/category/${parentCategory.slug || parentCategory.id}?supplier=${product.supplier_code || ''}`} style={{ color: 'var(--color-text-secondary)' }}>
               {parentCatName}
             </Link>
             <span>/</span>
@@ -68,7 +68,7 @@ export default async function ProductDetailPage({ params }) {
         )}
         {(category || product.category_slug) && (
           <>
-            <Link href={`/${lang}/category/${category?.slug || product.category_slug}`} style={{ color: 'var(--color-text-secondary)' }}>
+            <Link href={`/${lang}/category/${category?.slug || product.category_slug}?supplier=${product.supplier_code || ''}`} style={{ color: 'var(--color-text-secondary)' }}>
               {catName}
             </Link>
             <span>/</span>

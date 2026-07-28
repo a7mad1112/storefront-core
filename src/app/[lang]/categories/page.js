@@ -30,7 +30,7 @@ export default async function CategoriesPage({ params, searchParams }) {
   const parentCategories = categories.filter((c) => !c.parent_id);
   const getSubs = (parentId) => categories.filter((c) => c.parent_id === parentId);
 
-  const getCatHref = (slugOrId, cat) => supplier ? `/${lang}/supplier/${getFriendlySupplierCode(supplier, cat)}/category/${slugOrId}` : `/${lang}/category/${slugOrId}`;
+  const getCatHref = (slugOrId, cat) => supplier ? `/${lang}/supplier/${getFriendlySupplierCode(supplier, cat)}/category/${slugOrId}` : `/${lang}/category/${slugOrId}${cat?.supplier_code ? `?supplier=${cat.supplier_code}` : ''}`;
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '6rem' }}>

@@ -102,8 +102,15 @@ export default function ProductDetailActions({ product, category, parentCategory
     (activeColorVariant && activeColorVariant.is_available === false) ||
     (selectedSize && activeColorVariant?.sizes?.find(s => s.size === selectedSize)?.is_available === false);
 
+  // Validation: require explicit color/size selection before add-to-cart
+  const needsColorSelection = effectiveColorVariants.length > 0 && !selectedColor;
+  const activeHasSizes = (selectedColor || firstAvailableVariant)?.sizes?.length > 0;
+  const needsSizeSelection = activeHasSizes && !selectedSize;
+  const isSelectionIncomplete = needsColorSelection || needsSizeSelection;
+  const canAddToCart = !isCurrentlyUnavailable && !isSelectionIncomplete;
+
   const handleDirectWhatsAppBuy = () => {
-    if (isCurrentlyUnavailable) return;
+    if (!canAddToCart) return;
     const colorText = selectedColor ? `🎨 ${tCart.colorLabel || 'اللون'}: ${selectedColor.color_name}\n` : '';
     const sizeText = selectedSize ? `📐 ${tCart.sizeLabel || 'القياس'}: ${selectedSize}\n` : '';
     const imgUrl = selectedColor?.image_url || product.image_url || '';
@@ -122,7 +129,7 @@ export default function ProductDetailActions({ product, category, parentCategory
   };
 
   const handleAddToCart = () => {
-    if (isCurrentlyUnavailable) return;
+    if (!canAddToCart) return;
     let colorToPass = selectedColor;
     if (!colorToPass && effectiveColorVariants.length > 0) {
       const activeThumb = effectiveColorVariants.find((v) => v.image_url === currentImage);
@@ -352,40 +359,48 @@ export default function ProductDetailActions({ product, category, parentCategory
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <button
               onClick={handleAddToCart}
-              disabled={isCurrentlyUnavailable}
+              disabled={!canAddToCart}
               className="btn btn-primary"
               style={{
                 padding: '1rem',
                 fontSize: '1rem',
-                opacity: isCurrentlyUnavailable ? 0.5 : 1,
-                cursor: isCurrentlyUnavailable ? 'not-allowed' : 'pointer',
-                backgroundColor: isCurrentlyUnavailable ? 'var(--color-bg-elevated)' : '',
-                color: isCurrentlyUnavailable ? 'var(--color-text-muted)' : '',
-                border: isCurrentlyUnavailable ? '1px solid var(--color-border)' : '',
+                opacity: !canAddToCart ? 0.5 : 1,
+                cursor: !canAddToCart ? 'not-allowed' : 'pointer',
+                backgroundColor: !canAddToCart ? 'var(--color-bg-elevated)' : '',
+                color: !canAddToCart ? 'var(--color-text-muted)' : '',
+                border: !canAddToCart ? '1px solid var(--color-border)' : '',
               }}
             >
               {isCurrentlyUnavailable
                 ? (lang === 'en' ? '❌ Out of Stock' : lang === 'he' ? '❌ אזל מהמלאי' : '❌ غير متوفر في المخزون')
-                : `🛒 ${tProduct.addToCart || 'أضف إلى السلة'}`}
+                : isSelectionIncomplete
+                  ? (needsColorSelection
+                    ? (lang === 'en' ? '☝️ Choose color first' : lang === 'he' ? '☝️ בחר צבע קודם' : '☝️ اختر اللون أولاً')
+                    : (lang === 'en' ? '☝️ Choose size first' : lang === 'he' ? '☝️ בחר מידה קודם' : '☝️ اختر المقاس أولاً'))
+                  : `🛒 ${tProduct.addToCart || 'أضف إلى السلة'}`}
             </button>
 
             <button
               onClick={handleDirectWhatsAppBuy}
-              disabled={isCurrentlyUnavailable}
+              disabled={!canAddToCart}
               className="btn btn-whatsapp"
               style={{
                 padding: '1rem',
                 fontSize: '1rem',
-                opacity: isCurrentlyUnavailable ? 0.5 : 1,
-                cursor: isCurrentlyUnavailable ? 'not-allowed' : 'pointer',
-                backgroundColor: isCurrentlyUnavailable ? 'var(--color-bg-elevated)' : '',
-                color: isCurrentlyUnavailable ? 'var(--color-text-muted)' : '',
-                border: isCurrentlyUnavailable ? '1px solid var(--color-border)' : '',
+                opacity: !canAddToCart ? 0.5 : 1,
+                cursor: !canAddToCart ? 'not-allowed' : 'pointer',
+                backgroundColor: !canAddToCart ? 'var(--color-bg-elevated)' : '',
+                color: !canAddToCart ? 'var(--color-text-muted)' : '',
+                border: !canAddToCart ? '1px solid var(--color-border)' : '',
               }}
             >
               {isCurrentlyUnavailable
                 ? (lang === 'en' ? '❌ Unavailable to Order' : lang === 'he' ? '❌ לא זמין להזמנה' : '❌ غير متوفر للطلب')
-                : (tCart.orderWhatsApp || '💬 اطلب الآن عبر واتساب')}
+                : isSelectionIncomplete
+                  ? (needsColorSelection
+                    ? (lang === 'en' ? '☝️ Choose color first' : lang === 'he' ? '☝️ בחר צבע קודם' : '☝️ اختر اللون أولاً')
+                    : (lang === 'en' ? '☝️ Choose size first' : lang === 'he' ? '☝️ בחר מידה קודם' : '☝️ اختر المقاس أولاً'))
+                  : (tCart.orderWhatsApp || '💬 اطلب الآن عبر واتساب')}
             </button>
           </div>
         </div>
