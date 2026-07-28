@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
 import { formatPrice, getCategoryDisplayName, formatOptionLabel as formatOpt, cleanDescription } from '../../lib/utils';
 import ColorSwatchSelector from './ColorSwatchSelector';
+import StickyAddToCart from './StickyAddToCart';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '972595809023';
 
@@ -63,6 +64,7 @@ export default function ProductDetailActions({ product, category, parentCategory
   const [selectedSize, setSelectedSize] = useState(null);
   const [currentImage, setCurrentImage] = useState(defaultImage);
   const { addItem } = useCart();
+  const addToCartBtnRef = useRef(null);
 
   const tCart = dict.cart || {};
 
@@ -360,6 +362,7 @@ export default function ProductDetailActions({ product, category, parentCategory
             <button
               onClick={handleAddToCart}
               disabled={!canAddToCart}
+              ref={addToCartBtnRef}
               className="btn btn-primary"
               style={{
                 padding: '1rem',
@@ -421,6 +424,19 @@ export default function ProductDetailActions({ product, category, parentCategory
           </div>
         </div>
       </div>
+
+      {/* Sticky Add to Cart Bar (Mobile Only) */}
+      <StickyAddToCart
+        product={product}
+        lang={lang}
+        dict={dict}
+        canAddToCart={canAddToCart}
+        isCurrentlyUnavailable={isCurrentlyUnavailable}
+        selectedColor={selectedColor}
+        selectedSize={selectedSize}
+        quantity={quantity}
+        addToCartButtonRef={addToCartBtnRef}
+      />
     </div>
   );
 }

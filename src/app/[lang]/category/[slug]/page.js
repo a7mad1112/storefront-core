@@ -2,9 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCategoryBySlug, getSubcategories, getProductsForCategory } from '../../../../lib/queries';
-import ProductGrid from '../../../../components/product/ProductGrid';
+import LoadMoreGrid from '../../../../components/product/LoadMoreGrid';
 import SortSelector from '../../../../components/product/SortSelector';
-import Pagination from '../../../../components/product/Pagination';
 import { getDictionary } from '../../dictionaries';
 import { getCategoryDisplayName } from '../../../../lib/utils';
 
@@ -32,9 +31,7 @@ export async function generateMetadata({ params, searchParams }) {
 
 export default async function CategoryPage({ params, searchParams }) {
   const { lang, slug } = await params;
-  const { sort = 'default', page = '1', supplier = '' } = await searchParams;
-  const currentPage = Math.max(1, parseInt(page) || 1);
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  const { sort = 'default', supplier = '' } = await searchParams;
   const supplierCode = supplier || null;
 
   const dict = await getDictionary(lang);
@@ -52,16 +49,18 @@ export default async function CategoryPage({ params, searchParams }) {
 
   const [subcategories, { products, totalCount }, parentCategory] = await Promise.all([
     getSubcategories(category.id, { supplierCode: effectiveSupplier }),
-    getProductsForCategory(category.id, { limit: PAGE_SIZE, offset, sort, supplierCode: effectiveSupplier }),
+    getProductsForCategory(category.id, { limit: PAGE_SIZE, offset: 0, sort, supplierCode: effectiveSupplier }),
     category.parent_id ? getCategoryBySlug(category.parent_id, { supplierCode: effectiveSupplier }) : Promise.resolve(null),
   ]);
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const parentDisplayName = parentCategory ? getCategoryDisplayName(parentCategory, lang) : '';
 
-  // Build basePath for pagination links — preserve supplier param
-  const basePath = `/${lang}/category/${slug}`;
-  const resolvedSearchParams = { sort, page, ...(effectiveSupplier ? { supplier: effectiveSupplier } : {}) };
+  // Build fetch params for LoadMoreGrid client-side fetching
+  const fetchParams = {
+    categoryId: category.id,
+    sort,
+    ...(effectiveSupplier ? { supplierCode: effectiveSupplier } : {}),
+  };
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '5rem' }}>
@@ -123,19 +122,13 @@ export default async function CategoryPage({ params, searchParams }) {
         </div>
       )}
 
-      {/* Products Grid */}
-      <ProductGrid
-        products={products}
-        emptyMessage={dict.product?.noProducts || (lang === 'en' ? 'No products available right now' : lang === 'he' ? 'אין מוצרים זמינים כעת' : "لا توجد منتجات متوفرة في هذا القسم حالياً")}
-      />
-
-      {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        basePath={basePath}
-        searchParams={resolvedSearchParams}
-        lang={lang}
+      {/* Products Grid with Load More */}
+      <LoadMoreGrid
+        initialProducts={products}
+        totalCount={totalCount}
+        fetchUrl="/api/products"
+        fetchParams={fetchParams}
+        pageSize={PAGE_SIZE}
       />
     </div>
   );

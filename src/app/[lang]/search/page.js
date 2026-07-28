@@ -1,10 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { searchProducts } from '../../../lib/queries';
-import ProductGrid from '../../../components/product/ProductGrid';
-import { getDictionary, hasLocale } from '../dictionaries';
+import LoadMoreGrid from '../../../components/product/LoadMoreGrid';
+import { getDictionary } from '../dictionaries';
 
 export const revalidate = 0; // Dynamic search results
+
+const PAGE_SIZE = 30;
 
 export default async function SearchPage({ params, searchParams }) {
   const { lang } = await params;
@@ -15,7 +17,12 @@ export default async function SearchPage({ params, searchParams }) {
   const tSearch = dict.search || {};
   const tCommon = dict.common || {};
 
-  const results = await searchProducts(query);
+  const { products: results, totalCount } = await searchProducts(query, { limit: PAGE_SIZE, offset: 0 });
+
+  // Build fetch params for LoadMoreGrid
+  const fetchParams = {
+    q: query,
+  };
 
   return (
     <div className="container" style={{ padding: '3rem var(--space-4)', paddingBottom: '6rem' }}>
@@ -32,12 +39,18 @@ export default async function SearchPage({ params, searchParams }) {
           {query ? `${tSearch.resultsFor || 'نتائج البحث عن:'} "${query}"` : (tSearch.searchProducts || 'البحث في المنتجات')}
         </h1>
         <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-          {query ? `${tSearch.foundProducts || 'تم العثور على'} (${results.length}) ${tSearch.matchingProduct || 'منتج مطابق'}` : (tSearch.searchHint || 'اكتب اسم المنتج أو الماركة في شريط البحث بالأعلى')}
+          {query ? `${tSearch.foundProducts || 'تم العثور على'} (${totalCount}) ${tSearch.matchingProduct || 'منتج مطابق'}` : (tSearch.searchHint || 'اكتب اسم المنتج أو الماركة في شريط البحث بالأعلى')}
         </p>
       </div>
 
-      {/* Grid */}
-      <ProductGrid products={results} emptyMessage={query ? `${tSearch.noResults || 'لم يتم العثور على منتجات تطابق'} "${query}". ${tSearch.tryOther || 'جرب كلمات بحث أخرى.'}` : (tSearch.searchHint || 'اكتب اسم المنتج أو الماركة')} />
+      {/* Grid with Load More */}
+      <LoadMoreGrid
+        initialProducts={results}
+        totalCount={totalCount}
+        fetchUrl="/api/search-products"
+        fetchParams={fetchParams}
+        pageSize={PAGE_SIZE}
+      />
     </div>
   );
 }

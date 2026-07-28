@@ -201,7 +201,7 @@ export async function getCategoryBySlug(slugOrId, { supplierCode = null } = {}) 
 
   const applyCatSupplier = (q) => {
     if (norm && norm !== 'all') {
-      return q.eq('supplier_code', norm);
+      return q.or(`supplier_code.eq.${norm},supplier_code.is.null`);
     }
     return q;
   };
@@ -692,20 +692,28 @@ export async function getProductById(idOrSlug) {
 
 /**
  * Full-text search across product names and tags.
+ * Returns { products, totalCount } for pagination support.
  */
-export async function searchProducts(query, { limit = 30, supplierCode = null } = {}) {
-  if (!query || query.trim().length < 1) return [];
+export async function searchProducts(query, { limit = 30, offset = 0, supplierCode = null } = {}) {
+  if (!query || query.trim().length < 1) return { products: [], totalCount: 0 };
 
-  const { data, error } = await getCatalogTable(supplierCode)
-    .ilike('name', `%${query}%`)
-    .order('updated_at', { ascending: false })
-    .limit(limit);
+  const [pageRes, countRes] = await Promise.all([
+    getCatalogTable(supplierCode)
+      .ilike('name', `%${query}%`)
+      .order('updated_at', { ascending: false })
+      .range(offset, offset + limit - 1),
+    getCatalogTable(supplierCode, 'id')
+      .ilike('name', `%${query}%`),
+  ]);
 
-  if (error) {
-    console.error('[searchProducts]', error.message);
-    return [];
+  if (pageRes.error) {
+    console.error('[searchProducts]', pageRes.error.message);
+    return { products: [], totalCount: 0 };
   }
-  return data ?? [];
+
+  const products = pageRes.data ?? [];
+  const totalCount = countRes.data?.length ?? products.length;
+  return { products, totalCount };
 }
 
 // ─────────────────────────────────────────────

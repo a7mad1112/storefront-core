@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import PredictiveSearch from './PredictiveSearch';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
@@ -23,7 +24,7 @@ function saveLocaleCookie(locale) {
 }
 
 export default function Header({ lang = 'ar' }) {
-  const [searchQuery, setSearchQuery] = useState('');
+
   const [isSuppliersOpen, setIsSuppliersOpen] = useState(false);
   const { totalCount, setIsDrawerOpen } = useCart();
   const { dict } = useDictionary();
@@ -83,12 +84,7 @@ export default function Header({ lang = 'ar' }) {
     },
   ].filter((item) => isDepartmentSupported(item.key));
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/${lang}/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
+
 
   const switchLocale = (newLang) => {
     // Replace current locale prefix with new one
@@ -116,16 +112,8 @@ export default function Header({ lang = 'ar' }) {
           />
         </Link>
 
-        {/* Search Bar (Full width on mobile, sleek pill on desktop) */}
-        <form onSubmit={handleSearch} className="header-search-form">
-          <input
-            type="text"
-            placeholder={tSearch.searchPlaceholder || (lang === 'en' ? 'Search for bags, perfumes, watches...' : lang === 'he' ? 'חפש תיקים, בשמים, שעונים...' : 'ابحث عن الشنط، العطور، الساعات...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="header-search-input"
-          />
-        </form>
+        {/* Search Bar with Live Predictive Search */}
+        <PredictiveSearch lang={lang} />
 
         {/* Actions Row */}
         <div className="header-actions">
