@@ -74,7 +74,9 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
               position: 'relative',
               borderRadius: '20px',
               padding: '2.25rem',
-              background: dept.bgGradient || 'var(--color-bg-secondary)',
+              background: dept.bgImage ? `linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.85)), url('${dept.bgImage}')` : (dept.bgGradient || 'var(--color-bg-secondary)'),
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
               border: `1px solid ${dept.cardBorder || 'var(--color-border)'}`,
               boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.08)',
               display: 'flex',
@@ -93,13 +95,14 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
                     width: '64px',
                     height: '64px',
                     borderRadius: '16px',
-                    backgroundColor: 'var(--color-bg-primary)',
+                    backgroundColor: dept.bgImage ? 'rgba(255, 255, 255, 0.15)' : 'var(--color-bg-primary)',
+                    backdropFilter: dept.bgImage ? 'blur(8px)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '2.25rem',
                     boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
-                    border: '1px solid var(--color-border)',
+                    border: dept.bgImage ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid var(--color-border)',
                   }}
                 >
                   {dept.icon}
@@ -122,17 +125,17 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
               </div>
 
               {/* Title & Description */}
-              <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.75rem', lineHeight: 1.3 }}>
+              <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: dept.bgImage ? '#ffffff' : 'var(--color-text-primary)', marginBottom: '0.75rem', lineHeight: 1.3, textShadow: dept.bgImage ? '0 2px 4px rgba(0,0,0,0.5)' : 'none' }}>
                 {dept.title}
               </h3>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.925rem', lineHeight: 1.6, marginBottom: '1.5rem', minHeight: '3em' }}>
+              <p style={{ color: dept.bgImage ? 'rgba(255, 255, 255, 0.9)' : 'var(--color-text-secondary)', fontSize: '0.925rem', lineHeight: 1.6, marginBottom: '1.5rem', minHeight: '3em' }}>
                 {dept.subtitle}
               </p>
 
               {/* Subcategories Pills inside the card */}
               {dept.categories && dept.categories.length > 0 && (
                 <div style={{ marginBottom: '1.75rem' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: dept.bgImage ? 'rgba(255, 255, 255, 0.7)' : 'var(--color-text-muted)', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     {t.subcategoriesTitle || (lang === 'en' ? 'Featured Categories:' : lang === 'he' ? 'קטגוריות נבחרות:' : 'أبرز التصنيفات بالقسم:')}
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -144,11 +147,12 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
                           display: 'inline-block',
                           padding: '0.35rem 0.75rem',
                           borderRadius: '10px',
-                          backgroundColor: 'var(--color-bg-primary)',
-                          color: 'var(--color-text-primary)',
+                          backgroundColor: dept.bgImage ? 'rgba(255, 255, 255, 0.15)' : 'var(--color-bg-primary)',
+                          color: dept.bgImage ? '#ffffff' : 'var(--color-text-primary)',
                           fontSize: '0.8rem',
                           fontWeight: 700,
-                          border: '1px solid var(--color-border)',
+                          border: dept.bgImage ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid var(--color-border)',
+                          backdropFilter: dept.bgImage ? 'blur(8px)' : 'none',
                           transition: 'all 0.2s ease',
                           textDecoration: 'none',
                         }}
@@ -163,7 +167,7 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
             </div>
 
             {/* Bottom Actions */}
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '1rem', borderTop: dept.bgImage ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0,0,0,0.06)' }}>
               <a
                 href={`#${dept.anchorId}`}
                 onClick={(e) => handleSmoothScroll(e, dept.anchorId)}
@@ -188,6 +192,10 @@ export default function DepartmentsGatewayGrid({ departments = [], lang = 'ar', 
                   padding: '0.7rem 1rem',
                   fontSize: '0.85rem',
                   fontWeight: 700,
+                  backgroundColor: dept.bgImage ? 'rgba(255, 255, 255, 0.15)' : undefined,
+                  color: dept.bgImage ? '#ffffff' : undefined,
+                  borderColor: dept.bgImage ? 'rgba(255, 255, 255, 0.2)' : undefined,
+                  backdropFilter: dept.bgImage ? 'blur(8px)' : undefined,
                 }}
               >
                 {isRtl ? '←' : '→'}

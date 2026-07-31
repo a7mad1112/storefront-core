@@ -46,3 +46,5 @@ next-env.d.ts
 /scratch/
 __pycache__/
 *.py[cod]
+
+remove/

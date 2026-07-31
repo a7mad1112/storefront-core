@@ -122,9 +122,15 @@ export function CartProvider({ children, lang = 'ar', dict }) {
           item.name;
       const colorText = item.selectedColor ? ` (${colorLabel}: ${formatOptionLabel(item.selectedColor.color_name, lang)})` : '';
       const sizeText = item.selectedSize ? ` (${lang === 'en' ? 'Size' : lang === 'he' ? 'מידה' : 'القياس'}: ${formatOptionLabel(item.selectedSize, lang)})` : '';
-      text += `${index + 1}. ${displayName}${colorText}${sizeText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity, lang)}\n`;
+      const imageUrlText = item.image_url ? `\n   🔗 ${lang === 'en' ? 'Image' : lang === 'he' ? 'תמונה' : 'الصورة'}: ${item.image_url}` : '';
+      text += `${index + 1}. ${displayName}${colorText}${sizeText} × ${item.quantity} — ${formatPrice((item.retail_price || 0) * item.quantity, lang)}${imageUrlText}\n\n`;
     });
-    text += `\n${totalLabel}: ${formatPrice(totalPrice, lang)}\n\n${thanks}`;
+
+    const deliveryNote = lang === 'en' ? '*(Price does not include delivery)*' : 
+                         lang === 'he' ? '*(המחיר אינו כולל משלוח)*' : 
+                         '*(السعر غير شامل التوصيل)*';
+
+    text += `${totalLabel}: ${formatPrice(totalPrice, lang)}\n${deliveryNote}\n\n${thanks}`;
 
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
   };

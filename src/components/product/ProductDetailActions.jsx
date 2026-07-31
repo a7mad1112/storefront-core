@@ -124,7 +124,8 @@ export default function ProductDetailActions({ product, category, parentCategory
       colorText +
       sizeText +
       `🔢 العدد: ${quantity}\n` +
-      `💰 السعر الإجمالي: ${formatPrice((product.retail_price || 0) * quantity)}\n\n` +
+      `💰 السعر الإجمالي: ${formatPrice((product.retail_price || 0) * quantity)}\n` +
+      `*(السعر غير شامل التوصيل)*\n\n` +
       `رابط الصورة: ${imgUrl}\n\n${tCart.thanks || 'شكراً!'}`;
 
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
