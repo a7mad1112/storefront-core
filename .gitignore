@@ -48,3 +48,10 @@ __pycache__/
 *.py[cod]
 
 remove/
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example

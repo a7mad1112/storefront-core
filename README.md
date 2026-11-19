@@ -81,15 +81,39 @@ This will log into the supplier site, check for new or modified products, optimi
 
 ## ☁️ Deployment Guide
 
-### 1. Deploy Frontend to Vercel
-1. Push your repository to GitHub.
-2. Log into [Vercel](https://vercel.com) and import the repository.
-3. Add the following **Environment Variables** in project settings:
+### 1. Deploy Frontend to Cloudflare Workers (via OpenNext)
+The storefront is configured with `@opennextjs/cloudflare` to run full-stack Next.js on Cloudflare's global edge network (unlimited bandwidth, 100k requests/day free tier).
+
+1. **Push Changes to GitHub**:
+   Ensure all changes including `wrangler.jsonc`, `open-next.config.ts`, and `package.json` are committed and pushed to `main`.
+2. **Connect to Cloudflare**:
+   - Log into the [Cloudflare Dashboard](https://dash.cloudflare.com).
+   - Go to **Compute (Workers & Pages)** > **Create** > **Workers**.
+   - Click **Connect to Git** and choose your repository (`a7mad1112/storefront-core`).
+3. **Configure Build Settings**:
+   - **Framework Preset**: None (or Next.js)
+   - **Build command**: `npm run build:cf` (or `npx @opennextjs/cloudflare build`)
+   - **Deploy command**: (leave default or `wrangler deploy`)
+4. **Configure Environment Variables**:
+   Under **Variables and Secrets**, add:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_KEY`
+   - `NEXT_PUBLIC_R2_PUBLIC_URL`
    - `NEXT_PUBLIC_WHATSAPP_NUMBER`
-4. Click **Deploy**! Vercel will build and host your Next.js 16 storefront automatically on edge networks.
+   - `NEXT_PUBLIC_STORE_NAME`
+   - `NEXT_PUBLIC_STORE_LOGO`
+   - `NEXT_PUBLIC_STORE_ID`
+   - `NEXT_PUBLIC_SUPPORTED_SUPPLIERS`
+   - `NEXT_PUBLIC_SUPPLIER_NAMES`
+   - `NEXT_PUBLIC_SITE_URL`
+5. **Click Save and Deploy**!
+
+#### Multi-Site Deployment (Site 1 & Site 2 from same repo)
+To deploy multiple branded storefronts from the same repository:
+- Repeat the above steps: create another Worker project connected to the same repository.
+- Provide the distinct environment variables (e.g. different `NEXT_PUBLIC_STORE_NAME`, `NEXT_PUBLIC_STORE_ID`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SUPPORTED_SUPPLIERS`, etc.).
+- Cloudflare will build and deploy each storefront independently with its own custom domain.
 
 ### 2. Automated Nightly Scraping on GitHub Actions
 The project includes an automated workflow (`.github/workflows/scrape.yml`) configured to run every night at midnight UTC (00:00 UTC / 03:00 Jerusalem Time).
