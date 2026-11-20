@@ -34,6 +34,7 @@
 		"NEXT_PUBLIC_STORE_LOGO": "/logo.png",
 		"NEXT_PUBLIC_STORE_DESC": "متجر الموضة والأناقة الفاخرة.",
 		"NEXT_PUBLIC_SUPPORTED_SUPPLIERS": "gbstore,balagan,sakher",
-		"NEXT_PUBLIC_SUPPLIER_NAMES": "{\"gbstore\": \"قسم الشنط والهدايا\", \"balagan\": \"قسم الأحذية\", \"sakher\": \"قسم الملابس\"}"
+		"NEXT_PUBLIC_SUPPLIER_NAMES": "{\"gbstore\": \"قسم الشنط والهدايا\", \"balagan\": \"قسم الأحذية\", \"sakher\": \"قسم الملابس\"}",
+		"NEXT_PUBLIC_SITE_URL": "https://eloriafashions.com"
 	}
 }
