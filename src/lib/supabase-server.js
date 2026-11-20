@@ -1,29 +1,56 @@
 import { createClient } from '@supabase/supabase-js';
 
-/**
- * Server-side Supabase client.
- *
- * Uses the service_role key which bypasses RLS —
- * this must ONLY be used in server components, API routes,
- * and server actions. NEVER import this file in client components.
- *
- * The service key has full access to all tables including
- * wholesale_price, margins, and sync_logs.
- */
+const FALLBACK_URL = 'https://oaxjbquwzeemizvndekc.supabase.co';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error(
-    'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_KEY. ' +
-    'Check your .env.local file.'
-  );
+function getEnvValue(key, fallback = '') {
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  try {
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    const ctx = getCloudflareContext();
+    if (ctx && ctx.env && ctx.env[key]) {
+      return ctx.env[key];
+    }
+  } catch (e) {
+    // Ignore outside Cloudflare Workers context
+  }
+  return fallback;
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
+function initSupabaseAdmin() {
+  const supabaseUrl = getEnvValue('NEXT_PUBLIC_SUPABASE_URL', FALLBACK_URL);
+  const supabaseServiceKey = getEnvValue('SUPABASE_SERVICE_KEY');
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.warn('Supabase Admin initialized without service key. Some server queries may fail.');
+    return null;
+  }
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+let _supabaseAdmin = null;
+export function getSupabaseAdmin() {
+  if (!_supabaseAdmin) {
+    _supabaseAdmin = initSupabaseAdmin();
+  }
+  return _supabaseAdmin;
+}
+
+export const supabaseAdmin = new Proxy({}, {
+  get(target, prop) {
+    const client = getSupabaseAdmin();
+    if (!client) {
+      // Return a safe mock if service key is missing during build/prerender
+      return () => Promise.resolve({ data: null, error: new Error('Missing SUPABASE_SERVICE_KEY') });
+    }
+    const val = client[prop];
+    return typeof val === 'function' ? val.bind(client) : val;
+  }
 });
+
+

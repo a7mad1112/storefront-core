@@ -23,5 +23,17 @@
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
 		"binding": "IMAGES"
+	},
+	"vars": {
+		"NEXT_PUBLIC_SUPABASE_URL": "https://oaxjbquwzeemizvndekc.supabase.co",
+		"NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9heGpicXV3emVlbWl6dm5kZWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NDAwMDksImV4cCI6MjA5ODQxNjAwOX0.wSMOeqsc1P-BrtStaz6y9ACMHNaCd35F1pV2bvBbdWY",
+		"NEXT_PUBLIC_R2_PUBLIC_URL": "https://pub-72f682abb6e64cb4bbe8ed1a2908fc0e.r2.dev",
+		"NEXT_PUBLIC_STORE_NAME": "Eloria FASHION",
+		"NEXT_PUBLIC_STORE_ID": "eloria",
+		"NEXT_PUBLIC_WHATSAPP_NUMBER": "9700599042747",
+		"NEXT_PUBLIC_STORE_LOGO": "/logo.png",
+		"NEXT_PUBLIC_STORE_DESC": "متجر الموضة والأناقة الفاخرة.",
+		"NEXT_PUBLIC_SUPPORTED_SUPPLIERS": "gbstore,balagan,sakher",
+		"NEXT_PUBLIC_SUPPLIER_NAMES": "{\"gbstore\": \"قسم الشنط والهدايا\", \"balagan\": \"قسم الأحذية\", \"sakher\": \"قسم الملابس\"}"
 	}
 }
