@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "build:cf": "opennextjs-cloudflare build",
+    "build:cf:aura": "opennextjs-cloudflare build --env aura",
     "dev": "next dev",
     "start": "next start",
     "lint": "eslint",

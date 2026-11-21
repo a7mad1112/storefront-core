@@ -36,5 +36,34 @@
 		"NEXT_PUBLIC_SUPPORTED_SUPPLIERS": "gbstore,balagan,sakher",
 		"NEXT_PUBLIC_SUPPLIER_NAMES": "{\"gbstore\": \"قسم الشنط والهدايا\", \"balagan\": \"قسم الأحذية\", \"sakher\": \"قسم الملابس\"}",
 		"NEXT_PUBLIC_SITE_URL": "https://eloriafashions.com"
+	},
+	"env": {
+		"aura": {
+			"name": "aura-store",
+			"services": [
+				{
+					"binding": "WORKER_SELF_REFERENCE",
+					"service": "aura-store"
+				}
+			],
+			"images": {
+				"binding": "IMAGES"
+			},
+			"vars": {
+				"NEXT_PUBLIC_SUPABASE_URL": "https://oaxjbquwzeemizvndekc.supabase.co",
+				"NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9heGpicXV3emVlbWl6dm5kZWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NDAwMDksImV4cCI6MjA5ODQxNjAwOX0.wSMOeqsc1P-BrtStaz6y9ACMHNaCd35F1pV2bvBbdWY",
+				"NEXT_PUBLIC_R2_PUBLIC_URL": "https://pub-72f682abb6e64cb4bbe8ed1a2908fc0e.r2.dev",
+				"NEXT_PUBLIC_STORE_NAME": "Aura Store",
+				"NEXT_PUBLIC_STORE_ID": "aura",
+				"NEXT_PUBLIC_WHATSAPP_NUMBER": "9700599042747",
+				"NEXT_PUBLIC_STORE_LOGO": "https://pub-72f682abb6e64cb4bbe8ed1a2908fc0e.r2.dev/logos/aura_logo_noir_retry_1785168809334%20(1).png",
+				"NEXT_PUBLIC_STORE_DESC": "بوتيك أورا للفخامة. تشكيلة راقية من حقائب ماستر كواليتي، العطور، والأحذية بأسعار منافسة وخدمة توصيل مميزة.",
+				"NEXT_PUBLIC_SUPPORTED_SUPPLIERS": "gbstore,balagan,sakher",
+				"NEXT_PUBLIC_SUPPLIER_NAMES": "{\"gbstore\": \"قسم الشنط والهدايا\", \"balagan\": \"قسم الأحذية\", \"sakher\": \"قسم الملابس\"}",
+				"NEXT_PUBLIC_INSTAGRAM_URL": "https://www.instagram.com/aurastore.ps/",
+				"NEXT_PUBLIC_FACEBOOK_URL": "https://www.facebook.com/profile.php?id=61592519733749",
+				"NEXT_PUBLIC_SITE_URL": "https://aurastore.ps"
+			}
+		}
 	}
 }
