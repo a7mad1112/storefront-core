@@ -14,10 +14,21 @@ export default async function AdminProductsPage({ searchParams }) {
   const limit = 50;
   const offset = (pageNum - 1) * limit;
 
-  const [{ products, totalCount }, overrides] = await Promise.all([
-    getAdminProducts({ limit, offset, supplierCode: supplier, search }),
-    getAvailabilityOverrides(),
-  ]);
+  let products = [];
+  let totalCount = 0;
+  let overrides = {};
+
+  try {
+    const [{ products: p, totalCount: t }, o] = await Promise.all([
+      getAdminProducts({ limit, offset, supplierCode: supplier, search }),
+      getAvailabilityOverrides(),
+    ]);
+    products = p || [];
+    totalCount = t || 0;
+    overrides = o || {};
+  } catch (err) {
+    console.error('[AdminProductsPage] error:', err);
+  }
 
   return (
     <div>

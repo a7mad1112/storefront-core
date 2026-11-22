@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from './supabase.js';
 
 const FALLBACK_URL = 'https://oaxjbquwzeemizvndekc.supabase.co';
 
@@ -18,39 +19,37 @@ function getEnvValue(key, fallback = '') {
   return fallback;
 }
 
-function initSupabaseAdmin() {
-  const supabaseUrl = getEnvValue('NEXT_PUBLIC_SUPABASE_URL', FALLBACK_URL);
-  const supabaseServiceKey = getEnvValue('SUPABASE_SERVICE_KEY');
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn('Supabase Admin initialized without service key. Some server queries may fail.');
-    return null;
-  }
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-}
-
 let _supabaseAdmin = null;
+
 export function getSupabaseAdmin() {
-  if (!_supabaseAdmin) {
-    _supabaseAdmin = initSupabaseAdmin();
+  const serviceKey = getEnvValue('SUPABASE_SERVICE_KEY');
+  if (serviceKey) {
+    if (!_supabaseAdmin || !_supabaseAdmin._hasServiceKey) {
+      const url = getEnvValue('NEXT_PUBLIC_SUPABASE_URL', FALLBACK_URL);
+      _supabaseAdmin = createClient(url, serviceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+      _supabaseAdmin._hasServiceKey = true;
+    }
+    return _supabaseAdmin;
   }
-  return _supabaseAdmin;
+  // Fallback to standard client so server queries never crash
+  return getSupabase();
 }
 
 export const supabaseAdmin = new Proxy({}, {
   get(target, prop) {
-    const client = getSupabaseAdmin();
+    const client = getSupabaseAdmin() || getSupabase();
     if (!client) {
-      // Return a safe mock if service key is missing during build/prerender
-      return () => Promise.resolve({ data: null, error: new Error('Missing SUPABASE_SERVICE_KEY') });
+      return () => Promise.resolve({ data: null, error: new Error('Missing Supabase client') });
     }
     const val = client[prop];
     return typeof val === 'function' ? val.bind(client) : val;
   }
 });
+
 
 

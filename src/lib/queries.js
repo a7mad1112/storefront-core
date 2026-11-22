@@ -721,53 +721,58 @@ export async function searchProducts(query, { limit = 30, offset = 0, supplierCo
 // ─────────────────────────────────────────────
 
 export async function getAdminProducts({ limit = 50, offset = 0, supplierCode = null, search = null } = {}) {
-  const norm = normalizeSupplierCode(supplierCode);
-  let query = supabaseAdmin
-    .from('products')
-    .select('id, supplier_id, supplier_code, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at', { count: 'exact' });
+  try {
+    const norm = normalizeSupplierCode(supplierCode);
+    let query = supabaseAdmin
+      .from('products')
+      .select('id, supplier_id, supplier_code, name, wholesale_price, quantity, is_active, is_available, image_url, category_id, brand_id, updated_at', { count: 'exact' });
 
-  query = applySupplierFilter(query, supplierCode);
+    query = applySupplierFilter(query, supplierCode);
 
-  if (search && search.trim()) {
-    query = query.or(`name.ilike.%${search.trim()}%,supplier_id.ilike.%${search.trim()}%`);
-  }
+    if (search && search.trim()) {
+      query = query.or(`name.ilike.%${search.trim()}%,supplier_id.ilike.%${search.trim()}%`);
+    }
 
-  const [productsRes, marginsRes] = await Promise.all([
-    query.order('updated_at', { ascending: false }).range(offset, offset + limit - 1),
-    supabaseAdmin.from('margins').select('category_id, margin_type, margin_value').eq('store_id', STORE_ID),
-  ]);
+    const [productsRes, marginsRes] = await Promise.all([
+      query.order('updated_at', { ascending: false }).range(offset, offset + limit - 1),
+      supabaseAdmin.from('margins').select('category_id, margin_type, margin_value').eq('store_id', STORE_ID),
+    ]);
 
-  if (productsRes.error) {
-    console.error('[getAdminProducts]', productsRes.error.message);
+    if (productsRes.error) {
+      console.error('[getAdminProducts]', productsRes.error.message);
+      return { products: [], totalCount: 0 };
+    }
+
+    const marginsMap = {};
+    for (const m of (marginsRes.data || [])) {
+      marginsMap[m.category_id] = m;
+    }
+
+    const products = (productsRes.data || []).map((p) => {
+      const m = marginsMap[p.category_id];
+      const wholesale = Number(p.wholesale_price) || 0;
+      let retail = wholesale * 1.2; // default 20%
+      if (m) {
+        if (m.margin_type === 'percentage') {
+          retail = wholesale * (1 + Number(m.margin_value) / 100);
+        } else if (m.margin_type === 'fixed') {
+          retail = wholesale + Number(m.margin_value);
+        }
+      }
+      return {
+        ...p,
+        retail_price: Math.round(retail * 10) / 10,
+      };
+    });
+
+    return {
+      products,
+      totalCount: productsRes.count ?? products.length,
+    };
+  } catch (err) {
+    console.error('[getAdminProducts] error:', err);
     return { products: [], totalCount: 0 };
   }
-
-  const marginsMap = {};
-  for (const m of (marginsRes.data || [])) {
-    marginsMap[m.category_id] = m;
-  }
-
-  const products = (productsRes.data || []).map((p) => {
-    const m = marginsMap[p.category_id];
-    const wholesale = Number(p.wholesale_price) || 0;
-    let retail = wholesale * 1.2; // default 20%
-    if (m) {
-      if (m.margin_type === 'percentage') {
-        retail = wholesale * (1 + Number(m.margin_value) / 100);
-      } else if (m.margin_type === 'fixed') {
-        retail = wholesale + Number(m.margin_value);
-      }
-    }
-    return {
-      ...p,
-      retail_price: Math.round(retail * 10) / 10,
-    };
-  });
-
-  return {
-    products,
-    totalCount: productsRes.count ?? products.length,
-  };
 }
 
 // ─────────────────────────────────────────────
@@ -842,17 +847,22 @@ export async function deleteAvailabilityOverride(productSupplierId) {
 // ─────────────────────────────────────────────
 
 export async function getSyncLogs({ limit = 10 } = {}) {
-  const { data, error } = await supabaseAdmin
-    .from('sync_logs')
-    .select('id, started_at, completed_at, status, products_added, products_updated, products_deleted, categories_found, error_message')
-    .order('started_at', { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('sync_logs')
+      .select('id, started_at, completed_at, status, products_added, products_updated, products_deleted, categories_found, error_message')
+      .order('started_at', { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    console.error('[getSyncLogs]', error.message);
+    if (error) {
+      console.error('[getSyncLogs]', error.message);
+      return [];
+    }
+    return data ?? [];
+  } catch (err) {
+    console.error('[getSyncLogs] error:', err);
     return [];
   }
-  return data ?? [];
 }
 
 // ─────────────────────────────────────────────
@@ -860,53 +870,58 @@ export async function getSyncLogs({ limit = 10 } = {}) {
 // ─────────────────────────────────────────────
 
 export async function getMarginsWithCategories(supplierCode = null) {
-  // Include supplier_code so the UI can group/filter categories by supplier.
-  const { data, error } = await supabaseAdmin
-    .from('categories')
-    .select('id, name, slug, parent_id, supplier_code, margins(id, margin_type, margin_value, store_id)')
-    .eq('is_active', true)
-    .order('name');
+  try {
+    // Include supplier_code so the UI can group/filter categories by supplier.
+    const { data, error } = await supabaseAdmin
+      .from('categories')
+      .select('id, name, slug, parent_id, supplier_code, margins(id, margin_type, margin_value, store_id)')
+      .eq('is_active', true)
+      .order('name');
 
-  if (error) {
-    console.error('[getMarginsWithCategories]', error.message);
-    return [];
-  }
-  let cats = (data ?? []).map((cat) => ({
-    ...cat,
-    margins: (cat.margins || []).filter((m) => !m.store_id || m.store_id === STORE_ID),
-  }));
+    if (error) {
+      console.error('[getMarginsWithCategories]', error.message);
+      return [];
+    }
+    let cats = (data ?? []).map((cat) => ({
+      ...cat,
+      margins: (cat.margins || []).filter((m) => !m.store_id || m.store_id === STORE_ID),
+    }));
 
-  if (cats.length > 0) {
-    let prodQuery = supabaseAdmin.from('products').select('category_id, supplier_code');
-    // When filtering by specific supplier, restrict to that supplier's products.
+    if (cats.length > 0) {
+      let prodQuery = supabaseAdmin.from('products').select('category_id, supplier_code');
+      // When filtering by specific supplier, restrict to that supplier's products.
+      const norm = normalizeSupplierCode(supplierCode);
+      if (norm && norm !== 'all') {
+        prodQuery = prodQuery.eq('supplier_code', norm);
+      } else {
+        prodQuery = applySupplierFilter(prodQuery, null);
+      }
+      const { data: prodCats } = await prodQuery;
+      if (prodCats && prodCats.length > 0) {
+        const activeCatIds = new Set(prodCats.map((p) => p.category_id).filter(Boolean));
+        cats = cats.filter((c) => activeCatIds.has(c.id) || cats.some((child) => child.parent_id === c.id && activeCatIds.has(child.id)));
+      } else {
+        cats = [];
+      }
+    }
+
+    // If a specific supplier is requested, filter categories to that supplier only.
     const norm = normalizeSupplierCode(supplierCode);
     if (norm && norm !== 'all') {
-      prodQuery = prodQuery.eq('supplier_code', norm);
-    } else {
-      prodQuery = applySupplierFilter(prodQuery, null);
+      cats = cats.filter((c) => c.supplier_code === norm);
     }
-    const { data: prodCats } = await prodQuery;
-    if (prodCats && prodCats.length > 0) {
-      const activeCatIds = new Set(prodCats.map((p) => p.category_id).filter(Boolean));
-      cats = cats.filter((c) => activeCatIds.has(c.id) || cats.some((child) => child.parent_id === c.id && activeCatIds.has(child.id)));
-    } else {
-      cats = [];
-    }
+
+    // Permanently hide "Recently Added" category
+    cats = cats.filter((c) => {
+      const n = c.name || '';
+      return !/(حديثا|حديثاً)/i.test(n);
+    });
+
+    return cats;
+  } catch (err) {
+    console.error('[getMarginsWithCategories] error:', err);
+    return [];
   }
-
-  // If a specific supplier is requested, filter categories to that supplier only.
-  const norm = normalizeSupplierCode(supplierCode);
-  if (norm && norm !== 'all') {
-    cats = cats.filter((c) => c.supplier_code === norm);
-  }
-
-  // Permanently hide "Recently Added" category
-  cats = cats.filter((c) => {
-    const n = c.name || '';
-    return !/(حديثا|حديثاً)/i.test(n);
-  });
-
-  return cats;
 }
 
 export async function upsertMargin(categoryId, marginType, marginValue) {
@@ -928,41 +943,51 @@ export async function upsertMargin(categoryId, marginType, marginValue) {
 // ─────────────────────────────────────────────
 
 export async function getDashboardCounts() {
-  const activeList = getActiveSupportedSuppliers();
-  const isAllOrMulti = activeList.length === 0;
+  try {
+    const activeList = getActiveSupportedSuppliers();
+    const isAllOrMulti = activeList.length === 0;
 
-  let productsQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
-  let prodSelectQuery = supabaseAdmin.from('products').select('category_id, brand_id');
-  if (activeList.length === 1) {
-    productsQuery = productsQuery.eq('supplier_code', activeList[0]);
-    prodSelectQuery = prodSelectQuery.eq('supplier_code', activeList[0]);
-  } else if (activeList.length > 1) {
-    productsQuery = productsQuery.in('supplier_code', activeList);
-    prodSelectQuery = prodSelectQuery.in('supplier_code', activeList);
+    let productsQuery = supabaseAdmin.from('products').select('id', { count: 'exact', head: true });
+    let prodSelectQuery = supabaseAdmin.from('products').select('category_id, brand_id');
+    if (activeList.length === 1) {
+      productsQuery = productsQuery.eq('supplier_code', activeList[0]);
+      prodSelectQuery = prodSelectQuery.eq('supplier_code', activeList[0]);
+    } else if (activeList.length > 1) {
+      productsQuery = productsQuery.in('supplier_code', activeList);
+      prodSelectQuery = prodSelectQuery.in('supplier_code', activeList);
+    }
+
+    const [products, prodDataRes, gbstore, balagan, sakher] = await Promise.all([
+      productsQuery,
+      prodSelectQuery,
+      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'gbstore'),
+      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'balagan'),
+      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'sakher'),
+    ]);
+
+    const activeCategoryIds = new Set((prodDataRes?.data || []).map((p) => p.category_id).filter(Boolean));
+    const activeBrandIds = new Set((prodDataRes?.data || []).map((p) => p.brand_id).filter(Boolean));
+
+    const supplierCounts = {};
+    if (isAllOrMulti || activeList.includes('gbstore')) supplierCounts.gbstore = gbstore?.count ?? 0;
+    if (isAllOrMulti || activeList.includes('balagan')) supplierCounts.balagan = balagan?.count ?? 0;
+    if (isAllOrMulti || activeList.includes('sakher')) supplierCounts.sakher = sakher?.count ?? 0;
+
+    const totalProducts = products?.count ?? 0;
+
+    return {
+      products: totalProducts,
+      categories: activeCategoryIds.size,
+      brands: activeBrandIds.size,
+      supplierCounts,
+    };
+  } catch (err) {
+    console.error('[getDashboardCounts] error:', err);
+    return {
+      products: 0,
+      categories: 0,
+      brands: 0,
+      supplierCounts: {},
+    };
   }
-
-  const [products, prodDataRes, gbstore, balagan, sakher] = await Promise.all([
-    productsQuery,
-    prodSelectQuery,
-    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'gbstore'),
-    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'balagan'),
-    supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('supplier_code', 'sakher'),
-  ]);
-
-  const activeCategoryIds = new Set((prodDataRes.data || []).map((p) => p.category_id).filter(Boolean));
-  const activeBrandIds = new Set((prodDataRes.data || []).map((p) => p.brand_id).filter(Boolean));
-
-  const supplierCounts = {};
-  if (isAllOrMulti || activeList.includes('gbstore')) supplierCounts.gbstore = gbstore.count ?? 0;
-  if (isAllOrMulti || activeList.includes('balagan')) supplierCounts.balagan = balagan.count ?? 0;
-  if (isAllOrMulti || activeList.includes('sakher')) supplierCounts.sakher = sakher.count ?? 0;
-
-  const totalProducts = products.count ?? 0;
-
-  return {
-    products: totalProducts,
-    categories: activeCategoryIds.size,
-    brands: activeBrandIds.size,
-    supplierCounts,
-  };
 }

@@ -5,10 +5,19 @@ import VisitorAnalyticsDashboard from '../../../components/admin/VisitorAnalytic
 export const revalidate = 0; // Always fresh in admin panel
 
 export default async function AdminDashboardPage() {
-  const [counts, logs] = await Promise.all([
-    getDashboardCounts(),
-    getSyncLogs({ limit: 5 }),
-  ]);
+  let counts = { products: 0, categories: 0, brands: 0, supplierCounts: {} };
+  let logs = [];
+
+  try {
+    const [countsRes, logsRes] = await Promise.all([
+      getDashboardCounts(),
+      getSyncLogs({ limit: 5 }),
+    ]);
+    if (countsRes) counts = countsRes;
+    if (logsRes && Array.isArray(logsRes)) logs = logsRes;
+  } catch (err) {
+    console.error('[AdminDashboardPage] error loading dashboard data:', err);
+  }
 
   return (
     <div>

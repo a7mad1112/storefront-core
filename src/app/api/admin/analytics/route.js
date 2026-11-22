@@ -25,7 +25,12 @@ export async function GET(request) {
 
     if (error) {
       console.error('[admin analytics]', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({
+        totalVisits: 0,
+        uniqueSessions: 0,
+        chartData: [],
+        topPages: [],
+      });
     }
 
     const visits = data || [];
@@ -68,6 +73,12 @@ export async function GET(request) {
       topPages,
     });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('[admin analytics error]', err);
+    return NextResponse.json({
+      totalVisits: 0,
+      uniqueSessions: 0,
+      chartData: [],
+      topPages: [],
+    });
   }
 }

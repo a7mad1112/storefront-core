@@ -7,12 +7,17 @@ export const revalidate = 0;
 
 export default async function AdminMarginsPage() {
   // Fetch all categories once (unfiltered) — the client will handle per-supplier tab filtering.
-  const allCategories = await getMarginsWithCategories();
+  let allCategories = [];
+  try {
+    allCategories = await getMarginsWithCategories();
+  } catch (err) {
+    console.error('[AdminMarginsPage] error:', err);
+  }
 
   // Derive the unique supplier codes actually present in the returned categories,
   // intersected with the configured active suppliers list.
   const activeSuppliersFromEnv = getSupportedSuppliers();
-  const suppliersInDB = [...new Set(allCategories.map((c) => c.supplier_code).filter(Boolean))];
+  const suppliersInDB = [...new Set((allCategories || []).map((c) => c.supplier_code).filter(Boolean))];
   const suppliers = activeSuppliersFromEnv.length > 0
     ? suppliersInDB.filter((s) => activeSuppliersFromEnv.includes(s))
     : suppliersInDB;
