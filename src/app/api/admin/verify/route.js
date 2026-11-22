@@ -1,11 +1,27 @@
 import { NextResponse } from 'next/server';
 
+function getEnvValue(key, fallback = '') {
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  try {
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    const ctx = getCloudflareContext();
+    if (ctx && ctx.env && ctx.env[key]) {
+      return ctx.env[key];
+    }
+  } catch (e) {
+    // Ignore outside Cloudflare Workers context
+  }
+  return fallback;
+}
+
 export async function POST(request) {
   try {
     const { email } = (await request.json().catch(() => ({}))) || {};
-    const storeId = process.env.NEXT_PUBLIC_STORE_ID || 'eloria';
-    const envAdminEmail = process.env.ADMIN_EMAIL;
-    const allowedEmailsStr = process.env.ALLOWED_ADMIN_EMAILS || process.env.NEXT_PUBLIC_ALLOWED_ADMIN_EMAILS || envAdminEmail || '';
+    const storeId = getEnvValue('NEXT_PUBLIC_STORE_ID', 'eloria');
+    const envAdminEmail = getEnvValue('ADMIN_EMAIL');
+    const allowedEmailsStr = getEnvValue('ALLOWED_ADMIN_EMAILS') || getEnvValue('NEXT_PUBLIC_ALLOWED_ADMIN_EMAILS') || envAdminEmail || '';
     const allowedEmails = allowedEmailsStr
       .split(',')
       .map((e) => e.trim().toLowerCase())

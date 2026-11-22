@@ -35,6 +35,9 @@
 		"NEXT_PUBLIC_STORE_DESC": "متجر الموضة والأناقة الفاخرة.",
 		"NEXT_PUBLIC_SUPPORTED_SUPPLIERS": "gbstore,balagan,sakher",
 		"NEXT_PUBLIC_SUPPLIER_NAMES": "{\"gbstore\": \"قسم الشنط والهدايا\", \"balagan\": \"قسم الأحذية\", \"sakher\": \"قسم الملابس\"}",
+		"ADMIN_EMAIL": "admin@aura.ahmedalawneh.me",
+		"ALLOWED_ADMIN_EMAILS": "admin@aura.ahmedalawneh.me,admin@eloriafashions.com",
+		"ADMIN_PASSWORD": "aura@2026",
 		"NEXT_PUBLIC_SITE_URL": "https://eloriafashions.com"
 	},
 	"env": {
@@ -68,6 +71,7 @@
 				"NEXT_PUBLIC_THEME_TEXT_PRIMARY": "#000000",
 				"ADMIN_EMAIL": "admin@aura.ahmedalawneh.me",
 				"ALLOWED_ADMIN_EMAILS": "admin@aura.ahmedalawneh.me",
+				"ADMIN_PASSWORD": "aura@2026",
 				"NEXT_PUBLIC_SITE_URL": "https://aurastore.ps"
 			}
 		}
